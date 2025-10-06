@@ -79,6 +79,26 @@
           overflow-x: hidden;
       }
 
+      .sr-only-input {
+          position: absolute;
+          left: -9999px;
+          width: 1px;
+          height: 1px;
+          opacity: 0;
+          pointer-events: none;
+      }
+
+      #current-date:focus-visible {
+          outline: 2px solid var(--primary-light);
+          outline-offset: 6px;
+          border-radius: 10px;
+      }
+
+      .date-controls button:focus-visible {
+          outline: 2px solid var(--primary-light);
+          outline-offset: 4px;
+      }
+
       /* Efeito de partículas de fundo com tema moderado */
       body::before {
           content: '';
@@ -1353,6 +1373,13 @@
           transition: var(--transition-slow);
       }
 
+      .btn[disabled],
+      .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          box-shadow: none;
+      }
+
       .btn:hover::before {
           left: 100%;
       }
@@ -2560,7 +2587,7 @@
         </div>
     </div>
 
-    <input type="date" id="date-picker" style="display: none;">
+    <input type="date" id="date-picker" class="sr-only-input" aria-hidden="true">
 
     <script>
         // Dados de exemplo para demonstração
@@ -2597,6 +2624,64 @@
             userRole: null,
             visualizacaoSimplificada: true  // Novo estado para toggle simplificado
         };
+
+        // Utilidades de normalização
+        const removerAcentos = texto => String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        function normalizarTexto(valor) {
+            if (valor === null || valor === undefined) return '';
+            return removerAcentos(valor).trim().toLowerCase();
+        }
+
+        function normalizarTurno(valor) {
+            const turno = normalizarTexto(valor);
+            if (turno.includes('manha')) return 'manha';
+            if (turno.includes('tarde')) return 'tarde';
+            if (turno.includes('noite')) return 'noite';
+            if (turno.includes('integral') || turno.includes('todos')) return 'todos';
+            return turno;
+        }
+
+        function normalizarStatus(valor) {
+            const status = normalizarTexto(valor);
+            if (!status) return 'livre';
+            if (status.includes('ocup')) return 'ocupado';
+            if (status.includes('reser')) return 'reservado';
+            if (status.includes('bloq')) return 'bloqueado';
+            if (status.includes('manut')) return 'manutencao';
+            if (status.includes('indisp')) return 'bloqueado';
+            if (status.includes('cancel')) return 'cancelado';
+            if (status.includes('liber') || status.includes('livre') || status.includes('dispon')) return 'livre';
+            return status;
+        }
+
+        function statusBloqueiaAgendamento(status) {
+            const normalizado = normalizarStatus(status);
+            return ['ocupado', 'reservado', 'bloqueado', 'manutencao'].includes(normalizado);
+        }
+
+        function statusParaClasseVisual(status) {
+            const normalizado = normalizarStatus(status);
+            if (normalizado === 'manutencao') return 'bloqueado';
+            if (['ocupado', 'reservado', 'bloqueado'].includes(normalizado)) return normalizado;
+            return 'livre';
+        }
+
+        function formatarTurnoLabel(turno) {
+            const normalizado = normalizarTurno(turno);
+            switch (normalizado) {
+                case 'manha':
+                    return 'Manhã';
+                case 'tarde':
+                    return 'Tarde';
+                case 'noite':
+                    return 'Noite';
+                case 'todos':
+                    return 'Todos os turnos';
+                default:
+                    return turno || '';
+            }
+        }
 
         // Inicialização da aplicação
         document.addEventListener('DOMContentLoaded', function() {
@@ -2756,7 +2841,8 @@
         function inicializarData() {
             const dataElement = document.getElementById('current-date');
             dataElement.textContent = formatarData(estado.dataAtual);
-            
+            dataElement.setAttribute('title', 'Clique para escolher uma data');
+
             // Configurar botões de navegação de data
             document.getElementById('prev-date').addEventListener('click', function() {
                 estado.dataAtual.setDate(estado.dataAtual.getDate() - 1);
@@ -2789,8 +2875,15 @@
             google.script.run
                 .withSuccessHandler(function(dados) {
                     console.log('Dados recebidos do server:', dados);
-                    estado.salas = dados.salas;
-                    estado.agendamentos = dados.agendamentos;
+                    estado.salas = (dados.salas || []).map(sala => ({
+                        ...sala,
+                        statusNormalizado: normalizarStatus(sala.statusGeral || sala.status)
+                    }));
+                    estado.agendamentos = (dados.agendamentos || []).map(ag => ({
+                        ...ag,
+                        turnoNormalizado: normalizarTurno(ag.turno),
+                        statusNormalizado: normalizarStatus(ag.status)
+                    }));
                     console.log('Estado atualizado - Salas:', estado.salas.length, 'Agendamentos:', estado.agendamentos.length);
                     atualizarMonitor();
                     atualizarIndicadores();
@@ -3072,9 +3165,21 @@
             // Calendario para seleção de data
             const currentDateDiv = document.getElementById('current-date');
             const datePicker = document.getElementById('date-picker');
+            currentDateDiv.setAttribute('tabindex', '0');
             currentDateDiv.addEventListener('click', () => {
                 datePicker.value = estado.dataAtual.toISOString().split('T')[0];
-                datePicker.showPicker ? datePicker.showPicker() : datePicker.click();
+                if (datePicker.showPicker) {
+                    datePicker.showPicker();
+                } else {
+                    datePicker.focus();
+                    datePicker.click();
+                }
+            });
+            currentDateDiv.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    currentDateDiv.click();
+                }
             });
             datePicker.addEventListener('change', () => {
                 if (datePicker.value) {
@@ -3123,22 +3228,18 @@
         }
 
         function salaAtendeFiltros(sala) {
-            // Se não há agendamentos para esta sala, verificar apenas status geral
-            const agendamentosSala = estado.agendamentos.filter(ag => 
-                ag.sala === sala.numero && 
-                (estado.turnoAtual === 'todos' ? true : ag.turno === estado.turnoAtual)
-            );
-            
-            // Filtro por status
+            const turnoFiltro = estado.turnoAtual === 'todos' ? 'todos' : normalizarTurno(estado.turnoAtual);
+            const agendamentosSala = estado.agendamentos.filter(ag => {
+                if (ag.sala !== sala.numero) return false;
+                if (turnoFiltro === 'todos') return true;
+                const turnoAg = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                return turnoAg === turnoFiltro || turnoAg === 'todos';
+            });
+
             if (estado.filtros.status.length > 0) {
-                let statusEfetivo;
-                if (sala.statusGeral !== 'livre') {
-                    statusEfetivo = sala.statusGeral === 'bloqueada' ? 'bloqueado' : sala.statusGeral === 'reservada' ? 'reservado' : 'livre';
-                } else if (agendamentosSala.length > 0) {
-                    statusEfetivo = 'ocupado';
-                } else {
-                    statusEfetivo = 'livre';
-                }
+                const statusSala = sala.statusNormalizado || normalizarStatus(sala.statusGeral || sala.status);
+                const salaBloqueada = statusBloqueiaAgendamento(statusSala);
+                const statusEfetivo = salaBloqueada ? statusSala : (agendamentosSala.length > 0 ? 'ocupado' : 'livre');
                 if (!estado.filtros.status.includes(statusEfetivo)) return false;
             }
             
@@ -3246,13 +3347,20 @@
         }
 
         function getStatusClass(sala) {
-            if (sala.statusGeral !== 'livre') {
-                return sala.statusGeral === 'bloqueada' ? 'bloqueado' : 'reservado';
+            const statusSala = sala.statusNormalizado || normalizarStatus(sala.statusGeral || sala.status);
+            if (statusBloqueiaAgendamento(statusSala)) {
+                return statusParaClasseVisual(statusSala);
             }
-            const agendamentosSala = estado.agendamentos.filter(ag => 
-                ag.sala === sala.numero && 
-                (estado.turnoAtual === 'todos' ? true : ag.turno === estado.turnoAtual)
-            );
+
+            const turnoFiltro = estado.turnoAtual === 'todos' ? 'todos' : normalizarTurno(estado.turnoAtual);
+            const agendamentosSala = estado.agendamentos.filter(ag => {
+                if (ag.sala !== sala.numero) return false;
+                if (!statusBloqueiaAgendamento(ag.statusNormalizado || ag.status)) return false;
+                if (turnoFiltro === 'todos') return true;
+                const turnoAg = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                return turnoAg === turnoFiltro || turnoAg === 'todos';
+            });
+
             return agendamentosSala.length > 0 ? 'ocupado' : 'livre';
         }
 
@@ -3266,10 +3374,14 @@
             let ilhasEspecialidades = {};
             
             salasFiltradas.forEach(sala => {
-                const agendamentosSala = estado.agendamentos.filter(ag => 
-                    ag.sala === sala.numero && 
-                    (estado.turnoAtual === 'todos' ? true : ag.turno === estado.turnoAtual)
-                );
+                const agendamentosSala = estado.agendamentos.filter(ag => {
+                    if (ag.sala !== sala.numero) return false;
+                    if (!statusBloqueiaAgendamento(ag.statusNormalizado || ag.status)) return false;
+                    if (estado.turnoAtual === 'todos') return true;
+                    const turnoAg = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                    const turnoFiltro = normalizarTurno(estado.turnoAtual);
+                    return turnoAg === turnoFiltro || turnoAg === 'todos';
+                });
                 
                 if (agendamentosSala.length > 0) {
                     salasOcupadas++;
@@ -3285,9 +3397,12 @@
                 
                 // Calcular ocupação por turno
                 ['manha', 'tarde', 'noite'].forEach(turno => {
-                    const agendamentosTurno = estado.agendamentos.filter(ag => 
-                        ag.sala === sala.numero && ag.turno === turno
-                    );
+                    const agendamentosTurno = estado.agendamentos.filter(ag => {
+                        if (ag.sala !== sala.numero) return false;
+                        if (!statusBloqueiaAgendamento(ag.statusNormalizado || ag.status)) return false;
+                        const turnoAg = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                        return turnoAg === turno;
+                    });
                     if (agendamentosTurno.length > 0) {
                         ocupacaoPorTurno[turno]++;
                     }
@@ -3337,23 +3452,14 @@
             salaDiv.setAttribute('data-sala', sala.numero);
             
             // Determinar status geral da sala
-            let statusGeral = sala.statusGeral;
-            let statusClass = '';
-            let statusText = '';
-            
-            switch(statusGeral) {
-                case 'bloqueada':
-                    statusClass = 'bloqueado';
-                    statusText = 'Bloqueada';
-                    break;
-                case 'reservada':
-                    statusClass = 'reservado';
-                    statusText = 'Reservada';
-                    break;
-                default:
-                    statusClass = '';
-                    statusText = 'Livre';
-            }
+            const statusNormalizado = sala.statusNormalizado || normalizarStatus(sala.statusGeral || sala.status);
+            const statusClass = statusParaClasseVisual(statusNormalizado);
+            const statusTextMap = {
+                bloqueado: 'Bloqueada',
+                reservado: 'Reservada',
+                manutencao: 'Em manutenção'
+            };
+            const statusText = statusTextMap[statusNormalizado] || 'Livre';
             
             // Header da sala
             const headerDiv = document.createElement('div');
@@ -3371,7 +3477,7 @@
             horariosDiv.className = 'sala-horarios';
             
             // Se a sala tem status statusGeral, aplicar a todos os horários
-            if (statusGeral === 'bloqueada' || statusGeral === 'reservada') {
+            if (['bloqueado', 'reservado', 'manutencao'].includes(statusNormalizado)) {
                 salaDiv.classList.add('sala-simplificada');
                 const bloqueioDiv = document.createElement('div');
                 bloqueioDiv.className = `horario-slot horario-${statusClass} single-block`;
@@ -3386,18 +3492,22 @@
                 // Caso contrário, verificar agendamentos
                 if (estado.visualizacaoSimplificada) {
                     // Visualização simplificada
-                    const agendamentosSala = estado.agendamentos.filter(ag => 
-                        ag.sala === sala.numero && 
-                        (estado.turnoAtual === 'todos' ? true : ag.turno === estado.turnoAtual)
-                    );
-                    
+                    const agendamentosSala = estado.agendamentos.filter(ag => {
+                        if (ag.sala !== sala.numero) return false;
+                        if (!statusBloqueiaAgendamento(ag.statusNormalizado || ag.status)) return false;
+                        if (estado.turnoAtual === 'todos') return true;
+                        const turnoAg = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                        const turnoFiltro = normalizarTurno(estado.turnoAtual);
+                        return turnoAg === turnoFiltro || turnoAg === 'todos';
+                    });
+
                     if (agendamentosSala.length === 0) {
                         // Sala livre no turno
                         salaDiv.classList.add('sala-simplificada');
                         const livreDiv = document.createElement('div');
                         livreDiv.className = 'horario-slot horario-livre single-block';
                         livreDiv.innerHTML = `
-                            <span>${estado.turnoAtual.charAt(0).toUpperCase() + estado.turnoAtual.slice(1)}</span>
+                            <span>${formatarTurnoLabel(estado.turnoAtual)}</span>
                             <div class="horario-status-container">
                                 <span class="horario-status">Livre</span>
                             </div>
@@ -3410,7 +3520,7 @@
                         const ocupadoDiv = document.createElement('div');
                         ocupadoDiv.className = 'horario-slot horario-ocupado single-block';
                         ocupadoDiv.innerHTML = `
-                            <span>${ag.turno.charAt(0).toUpperCase() + ag.turno.slice(1)}</span>
+                            <span>${formatarTurnoLabel(ag.turno)}</span>
                             <div class="horario-status-container">
                                 <span class="horario-status">${ag.especialidade}</span>
                                 <span class="horario-status">${ag.profissional}</span>
@@ -3444,7 +3554,9 @@
                 tarde: {start: '13:00', end: '19:00'},
                 noite: {start: '19:00', end: '07:00'}
             };
-            const range = turnoRanges[ag.turno];
+            const turno = ag.turnoNormalizado || normalizarTurno(ag.turno);
+            const range = turnoRanges[turno];
+            if (!range) return false;
             return ag.horaInicio === range.start && ag.horaFim === range.end;
         }
 
@@ -3455,11 +3567,12 @@
                     const horaInicioStr = horario.split('-')[0];
                     const horaInicio = Number(horaInicioStr.split(':')[0]);
                     
-                    const agendamento = estado.agendamentos.find(ag => 
-                        ag.sala === sala.numero && 
-                        ag.turno === estado.turnoAtual &&
-                        estaNoHorario(ag, horaInicio)
-                    );
+                    const agendamento = estado.agendamentos.find(ag => {
+                        if (ag.sala !== sala.numero) return false;
+                        if (!statusBloqueiaAgendamento(ag.statusNormalizado || ag.status)) return false;
+                        const turnoAg = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                        return turnoAg === estado.turnoAtual && estaNoHorario(ag, horaInicio);
+                    });
                     
                     let horarioClass = agendamento ? 'horario-ocupado' : 'horario-livre';
                     
@@ -3500,11 +3613,12 @@
                     turnoInfo.horarios.forEach(horario => {
                         const horaInicioStr = horario.split('-')[0];
                         const horaInicio = Number(horaInicioStr.split(':')[0]);
-                        const agendamento = estado.agendamentos.find(ag => 
-                            ag.sala === sala.numero && 
-                            ag.turno === turnoInfo.turno &&
-                            estaNoHorario(ag, horaInicio)
-                        );
+                    const agendamento = estado.agendamentos.find(ag => {
+                        if (ag.sala !== sala.numero) return false;
+                        if (!statusBloqueiaAgendamento(ag.statusNormalizado || ag.status)) return false;
+                        const turnoAg = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                        return turnoAg === turnoInfo.turno && estaNoHorario(ag, horaInicio);
+                    });
                         let horarioClass = agendamento ? 'horario-ocupado' : 'horario-livre';
                         const horarioDiv = document.createElement('div');
                         horarioDiv.className = `horario-slot ${horarioClass}`;
@@ -3563,32 +3677,67 @@
             }
         }
 
-        function verificarConflitoHorario(sala, data, horaInicio, horaFim, turno) {
-            const agendamentosSala = estado.agendamentos.filter(ag => 
-                ag.sala === sala && 
-                ag.turno === turno &&
-                ag.dataInicio <= data && ag.dataFim >= data
-            );
-            
-            const [hInicioH, hInicioM] = horaInicio.split(':').map(Number);
-            const [hFimH, hFimM] = horaFim.split(':').map(Number);
-            const minutosInicio = hInicioH * 60 + hInicioM;
-            const minutosFim = hFimH * 60 + hFimM;
-            
+        function verificarConflitoHorario(sala, data, horaInicio, horaFim, turno, ignorarId = null) {
+            if (!sala || !data || !horaInicio || !horaFim || !turno) {
+                return null;
+            }
+
+            const dataStr = typeof data === 'string' ? data : new Date(data).toISOString().split('T')[0];
+            const turnoNormalizado = normalizarTurno(turno);
+
+            const agendamentosSala = estado.agendamentos.filter(ag => {
+                if (ag.sala !== sala) return false;
+                if (ignorarId && ag.id === ignorarId) return false;
+
+                const agTurno = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                if (turnoNormalizado !== 'todos' && agTurno !== turnoNormalizado && agTurno !== 'todos') {
+                    return false;
+                }
+
+                if (!statusBloqueiaAgendamento(ag.statusNormalizado || ag.status)) {
+                    return false;
+                }
+
+                return ag.dataInicio <= dataStr && ag.dataFim >= dataStr;
+            });
+
+            if (!agendamentosSala.length) {
+                return null;
+            }
+
+            const toMinutes = hora => {
+                const [h, m] = hora.split(':').map(Number);
+                return (h * 60) + m;
+            };
+
+            const criarIntervalos = (inicio, fim) => {
+                if (fim <= inicio) {
+                    return [
+                        [inicio, 24 * 60],
+                        [0, fim]
+                    ];
+                }
+                return [[inicio, fim]];
+            };
+
+            const novoInicio = toMinutes(horaInicio);
+            const novoFim = toMinutes(horaFim);
+            const intervalosNovos = criarIntervalos(novoInicio, novoFim);
+
             for (const ag of agendamentosSala) {
-                const [agHInicioH, agHInicioM] = ag.horaInicio.split(':').map(Number);
-                const [agHFimH, agHFimM] = ag.horaFim.split(':').map(Number);
-                const agMinutosInicio = agHInicioH * 60 + agHInicioM;
-                const agMinutosFim = agHFimH * 60 + agHFimM;
-                
-                // Verificar sobreposição de horários
-                if ((minutosInicio >= agMinutosInicio && minutosInicio < agMinutosFim) ||
-                    (minutosFim > agMinutosInicio && minutosFim <= agMinutosFim) ||
-                    (minutosInicio <= agMinutosInicio && minutosFim >= agMinutosFim)) {
-                    return ag;
+                const agInicio = toMinutes(ag.horaInicio);
+                const agFim = toMinutes(ag.horaFim);
+                const intervalosAg = criarIntervalos(agInicio, agFim);
+
+                for (const [iniNovo, fimNovo] of intervalosNovos) {
+                    for (const [iniAg, fimAg] of intervalosAg) {
+                        if (iniNovo < fimAg && fimNovo > iniAg) {
+                            return ag;
+                        }
+                    }
                 }
             }
-            
+
             return null;
         }
 
@@ -3605,17 +3754,28 @@
 
         function abrirModalSala(numeroSala) {
             const sala = estado.salas.find(s => s.numero === numeroSala);
-            const agendamentosSala = estado.agendamentos.filter(ag => ag.sala === numeroSala && ag.dataInicio <= estado.dataAtual.toISOString().split('T')[0] && ag.dataFim >= estado.dataAtual.toISOString().split('T')[0]);
-            
+            const agendamentosSala = estado.agendamentos.filter(ag =>
+                ag.sala === numeroSala &&
+                ag.dataInicio <= estado.dataAtual.toISOString().split('T')[0] &&
+                ag.dataFim >= estado.dataAtual.toISOString().split('T')[0] &&
+                statusBloqueiaAgendamento(ag.statusNormalizado || ag.status)
+            );
+
             // Atualizar informações no modal
             document.getElementById('modal-sala-numero').textContent = numeroSala;
-            document.getElementById('info-status').textContent = 
-                sala.statusGeral === 'bloqueada' ? 'Bloqueada' : 
-                sala.statusGeral === 'reservada' ? 'Reservada' : 'Livre';
-            document.getElementById('info-motivo').textContent = sala.motivo || '-';
+            const statusSala = sala.statusNormalizado || normalizarStatus(sala.statusGeral || sala.status);
+            const statusLabelMap = {
+                bloqueado: 'Bloqueada',
+                reservado: 'Reservada',
+                manutencao: 'Em manutenção',
+                ocupado: 'Ocupado',
+                livre: 'Livre'
+            };
+            document.getElementById('info-status').textContent = statusLabelMap[statusSala] || 'Livre';
+            document.getElementById('info-motivo').textContent = ['bloqueado', 'reservado', 'manutencao'].includes(statusSala) ? (sala.motivo || '-') : '-';
             document.getElementById('info-ilha').textContent = sala.ilha;
-            document.getElementById('info-turno').textContent = 
-                estado.turnoAtual === 'todos' ? 'Todos os Turnos' : estado.turnoAtual.charAt(0).toUpperCase() + estado.turnoAtual.slice(1);
+            document.getElementById('info-turno').textContent =
+                estado.turnoAtual === 'todos' ? 'Todos os Turnos' : formatarTurnoLabel(estado.turnoAtual);
             
             // Calcular estatísticas
             let horarios = estado.turnoAtual === 'manha' ? horariosManha : 
@@ -3625,20 +3785,21 @@
             let ocupados = 0;
             let proximaDisponibilidade = null;
             
-            if (sala.statusGeral === 'livre') {
+            if (!['bloqueado', 'reservado', 'manutencao'].includes(statusSala)) {
                 for (let i = 0; i < horarios.length; i++) {
                     const horaInicioStr = horarios[i].split('-')[0];
                     const horaInicio = Number(horaInicioStr.split(':')[0]);
-                    
+
                     let turnoHorario = estado.turnoAtual;
                     if (estado.turnoAtual === 'todos') {
                         turnoHorario = (horaInicio >= 7 && horaInicio < 13) ? 'manha' :
                                        (horaInicio >= 13 && horaInicio < 19) ? 'tarde' : 'noite';
                     }
-                    
-                    const agendamento = agendamentosSala.find(ag => 
-                        ag.turno === turnoHorario && estaNoHorario(ag, horaInicio)
-                    );
+
+                    const agendamento = agendamentosSala.find(ag => {
+                        const turnoAg = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                        return turnoAg === turnoHorario && estaNoHorario(ag, horaInicio);
+                    });
                     
                     if (agendamento) {
                         ocupados++;
@@ -3659,7 +3820,13 @@
             const agendamentosList = document.getElementById('agendamentos-list');
             agendamentosList.innerHTML = '';
             
-            if (agendamentosSala.length === 0) {
+            const agendamentosFiltrados = estado.turnoAtual === 'todos' ? agendamentosSala :
+                    agendamentosSala.filter(ag => {
+                        const turnoAg = ag.turnoNormalizado || normalizarTurno(ag.turno);
+                        return turnoAg === estado.turnoAtual;
+                    });
+
+            if (agendamentosFiltrados.length === 0) {
                 agendamentosList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-calendar-times"></i>
@@ -3667,16 +3834,17 @@
                     </div>
                 `;
             } else {
-                const agendamentosFiltrados = estado.turnoAtual === 'todos' ? agendamentosSala :
-                    agendamentosSala.filter(ag => ag.turno === estado.turnoAtual);
                 agendamentosFiltrados.forEach(ag => {
+                    const statusAg = ag.statusNormalizado || normalizarStatus(ag.status);
+                    const statusClasse = statusParaClasseVisual(statusAg);
+                    const statusLabel = statusLabelMap[statusAg] || 'Ocupado';
                     const agendamentoItem = document.createElement('div');
                     agendamentoItem.className = 'agendamento-item';
                     agendamentoItem.setAttribute('data-agendamento-id', ag.id); // Novo: Adicionar ID do agendamento
                     agendamentoItem.innerHTML = `
                         <div class="agendamento-header">
                             <div class="agendamento-horario">${ag.horaInicio} - ${ag.horaFim}</div>
-                            <div class="agendamento-status status-ocupado">Ocupado</div>
+                            <div class="agendamento-status status-${statusClasse}">${statusLabel}</div>
                         </div>
                         <div class="agendamento-details">
                             <div class="detail-item">
@@ -3730,20 +3898,36 @@
             // Preencher select de salas destino (excluindo origem)
             const selectDestino = document.getElementById('mover-sala-destino');
             selectDestino.innerHTML = '<option value="">Selecione uma sala</option>';
+            let possuiSalasDisponiveis = false;
             estado.salas.forEach(sala => {
-                if (sala.numero !== salaOrigem && sala.statusGeral === 'livre') {
+                const statusSala = sala.statusNormalizado || normalizarStatus(sala.statusGeral || sala.status);
+                if (sala.numero !== salaOrigem && !statusBloqueiaAgendamento(statusSala)) {
                     const option = document.createElement('option');
                     option.value = sala.numero;
                     option.textContent = `Sala ${sala.numero}`;
                     selectDestino.appendChild(option);
+                    possuiSalasDisponiveis = true;
                 }
             });
 
+            const moverSubmitBtn = document.querySelector('#form-mover button[type="submit"]');
+            const moverAlert = document.getElementById('mover-alert');
+            if (!possuiSalasDisponiveis) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Nenhuma sala livre disponível';
+                option.disabled = true;
+                option.selected = true;
+                selectDestino.appendChild(option);
+                document.getElementById('mover-message').textContent = 'Nenhuma sala livre disponível para o horário selecionado.';
+                moverAlert.style.display = 'block';
+            } else {
+                moverAlert.style.display = 'none';
+            }
+            moverSubmitBtn.disabled = !possuiSalasDisponiveis;
+
             // Armazenar agendamento ID atual no estado ou attr
             estado.agendamentoMoverId = agendamentoId;
-
-            // Resetar alerta
-            document.getElementById('mover-alert').style.display = 'none';
 
             // Exibir modal
             document.getElementById('mover-modal').style.display = 'flex';
@@ -3765,7 +3949,14 @@
     console.log('Movendo agendamento ID:', estado.agendamentoMoverId, 'de sala', agOrigem.sala, 'para', salaDestino);
 
     // Verificar conflito na destino
-    const conflito = verificarConflitoHorario(salaDestino, agOrigem.dataInicio, agOrigem.horaInicio, agOrigem.horaFim, agOrigem.turno);
+    const conflito = verificarConflitoHorario(
+        salaDestino,
+        agOrigem.dataInicio,
+        agOrigem.horaInicio,
+        agOrigem.horaFim,
+        agOrigem.turno,
+        estado.agendamentoMoverId
+    );
 
     if (conflito) {
         console.log('Conflito detectado! ID conflito:', conflito.id, 'Profissional:', conflito.profissional);
@@ -3825,7 +4016,7 @@
             selectSala.innerHTML = '<option value="">Selecione uma sala</option>';
             
             estado.salas.forEach(sala => {
-                if (sala.statusGeral === 'livre') {
+                if (!statusBloqueiaAgendamento(sala.statusNormalizado || sala.statusGeral || sala.status)) {
                     const option = document.createElement('option');
                     option.value = sala.numero;
                     option.textContent = `Sala ${sala.numero}`;

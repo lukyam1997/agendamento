@@ -1114,22 +1114,23 @@ function atualizarAgendamento(id, novosDados) {
     const dataRange = sheet.getDataRange();
     const values = dataRange.getValues();
     
+    const targetId = String(id).trim();
     let found = false;
     for (let i = 1; i < values.length; i++) {
-      if (values[i][BASE_COLUMNS.ID - 1] == id) {
-        // Atualizar campos
-        if (novosDados.sala) sheet.getRange(i + 1, BASE_COLUMNS.SALA).setValue(novosDados.sala);
-        if (novosDados.ilha) sheet.getRange(i + 1, BASE_COLUMNS.ILHA).setValue(novosDados.ilha);
-        if (novosDados.turno) sheet.getRange(i + 1, BASE_COLUMNS.TURNO).setValue(novosDados.turno);
-        if (novosDados.horaInicio) sheet.getRange(i + 1, BASE_COLUMNS.HORA1).setValue(novosDados.horaInicio);
-        if (novosDados.horaFim) sheet.getRange(i + 1, BASE_COLUMNS.HORA2).setValue(novosDados.horaFim);
-        // Adicionar mais campos se necessário
-        
+      const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
+      if (currentId === targetId) {
+        const rowIndex = i + 1;
+        if (novosDados.sala) sheet.getRange(rowIndex, BASE_COLUMNS.SALA).setValue(novosDados.sala);
+        if (novosDados.ilha) sheet.getRange(rowIndex, BASE_COLUMNS.ILHA).setValue(novosDados.ilha);
+        if (novosDados.turno) sheet.getRange(rowIndex, BASE_COLUMNS.TURNO).setValue(novosDados.turno);
+        if (novosDados.horaInicio) sheet.getRange(rowIndex, BASE_COLUMNS.HORA1).setValue(novosDados.horaInicio);
+        if (novosDados.horaFim) sheet.getRange(rowIndex, BASE_COLUMNS.HORA2).setValue(novosDados.horaFim);
+
         found = true;
         break;
       }
     }
-    
+
     if (!found) {
       return { success: false, message: 'Agendamento não encontrado' };
     }
@@ -1156,12 +1157,15 @@ function trocarAgendamentos(id1, id2) {
     const dataRange = sheet.getDataRange();
     const values = dataRange.getValues();
     
+    const targetId1 = String(id1).trim();
+    const targetId2 = String(id2).trim();
     let pos1 = -1, pos2 = -1;
     for (let i = 1; i < values.length; i++) {
-      if (values[i][BASE_COLUMNS.ID - 1] == id1) {
+      const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
+      if (currentId === targetId1) {
         pos1 = i + 1;
       }
-      if (values[i][BASE_COLUMNS.ID - 1] == id2) {
+      if (currentId === targetId2) {
         pos2 = i + 1;
       }
       if (pos1 > 0 && pos2 > 0) break;
