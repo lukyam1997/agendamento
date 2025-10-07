@@ -1650,6 +1650,11 @@ function atualizarAgendamento(id, novosDados) {
         if (novosDados.turno) sheet.getRange(rowIndex, BASE_COLUMNS.TURNO).setValue(novosDados.turno);
         if (novosDados.horaInicio) sheet.getRange(rowIndex, BASE_COLUMNS.HORA1).setValue(novosDados.horaInicio);
         if (novosDados.horaFim) sheet.getRange(rowIndex, BASE_COLUMNS.HORA2).setValue(novosDados.horaFim);
+        if (novosDados.especialidade !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.ESPECIALIDADE).setValue(novosDados.especialidade);
+        if (novosDados.profissional !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.PROFISSIONAL).setValue(novosDados.profissional);
+        if (novosDados.categoria !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.CATEGORIA).setValue(novosDados.categoria);
+        if (novosDados.status !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.STATUS).setValue(novosDados.status);
+        if (novosDados.observacoes !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.OBSERVACOES).setValue(novosDados.observacoes);
 
         found = true;
         break;
