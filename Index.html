@@ -919,6 +919,8 @@
           flex-direction: column;
           gap: 12px;
           min-height: 260px;
+          height: 320px;
+          position: relative;
       }
 
       .chart-container h3 {
@@ -929,7 +931,15 @@
 
       .chart-container canvas {
           width: 100%;
-          flex: 1;
+          flex: 1 1 auto;
+          min-height: 0;
+          height: 100% !important;
+      }
+
+      @media (max-width: 768px) {
+          .chart-container {
+              height: 280px;
+          }
       }
 
       .monthly-table,
@@ -3416,6 +3426,177 @@
             }
         }
 
+        function abrirTelaTestePlanejamento(resumoTexto, totais) {
+            const janelaTeste = window.open('', '_blank');
+            if (!janelaTeste || janelaTeste.closed || typeof janelaTeste.closed === 'undefined') {
+                mostrarPlanejamentoMensagem('Não foi possível abrir a nova aba. Verifique o bloqueio de pop-ups.', false, true);
+                return;
+            }
+
+            const linhas = Array.isArray(estado.planejamentoLinhas) ? estado.planejamentoLinhas : [];
+            const statusLabel = {
+                ok: 'Correto',
+                erro: 'Divergente',
+                pendente: 'Pendente',
+                null: 'Não testado'
+            };
+
+            const linhasTabela = linhas.map(item => {
+                const turno = formatarTurnoLabel(item.turno || '');
+                const salaPlanejada = item.salaPlanejada || '-';
+                const salaAtual = item.salaAtual || '-';
+                const resultado = item.resultado ?? null;
+                const mensagem = item.mensagem || '-';
+                const classe = resultado ? `status-${resultado}` : 'status-indefinido';
+                const label = statusLabel[resultado] || statusLabel.null;
+
+                return `
+                    <tr class="${classe}">
+                        <td>${item.profissional || '-'}</td>
+                        <td>${item.especialidade || '-'}</td>
+                        <td>${turno}</td>
+                        <td>${salaAtual}</td>
+                        <td>${salaPlanejada}</td>
+                        <td>${label}</td>
+                        <td>${mensagem}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const html = `
+                <!DOCTYPE html>
+                <html lang="pt-BR">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Resultado do Teste de Planejamento</title>
+                    <style>
+                        body {
+                            margin: 0;
+                            font-family: 'Inter', 'Segoe UI', sans-serif;
+                            background: #0f172a;
+                            color: #f8fafc;
+                            padding: 24px;
+                        }
+                        h1 {
+                            margin-top: 0;
+                            font-size: 1.5rem;
+                        }
+                        .resumo {
+                            margin: 12px 0 24px;
+                            color: #dbe8ff;
+                            font-weight: 500;
+                        }
+                        .totais {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 12px;
+                            margin-bottom: 18px;
+                        }
+                        .total-card {
+                            background: rgba(148, 163, 254, 0.12);
+                            border: 1px solid rgba(148, 163, 254, 0.25);
+                            border-radius: 10px;
+                            padding: 12px 16px;
+                            min-width: 140px;
+                        }
+                        .total-card span {
+                            display: block;
+                            font-size: 0.85rem;
+                            color: #cbd5f5;
+                        }
+                        .total-card strong {
+                            font-size: 1.15rem;
+                            color: #fff;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            background: rgba(15, 23, 42, 0.65);
+                            border-radius: 12px;
+                            overflow: hidden;
+                            box-shadow: 0 18px 35px rgba(7, 12, 26, 0.35);
+                        }
+                        th, td {
+                            padding: 12px 16px;
+                            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                            text-align: left;
+                            font-size: 0.92rem;
+                        }
+                        th {
+                            background: rgba(30, 41, 82, 0.85);
+                            position: sticky;
+                            top: 0;
+                            z-index: 1;
+                        }
+                        tbody tr:last-child td {
+                            border-bottom: none;
+                        }
+                        .status-ok td:nth-child(6) {
+                            color: #4ade80;
+                            font-weight: 600;
+                        }
+                        .status-erro td:nth-child(6) {
+                            color: #f87171;
+                            font-weight: 600;
+                        }
+                        .status-pendente td:nth-child(6) {
+                            color: #fbbf24;
+                            font-weight: 600;
+                        }
+                        .status-indefinido td:nth-child(6) {
+                            color: #94a3b8;
+                        }
+                        @media (max-width: 900px) {
+                            table {
+                                display: block;
+                                overflow-x: auto;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>Resultado do Teste de Planejamento</h1>
+                    <div class="resumo">${resumoTexto}</div>
+                    <div class="totais">
+                        <div class="total-card">
+                            <span>Corretos</span>
+                            <strong>${totais.corretos}</strong>
+                        </div>
+                        <div class="total-card">
+                            <span>Divergentes</span>
+                            <strong>${totais.divergentes}</strong>
+                        </div>
+                        <div class="total-card">
+                            <span>Pendentes</span>
+                            <strong>${totais.pendentes}</strong>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Profissional</th>
+                                <th>Especialidade</th>
+                                <th>Turno</th>
+                                <th>Sala atual</th>
+                                <th>Sala planejada</th>
+                                <th>Status</th>
+                                <th>Mensagem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${linhasTabela || '<tr><td colspan="7">Nenhum dado disponível para exibir.</td></tr>'}
+                        </tbody>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            janelaTeste.document.open();
+            janelaTeste.document.write(html);
+            janelaTeste.document.close();
+        }
+
         function testarPlanejamento() {
             if (!Array.isArray(estado.planejamentoLinhas) || estado.planejamentoLinhas.length === 0) {
                 mostrarPlanejamentoMensagem('Nenhum agendamento para validar neste turno.', false, true);
@@ -3460,6 +3641,7 @@
                 : 'Nenhuma sala planejada informada.';
 
             mostrarPlanejamentoMensagem(texto, divergentes === 0 && pendentes === 0, divergentes > 0 || pendentes > 0);
+            abrirTelaTestePlanejamento(texto, { corretos, divergentes, pendentes });
         }
 
         function aplicarPlanejamentoLinha(id) {
