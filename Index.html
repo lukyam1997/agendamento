@@ -281,8 +281,8 @@
 
       .main-content {
           display: grid;
-          grid-template-columns: 320px minmax(0, 1fr);
-          gap: 24px;
+          grid-template-columns: 280px minmax(0, 1fr);
+          gap: 20px;
           align-items: start;
       }
 
@@ -749,6 +749,7 @@
           flex-direction: column;
           transition: transform var(--transition-fast), box-shadow var(--transition-fast);
           cursor: pointer;
+          overflow: hidden;
       }
 
       .sala:hover {
@@ -779,10 +780,16 @@
           justify-content: space-between;
           gap: 10px;
           font-size: 0.9rem;
+          align-items: flex-start;
+          min-width: 0;
       }
 
       .horario-slot:last-child {
           border-bottom: none;
+      }
+
+      .horario-slot span:first-child {
+          flex-shrink: 0;
       }
 
       .turno-section {
@@ -804,11 +811,16 @@
           flex-direction: column;
           gap: 4px;
           text-align: right;
+          align-items: flex-end;
+          flex: 1;
+          min-width: 0;
       }
 
       .horario-status {
           font-weight: 600;
           color: var(--text-secondary);
+          display: block;
+          overflow-wrap: anywhere;
       }
 
       .horario-livre {
@@ -1502,6 +1514,7 @@
     <div id="main-container" class="container" style="display: none;">
         <nav class="main-nav">
             <button class="nav-btn active" data-tab="monitor">Monitor</button>
+            <button class="nav-btn" data-tab="planejamento">Planejamento</button>
             <button class="nav-btn" data-tab="dashboard">Dashboards</button>
             <button class="nav-btn" data-tab="relatorios">Relatórios</button>
             <button class="nav-btn" data-tab="sala-mes">Acompanhamento Sala/Mês</button>
@@ -1537,49 +1550,6 @@
                 </div>
             </div>
         </header>
-
-        <section class="planejamento-container" id="planejamento-container" style="display: none;">
-            <div class="planejamento-header">
-                <div>
-                    <h2><i class="fas fa-clipboard-check"></i> Planejamento de Salas por Turno</h2>
-                    <p>Monte rapidamente o mapa de salas e valide com o agendamento oficial.</p>
-                </div>
-                <div class="planejamento-controls">
-                    <label>
-                        Turno
-                        <select id="planejamento-turno">
-                            <option value="manha">Manhã</option>
-                            <option value="tarde">Tarde</option>
-                            <option value="noite">Noite</option>
-                            <option value="todos">Todos</option>
-                        </select>
-                    </label>
-                    <button class="btn btn-secondary" id="planejamento-testar" type="button">
-                        <i class="fas fa-vial"></i> Testar atribuições
-                    </button>
-                    <button class="btn btn-primary" id="planejamento-aplicar" type="button">
-                        <i class="fas fa-check-double"></i> Substituir tudo
-                    </button>
-                </div>
-            </div>
-            <div class="planejamento-table-wrapper">
-                <table class="planejamento-table">
-                    <thead>
-                        <tr>
-                            <th>Profissional</th>
-                            <th>Especialidade</th>
-                            <th>Turno</th>
-                            <th>Sala atual</th>
-                            <th>Sala planejada</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="planejamento-tbody"></tbody>
-                </table>
-            </div>
-            <div class="planejamento-feedback" id="planejamento-feedback"></div>
-        </section>
 
         <div class="main-content">
             <aside class="sidebar" data-drawer="filters" id="filters-panel">
@@ -1673,9 +1643,54 @@
                         <i class="fas fa-spinner"></i>
                         <p>Carregando salas...</p>
                     </div>
-                    
+
                     <div class="monitor" id="monitor-content">
                     </div>
+                </div>
+
+                <div class="dashboard-section" id="planejamento-section">
+                    <section class="planejamento-container" id="planejamento-container">
+                        <div class="planejamento-header">
+                            <div>
+                                <h2><i class="fas fa-clipboard-check"></i> Planejamento de Salas por Turno</h2>
+                                <p>Monte rapidamente o mapa de salas e valide com o agendamento oficial.</p>
+                            </div>
+                            <div class="planejamento-controls">
+                                <label>
+                                    Turno
+                                    <select id="planejamento-turno">
+                                        <option value="manha">Manhã</option>
+                                        <option value="tarde">Tarde</option>
+                                        <option value="noite">Noite</option>
+                                        <option value="todos">Todos</option>
+                                    </select>
+                                </label>
+                                <button class="btn btn-secondary" id="planejamento-testar" type="button">
+                                    <i class="fas fa-vial"></i> Testar atribuições
+                                </button>
+                                <button class="btn btn-primary" id="planejamento-aplicar" type="button">
+                                    <i class="fas fa-check-double"></i> Substituir tudo
+                                </button>
+                            </div>
+                        </div>
+                        <div class="planejamento-table-wrapper">
+                            <table class="planejamento-table">
+                                <thead>
+                                    <tr>
+                                        <th>Profissional</th>
+                                        <th>Especialidade</th>
+                                        <th>Turno</th>
+                                        <th>Sala atual</th>
+                                        <th>Sala planejada</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="planejamento-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div class="planejamento-feedback" id="planejamento-feedback"></div>
+                    </section>
                 </div>
 
                 <div class="dashboard-section" id="dashboard-section">
@@ -2890,6 +2905,7 @@
                     if (tab === 'dashboard') carregarDashboard();
                     if (tab === 'sala-mes') carregarSalaMesOptions();
                     if (tab === 'relatorios') inicializarRelatorios();
+                    if (tab === 'planejamento') atualizarPlanejamento();
                 });
             });
 
@@ -3257,8 +3273,6 @@
         function atualizarPlanejamento() {
             const container = document.getElementById('planejamento-container');
             if (!container) return;
-
-            container.style.display = 'flex';
 
             const dataIso = estado.dataAtual.toISOString().split('T')[0];
             const turnoSelecionado = estado.planejamentoTurno || 'manha';
