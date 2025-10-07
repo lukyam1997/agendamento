@@ -776,12 +776,54 @@
 
       .chart-container,
       .monthly-table,
-      #relatorio-tabela {
+      .table-card {
           background: var(--surface-elevated);
           border-radius: var(--radius-sm);
           border: 1px solid var(--border-soft);
           padding: 18px;
           margin-bottom: 18px;
+      }
+
+      .resumo-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 16px;
+          margin-bottom: 18px;
+      }
+
+      .resumo-card {
+          background: var(--surface-elevated);
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-soft);
+          padding: 16px;
+          box-shadow: var(--shadow-soft);
+      }
+
+      .resumo-label {
+          display: block;
+          font-size: 0.85rem;
+          color: var(--text-muted);
+          margin-bottom: 6px;
+      }
+
+      .resumo-valor {
+          display: block;
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: var(--text-primary);
+      }
+
+      .table-card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+      }
+
+      .table-card-header h3 {
+          margin: 0;
+          font-size: 1.1rem;
+          color: var(--text-primary);
       }
 
       .dashboard-controls {
@@ -1432,6 +1474,44 @@
                         </select>
                         <button class="btn btn-primary" id="btn-atualizar-dashboard">Atualizar</button>
                     </div>
+                    <div class="resumo-grid" id="dashboard-resumo">
+                        <div class="resumo-card">
+                            <span class="resumo-label">Período analisado</span>
+                            <span class="resumo-valor" id="dashboard-resumo-periodo">-</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Agendamentos analisados</span>
+                            <span class="resumo-valor" id="dashboard-resumo-total">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Dias analisados</span>
+                            <span class="resumo-valor" id="dashboard-resumo-dias">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Ocupação média</span>
+                            <span class="resumo-valor" id="dashboard-resumo-ocupacao-media">0%</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Pico de ocupação</span>
+                            <span class="resumo-valor" id="dashboard-resumo-ocupacao-pico">0%</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Salas ativas</span>
+                            <span class="resumo-valor" id="dashboard-resumo-salas">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Especialidades ativas</span>
+                            <span class="resumo-valor" id="dashboard-resumo-especialidades">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Turnos ativos</span>
+                            <span class="resumo-valor" id="dashboard-resumo-turnos">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Salas consideradas</span>
+                            <span class="resumo-valor" id="dashboard-resumo-salas-consideradas">0</span>
+                        </div>
+                    </div>
                     <div class="chart-container">
                         <h3>Ocupação por Turno</h3>
                         <canvas id="chart-turno"></canvas>
@@ -1449,11 +1529,11 @@
                         <canvas id="chart-especialidade"></canvas>
                     </div>
                     <div class="chart-container">
-                        <h3>Heatmap de Ocupação</h3>
+                        <h3>Distribuição Geral de Ocupação</h3>
                         <canvas id="chart-heatmap"></canvas>
                     </div>
                     <div class="chart-container">
-                        <h3>Taxa de Aproveitamento</h3>
+                        <h3>Distribuição por Status</h3>
                         <canvas id="chart-aproveitamento"></canvas>
                     </div>
                 </div>
@@ -1465,17 +1545,80 @@
                         <input type="date" id="relatorio-data-fim">
                         <button class="btn btn-primary" id="btn-gerar-relatorio">Gerar</button>
                     </div>
-                    <table id="relatorio-tabela">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Salas Ocupadas</th>
-                                <th>Taxa (%)</th>
-                                <th>Especialidades</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+                    <div class="resumo-grid" id="relatorio-resumo">
+                        <div class="resumo-card">
+                            <span class="resumo-label">Período analisado</span>
+                            <span class="resumo-valor" id="relatorio-resumo-periodo">-</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Agendamentos analisados</span>
+                            <span class="resumo-valor" id="relatorio-resumo-total">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Dias analisados</span>
+                            <span class="resumo-valor" id="relatorio-resumo-dias">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Ocupação média</span>
+                            <span class="resumo-valor" id="relatorio-resumo-ocupacao-media">0%</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Pico de ocupação</span>
+                            <span class="resumo-valor" id="relatorio-resumo-ocupacao-pico">0%</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Salas ativas</span>
+                            <span class="resumo-valor" id="relatorio-resumo-salas">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Especialidades ativas</span>
+                            <span class="resumo-valor" id="relatorio-resumo-especialidades">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Turnos ativos</span>
+                            <span class="resumo-valor" id="relatorio-resumo-turnos">0</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Salas consideradas</span>
+                            <span class="resumo-valor" id="relatorio-resumo-salas-consideradas">0</span>
+                        </div>
+                    </div>
+                    <div class="table-card">
+                        <div class="table-card-header">
+                            <h3>Resumo diário</h3>
+                        </div>
+                        <table id="relatorio-tabela">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Salas Ocupadas</th>
+                                    <th>Taxa (%)</th>
+                                    <th>Especialidades</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="table-card">
+                        <div class="table-card-header">
+                            <h3>Detalhamento de agendamentos</h3>
+                        </div>
+                        <table id="relatorio-detalhado">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Sala</th>
+                                    <th>Ilha</th>
+                                    <th>Turno</th>
+                                    <th>Horário</th>
+                                    <th>Especialidade</th>
+                                    <th>Profissional</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="dashboard-section" id="sala-mes-section">
@@ -1921,6 +2064,19 @@
                 default:
                     return turno || '';
             }
+        }
+
+        function formatarStatusLabel(status) {
+            const normalizado = normalizarStatus(status);
+            const mapa = {
+                ocupado: 'Ocupado',
+                livre: 'Livre',
+                reservado: 'Reservado',
+                bloqueado: 'Bloqueado',
+                manutencao: 'Em manutenção',
+                cancelado: 'Cancelado'
+            };
+            return mapa[normalizado] || (status ? status : '-');
         }
 
         // Inicialização da aplicação
@@ -3571,15 +3727,93 @@
 
         // Funções para as novas abas
 
+        function atualizarResumoIndicadores(prefixo, resumo) {
+            const dados = resumo || {};
+            const definirTexto = (campo, valor, sufixo) => {
+                const elemento = document.getElementById(`${prefixo}-${campo}`);
+                if (!elemento) return;
+
+                if (campo === 'periodo') {
+                    elemento.textContent = valor && String(valor).trim() ? valor : '-';
+                    return;
+                }
+
+                if (sufixo === '%') {
+                    const numero = Number(valor);
+                    elemento.textContent = Number.isFinite(numero) ? `${numero}%` : '0%';
+                    return;
+                }
+
+                const numero = Number(valor);
+                if (Number.isFinite(numero)) {
+                    elemento.textContent = numero.toLocaleString('pt-BR');
+                } else {
+                    elemento.textContent = valor && String(valor).trim() ? valor : '0';
+                }
+            };
+
+            definirTexto('periodo', dados.periodoTexto || '-');
+            definirTexto('total', dados.totalAgendamentos ?? 0);
+            definirTexto('dias', dados.diasAnalisados ?? 0);
+            definirTexto('ocupacao-media', dados.ocupacaoMedia ?? 0, '%');
+            definirTexto('ocupacao-pico', dados.ocupacaoPico ?? 0, '%');
+            definirTexto('salas', dados.salasAtivas ?? 0);
+            definirTexto('salas-consideradas', dados.totalSalasConsideradas ?? 0);
+            definirTexto('especialidades', dados.especialidadesAtivas ?? 0);
+            definirTexto('turnos', dados.turnosAtivos ?? 0);
+        }
+
+        function formatarDataCurtaGrafico(isoDate) {
+            if (!isoDate) return '';
+            const partes = isoDate.split('-');
+            if (partes.length !== 3) return isoDate;
+            const [ano, mes, dia] = partes;
+            if (!ano || !mes || !dia) return isoDate;
+            return `${dia}/${mes}`;
+        }
+
         function carregarDashboard() {
             const periodo = document.getElementById('dashboard-periodo').value;
+            const filtrosDashboard = {
+                turnos: [],
+                ilhas: Array.isArray(estado.filtros.ilha) ? estado.filtros.ilha : [],
+                especialidades: Array.isArray(estado.filtros.especialidade)
+                    ? estado.filtros.especialidade.map(normalizarTexto)
+                    : [],
+                status: Array.isArray(estado.filtros.status)
+                    ? estado.filtros.status.map(normalizarStatus)
+                    : []
+            };
             google.script.run
                 .withSuccessHandler(renderCharts)
                 .withFailureHandler(error => console.error('Erro no dashboard:', error))
-                .getDadosAgregados(periodo);
+                .getDadosAgregados(periodo, JSON.stringify(filtrosDashboard));
         }
 
         function renderCharts(dados) {
+            if (!dados || dados.error) {
+                console.error('Erro ao carregar dados do dashboard:', dados && dados.error ? dados.error : 'Dados indisponíveis');
+            }
+
+            const informacoes = dados && !dados.error ? dados : {
+                resumo: {},
+                ocupacaoTurno: {},
+                ocupacaoIlha: {},
+                evolucao: {},
+                especialidades: {},
+                ocupacaoGeral: {},
+                statusDistribuicao: {}
+            };
+
+            atualizarResumoIndicadores('dashboard-resumo', informacoes.resumo);
+
+            const ocupacaoTurno = informacoes.ocupacaoTurno || {};
+            const ocupacaoIlha = informacoes.ocupacaoIlha || {};
+            const evolucao = informacoes.evolucao || {};
+            const especialidades = informacoes.especialidades || {};
+            const ocupacaoGeral = informacoes.ocupacaoGeral || {};
+            const statusDistribuicao = informacoes.statusDistribuicao || {};
+
             // Limpar charts anteriores
             ['turno', 'ilha', 'evolucao', 'especialidade', 'heatmap', 'aproveitamento'].forEach(id => {
                 const canvas = document.getElementById(`chart-${id}`);
@@ -3588,12 +3822,15 @@
 
             // Ocupação por Turno (Pie Chart)
             const ctxTurno = document.getElementById('chart-turno').getContext('2d');
+            const turnosOrdem = ['manha', 'tarde', 'noite'];
+            const turnosRotulos = ['Manhã', 'Tarde', 'Noite'];
+            const dadosTurno = turnosOrdem.map(key => Number(ocupacaoTurno[key] || 0));
             document.getElementById('chart-turno').chart = new Chart(ctxTurno, {
                 type: 'pie',
                 data: {
-                    labels: ['Manhã', 'Tarde', 'Noite'],
+                    labels: turnosRotulos,
                     datasets: [{
-                        data: dados.ocupacaoTurno,
+                        data: dadosTurno,
                         backgroundColor: ['#48bb78', '#4299e1', '#f56565']
                     }]
                 },
@@ -3608,13 +3845,27 @@
 
             // Ocupação por Ilha (Bar Chart)
             const ctxIlha = document.getElementById('chart-ilha').getContext('2d');
+            const entradasIlhas = Object.entries(ocupacaoIlha).sort((a, b) => {
+                const numA = parseFloat(a[0]);
+                const numB = parseFloat(b[0]);
+                if (Number.isFinite(numA) && Number.isFinite(numB)) {
+                    return numA - numB;
+                }
+                return a[0].localeCompare(b[0], 'pt-BR', { numeric: true, sensitivity: 'base' });
+            });
+            const labelsIlhas = entradasIlhas.length
+                ? entradasIlhas.map(([ilha]) => ilha ? `Ilha ${ilha}` : 'Sem ilha')
+                : ['Sem dados'];
+            const dadosIlhas = entradasIlhas.length
+                ? entradasIlhas.map(([, valor]) => Number(valor) || 0)
+                : [0];
             document.getElementById('chart-ilha').chart = new Chart(ctxIlha, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(dados.ocupacaoIlha),
+                    labels: labelsIlhas,
                     datasets: [{
                         label: 'Ocupação por Ilha',
-                        data: Object.values(dados.ocupacaoIlha),
+                        data: dadosIlhas,
                         backgroundColor: '#5b7cfd'
                     }]
                 },
@@ -3626,13 +3877,20 @@
 
             // Evolução de Ocupação (Line Chart)
             const ctxEvolucao = document.getElementById('chart-evolucao').getContext('2d');
+            const evolucaoOrdenada = Object.entries(evolucao).sort((a, b) => new Date(a[0]) - new Date(b[0]));
+            const labelsEvolucao = evolucaoOrdenada.length
+                ? evolucaoOrdenada.map(([dia]) => formatarDataCurtaGrafico(dia))
+                : ['Sem dados'];
+            const dadosEvolucao = evolucaoOrdenada.length
+                ? evolucaoOrdenada.map(([, valor]) => Number(valor) || 0)
+                : [0];
             document.getElementById('chart-evolucao').chart = new Chart(ctxEvolucao, {
                 type: 'line',
                 data: {
-                    labels: Object.keys(dados.evolucao),
+                    labels: labelsEvolucao,
                     datasets: [{
                         label: 'Evolução',
-                        data: Object.values(dados.evolucao),
+                        data: dadosEvolucao,
                         borderColor: '#5b7cfd',
                         tension: 0.1
                     }]
@@ -3645,13 +3903,20 @@
 
             // Distribuição por Especialidade (Bar Chart)
             const ctxEspecialidade = document.getElementById('chart-especialidade').getContext('2d');
+            const entradasEspecialidades = Object.entries(especialidades).sort((a, b) => b[1] - a[1]);
+            const labelsEspecialidades = entradasEspecialidades.length
+                ? entradasEspecialidades.map(([nome]) => nome)
+                : ['Sem dados'];
+            const dadosEspecialidades = entradasEspecialidades.length
+                ? entradasEspecialidades.map(([, valor]) => Number(valor) || 0)
+                : [0];
             document.getElementById('chart-especialidade').chart = new Chart(ctxEspecialidade, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(dados.especialidade),
+                    labels: labelsEspecialidades,
                     datasets: [{
                         label: 'Por Especialidade',
-                        data: Object.values(dados.especialidade),
+                        data: dadosEspecialidades,
                         backgroundColor: '#8a4dbf'
                     }]
                 },
@@ -3661,15 +3926,21 @@
                 }
             });
 
-            // Heatmap de Ocupação (Usando doughnut como placeholder, ajuste se necessário para true heatmap)
+            // Distribuição geral de ocupação (Doughnut)
             const ctxHeatmap = document.getElementById('chart-heatmap').getContext('2d');
+            const labelsGeral = ['Uso médio', 'Salas livres', 'Indisponíveis'];
+            const dadosGeral = [
+                Number(ocupacaoGeral.uso || 0),
+                Number(ocupacaoGeral.livres || 0),
+                Number(ocupacaoGeral.indisponiveis || 0)
+            ];
             document.getElementById('chart-heatmap').chart = new Chart(ctxHeatmap, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Ocupado', 'Livre'],
+                    labels: labelsGeral,
                     datasets: [{
-                        data: [dados.ocupacaoGeral.ocupadas, dados.ocupacaoGeral.livres],
-                        backgroundColor: ['#f56565', '#48bb78']
+                        data: dadosGeral,
+                        backgroundColor: ['#f56565', '#48bb78', '#f59e0b']
                     }]
                 },
                 options: {
@@ -3677,15 +3948,23 @@
                 }
             });
 
-            // Taxa de Aproveitamento (Polar Area)
+            // Distribuição por status (Polar Area)
             const ctxAproveitamento = document.getElementById('chart-aproveitamento').getContext('2d');
+            const entradasStatus = Object.entries(statusDistribuicao).sort((a, b) => b[1] - a[1]);
+            const statusLabels = entradasStatus.length
+                ? entradasStatus.map(([status]) => formatarStatusLabel(status))
+                : ['Sem dados'];
+            const statusValores = entradasStatus.length
+                ? entradasStatus.map(([, valor]) => Number(valor) || 0)
+                : [0];
+            const statusCores = ['#5b7cfd', '#48bb78', '#f59e0b', '#f56565', '#38bdf8', '#9f7aea'];
             document.getElementById('chart-aproveitamento').chart = new Chart(ctxAproveitamento, {
                 type: 'polarArea',
                 data: {
-                    labels: Object.keys(dados.aproveitamento),
+                    labels: statusLabels,
                     datasets: [{
-                        data: Object.values(dados.aproveitamento),
-                        backgroundColor: ['#5b7cfd', '#8a4dbf', '#5ac8e8']
+                        data: statusValores,
+                        backgroundColor: statusValores.map((_, index) => statusCores[index % statusCores.length])
                     }]
                 },
                 options: {
@@ -3709,23 +3988,113 @@
                 .getRelatorioPeriodo(inicio, fim);
         }
 
-        function renderRelatorioTable(dados) {
-            const tbody = document.querySelector('#relatorio-tabela tbody');
-            tbody.innerHTML = '';
-            if (dados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4">Nenhum dado encontrado</td></tr>';
-                return;
+        function renderRelatorioTable(resultado) {
+            if (!resultado || resultado.error) {
+                console.error('Erro ao gerar relatório:', resultado && resultado.error ? resultado.error : 'Dados indisponíveis');
             }
-            dados.forEach(item => {
+
+            const dados = resultado && !resultado.error ? resultado : { resumo: {}, diario: [], detalhado: [] };
+            atualizarResumoIndicadores('relatorio-resumo', dados.resumo);
+
+            const tbodyResumo = document.querySelector('#relatorio-tabela tbody');
+            tbodyResumo.innerHTML = '';
+
+            const linhasDiario = Array.isArray(dados.diario) ? dados.diario : [];
+            if (linhasDiario.length === 0) {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${item.data}</td>
-                    <td>${item.ocupadas}</td>
-                    <td>${item.taxa}%</td>
-                    <td>${item.especialidades.join(', ')}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+                const td = document.createElement('td');
+                td.colSpan = 4;
+                td.textContent = 'Nenhum dado encontrado para o período selecionado.';
+                tr.appendChild(td);
+                tbodyResumo.appendChild(tr);
+            } else {
+                linhasDiario.forEach(item => {
+                    const tr = document.createElement('tr');
+
+                    const tdData = document.createElement('td');
+                    tdData.textContent = item.data || '-';
+
+                    const tdSalas = document.createElement('td');
+                    tdSalas.textContent = Number.isFinite(Number(item.salasOcupadas))
+                        ? Number(item.salasOcupadas).toLocaleString('pt-BR')
+                        : item.salasOcupadas || '0';
+
+                    const tdTaxa = document.createElement('td');
+                    const taxaNumero = Number(item.taxaMedia);
+                    tdTaxa.textContent = Number.isFinite(taxaNumero) ? `${taxaNumero}%` : '0%';
+
+                    const tdEspecialidades = document.createElement('td');
+                    tdEspecialidades.textContent = Array.isArray(item.especialidades) && item.especialidades.length
+                        ? item.especialidades.join(', ')
+                        : 'Não informado';
+
+                    tr.appendChild(tdData);
+                    tr.appendChild(tdSalas);
+                    tr.appendChild(tdTaxa);
+                    tr.appendChild(tdEspecialidades);
+                    tbodyResumo.appendChild(tr);
+                });
+            }
+
+            const tbodyDetalhado = document.querySelector('#relatorio-detalhado tbody');
+            tbodyDetalhado.innerHTML = '';
+
+            const linhasDetalhe = Array.isArray(dados.detalhado) ? dados.detalhado : [];
+            if (linhasDetalhe.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 8;
+                td.textContent = 'Nenhum agendamento encontrado para o período selecionado.';
+                tr.appendChild(td);
+                tbodyDetalhado.appendChild(tr);
+            } else {
+                linhasDetalhe.forEach(item => {
+                    const tr = document.createElement('tr');
+
+                    const tdData = document.createElement('td');
+                    tdData.textContent = item.data || '-';
+
+                    const tdSala = document.createElement('td');
+                    tdSala.textContent = item.sala || '-';
+
+                    const tdIlha = document.createElement('td');
+                    tdIlha.textContent = item.ilha || '-';
+
+                    const tdTurno = document.createElement('td');
+                    const turnoLabel = formatarTurnoLabel(item.turno);
+                    tdTurno.textContent = turnoLabel ? turnoLabel : '-';
+
+                    const tdHorario = document.createElement('td');
+                    const horaInicio = item.horaInicio || '';
+                    const horaFim = item.horaFim || '';
+                    let horarioTexto = '-';
+                    if (horaInicio && horaFim) {
+                        horarioTexto = `${horaInicio} - ${horaFim}`;
+                    } else if (horaInicio || horaFim) {
+                        horarioTexto = horaInicio || horaFim;
+                    }
+                    tdHorario.textContent = horarioTexto;
+
+                    const tdEspecialidade = document.createElement('td');
+                    tdEspecialidade.textContent = item.especialidade || 'Não informado';
+
+                    const tdProfissional = document.createElement('td');
+                    tdProfissional.textContent = item.profissional || '-';
+
+                    const tdStatus = document.createElement('td');
+                    tdStatus.textContent = formatarStatusLabel(item.status);
+
+                    tr.appendChild(tdData);
+                    tr.appendChild(tdSala);
+                    tr.appendChild(tdIlha);
+                    tr.appendChild(tdTurno);
+                    tr.appendChild(tdHorario);
+                    tr.appendChild(tdEspecialidade);
+                    tr.appendChild(tdProfissional);
+                    tr.appendChild(tdStatus);
+                    tbodyDetalhado.appendChild(tr);
+                });
+            }
         }
 
         function carregarSalaMesOptions() {
