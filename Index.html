@@ -1040,45 +1040,45 @@
 
       .report-filters {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 18px;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 16px;
           margin-top: 18px;
-          padding: 20px;
-          border-radius: var(--radius-lg);
-          background: linear-gradient(160deg, rgba(37, 54, 96, 0.55), rgba(22, 36, 74, 0.85));
-          border: 1px solid rgba(122, 141, 255, 0.12);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+          padding: 16px;
+          border-radius: var(--radius-md);
+          background: rgba(15, 23, 42, 0.45);
+          border: 1px solid rgba(122, 141, 255, 0.14);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
       }
 
       .report-filter-field {
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          padding: 18px;
-          border-radius: var(--radius-md);
-          border: 1px solid rgba(148, 163, 255, 0.16);
-          background: rgba(15, 23, 42, 0.35);
-          box-shadow: 0 12px 24px rgba(8, 15, 32, 0.35);
+          gap: 8px;
+          padding: 12px;
+          border-radius: var(--radius-sm);
+          border: 1px solid rgba(122, 141, 255, 0.16);
+          background: rgba(13, 23, 46, 0.6);
+          box-shadow: none;
           position: relative;
           overflow: visible;
       }
 
       .report-filter-field label {
-          font-weight: 700;
-          letter-spacing: 0.02em;
-          color: #f1f5ff;
+          font-weight: 600;
+          letter-spacing: 0.03em;
+          color: #f8fafc;
           text-transform: uppercase;
-          font-size: 0.75rem;
+          font-size: 0.72rem;
       }
 
       .report-filter-field input {
-          background: rgba(15, 23, 42, 0.7);
+          background: rgba(15, 23, 42, 0.65);
           border: 1px solid rgba(122, 141, 255, 0.28);
           border-radius: var(--radius-sm);
           color: var(--text-primary);
-          padding: 10px 12px;
+          padding: 9px 12px;
           font-family: var(--font-family);
-          min-height: 44px;
+          min-height: 40px;
       }
 
       .report-filter-field input::placeholder {
@@ -1092,18 +1092,20 @@
       .report-multiselect-btn {
           width: 100%;
           text-align: left;
-          padding: 12px 14px;
+          padding: 10px 12px;
           border-radius: var(--radius-sm);
-          border: 1px solid rgba(122, 141, 255, 0.32);
-          background: rgba(17, 27, 58, 0.82);
+          border: 1px solid rgba(122, 141, 255, 0.28);
+          background: rgba(17, 27, 58, 0.78);
           color: #e2e8ff;
           font-weight: 500;
+          font-size: 0.9rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
           cursor: pointer;
           transition: var(--transition-fast);
+          min-height: 40px;
       }
 
       .report-multiselect-btn::after {
@@ -1116,22 +1118,22 @@
 
       .report-multiselect-btn.open {
           border-color: rgba(122, 141, 255, 0.6);
-          background: rgba(30, 46, 92, 0.85);
+          background: rgba(30, 46, 92, 0.82);
       }
 
       .report-multiselect-panel {
           position: absolute;
           z-index: 20;
-          top: calc(100% + 8px);
+          top: calc(100% + 6px);
           left: 0;
           right: 0;
-          background: rgba(12, 20, 44, 0.96);
+          background: rgba(12, 20, 44, 0.95);
           border-radius: var(--radius-md);
-          border: 1px solid rgba(122, 141, 255, 0.28);
-          box-shadow: var(--shadow-strong);
+          border: 1px solid rgba(122, 141, 255, 0.24);
+          box-shadow: var(--shadow-soft);
           display: none;
           flex-direction: column;
-          max-height: 280px;
+          max-height: 240px;
       }
 
       .report-multiselect-panel.open {
@@ -1142,7 +1144,7 @@
           display: flex;
           justify-content: space-between;
           gap: 8px;
-          padding: 12px 14px;
+          padding: 10px 12px;
           border-bottom: 1px solid rgba(122, 141, 255, 0.12);
       }
 
@@ -1150,14 +1152,14 @@
           flex: 1;
           border: none;
           border-radius: var(--radius-sm);
-          background: rgba(96, 165, 250, 0.14);
+          background: rgba(96, 165, 250, 0.16);
           color: #dbe8ff;
-          padding: 8px 10px;
+          padding: 7px 10px;
           cursor: pointer;
           font-weight: 600;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          font-size: 0.7rem;
+          letter-spacing: 0.04em;
+          font-size: 0.68rem;
           transition: var(--transition-fast);
       }
 
@@ -1166,22 +1168,23 @@
       }
 
       .report-multiselect-options {
-          padding: 12px 14px 14px;
+          padding: 10px 12px 12px;
           display: grid;
-          gap: 8px;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 6px;
           overflow-y: auto;
       }
 
       .report-multiselect-options label {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 8px 10px;
+          gap: 8px;
+          padding: 6px 8px;
           border-radius: var(--radius-sm);
           color: var(--text-secondary);
           cursor: pointer;
           transition: var(--transition-fast);
-          background: rgba(30, 41, 78, 0.55);
+          background: rgba(30, 41, 78, 0.4);
       }
 
       .report-multiselect-options label:hover {
@@ -1315,8 +1318,8 @@
           width: 100%;
           display: none;
           flex-direction: column;
-          gap: 12px;
-          padding: 14px 18px;
+          gap: 14px;
+          padding: 16px 18px;
           border-radius: var(--radius-md);
           border: 1px solid var(--border-soft);
           background: var(--surface-base);
@@ -1330,7 +1333,7 @@
       .dashboard-day-mode {
           display: flex;
           flex-wrap: wrap;
-          gap: 14px;
+          gap: 12px;
       }
 
       .dashboard-day-mode label {
@@ -1348,28 +1351,30 @@
           accent-color: var(--primary);
       }
 
-      .dashboard-day-mode label:hover {
+      .dashboard-day-mode label:hover,
+      .dashboard-day-mode input[type="radio"]:checked + span {
           background: rgba(122, 141, 255, 0.14);
       }
 
-      .dashboard-day-picker {
+      .dashboard-day-range {
           display: none;
           flex-direction: column;
-          gap: 12px;
-      }
-
-      .dashboard-day-picker.active {
-          display: flex;
-      }
-
-      .dashboard-day-input {
-          display: flex;
-          flex-wrap: wrap;
           gap: 10px;
+      }
+
+      .dashboard-day-range.active {
+          display: flex;
+      }
+
+      .dashboard-day-range-fields {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 12px;
           align-items: center;
       }
 
-      .dashboard-day-input input[type="date"] {
+      .dashboard-day-range input[type="date"] {
+          width: 100%;
           padding: 10px 12px;
           border-radius: var(--radius-sm);
           border: 1px solid var(--border-soft);
@@ -1377,35 +1382,23 @@
           color: var(--text-primary);
       }
 
-      .dashboard-day-chips {
+      .dashboard-day-range-label {
           display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-      }
-
-      .dashboard-day-chip {
-          display: inline-flex;
-          align-items: center;
+          flex-direction: column;
           gap: 6px;
-          padding: 6px 10px;
-          border-radius: 999px;
-          background: rgba(96, 165, 250, 0.18);
-          color: #dbe8ff;
-          font-size: 0.85rem;
-      }
-
-      .dashboard-day-chip button {
-          border: none;
-          background: transparent;
-          color: inherit;
-          cursor: pointer;
-          font-size: 0.85rem;
-          padding: 0 2px;
-      }
-
-      .dashboard-day-empty {
+          font-size: 0.78rem;
           color: var(--text-muted);
-          font-size: 0.85rem;
+      }
+
+      .dashboard-day-range-label span {
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+      }
+
+      .dashboard-day-range-hint {
+          font-size: 0.82rem;
+          color: var(--text-muted);
       }
 
       table {
@@ -2165,23 +2158,25 @@
                         <div class="dashboard-day-mode">
                             <label>
                                 <input type="radio" name="dashboard-dia-modo" value="hoje" checked>
-                                Usar data atual do monitor
+                                <span>Usar data atual do monitor</span>
                             </label>
                             <label>
-                                <input type="radio" name="dashboard-dia-modo" value="multi">
-                                Selecionar dias específicos
+                                <input type="radio" name="dashboard-dia-modo" value="intervalo">
+                                <span>Selecionar intervalo de dias</span>
                             </label>
                         </div>
-                        <div class="dashboard-day-picker" id="dashboard-dia-picker">
-                            <div class="dashboard-day-input">
-                                <input type="date" id="dashboard-dia-input">
-                                <button type="button" class="btn btn-secondary" id="dashboard-dia-adicionar">
-                                    <i class="fas fa-plus"></i> Adicionar dia
-                                </button>
+                        <div class="dashboard-day-range" id="dashboard-dia-range">
+                            <div class="dashboard-day-range-fields">
+                                <label class="dashboard-day-range-label" for="dashboard-dia-inicio">
+                                    <span>Início</span>
+                                    <input type="date" id="dashboard-dia-inicio" aria-label="Data inicial do intervalo">
+                                </label>
+                                <label class="dashboard-day-range-label" for="dashboard-dia-fim">
+                                    <span>Fim</span>
+                                    <input type="date" id="dashboard-dia-fim" aria-label="Data final do intervalo">
+                                </label>
                             </div>
-                            <div class="dashboard-day-chips" id="dashboard-dia-chips">
-                                <span class="dashboard-day-empty">Nenhum dia selecionado.</span>
-                            </div>
+                            <span class="dashboard-day-range-hint">Escolha a data inicial e final para analisar o período.</span>
                         </div>
                     </div>
                     <div class="resumo-grid" id="dashboard-resumo">
@@ -2935,7 +2930,8 @@
             planejamentoTurno: 'manha',
             planejamentoLinhas: [],
             agendamentoEditarId: null,
-            dashboardDiasEspecificos: []
+            dashboardDiasEspecificos: [],
+            dashboardIntervaloDias: { inicio: '', fim: '' }
         };
 
         // Utilidades de normalização
@@ -6168,65 +6164,75 @@
             return `${dia}/${mes}`;
         }
 
+        
         function inicializarDashboardDiasEspecificos() {
             const periodoSelect = document.getElementById('dashboard-periodo');
             const container = document.getElementById('dashboard-dia-especifico-container');
-            const picker = document.getElementById('dashboard-dia-picker');
-            const input = document.getElementById('dashboard-dia-input');
-            const adicionarBtn = document.getElementById('dashboard-dia-adicionar');
-            const chips = document.getElementById('dashboard-dia-chips');
+            const intervaloWrapper = document.getElementById('dashboard-dia-range');
+            const inputInicio = document.getElementById('dashboard-dia-inicio');
+            const inputFim = document.getElementById('dashboard-dia-fim');
             const radios = document.querySelectorAll('input[name="dashboard-dia-modo"]');
 
-            if (!periodoSelect || !container || !picker || !chips) {
+            if (!periodoSelect || !container || !intervaloWrapper || !inputInicio || !inputFim) {
                 return;
             }
 
-            const formatarDia = iso => {
-                if (!iso) return '';
-                const partes = iso.split('-');
-                if (partes.length !== 3) return iso;
-                return `${partes[2]}/${partes[1]}/${partes[0]}`;
-            };
-
-            const atualizarChips = () => {
-                chips.innerHTML = '';
-                const dias = Array.isArray(estado.dashboardDiasEspecificos)
-                    ? [...estado.dashboardDiasEspecificos]
-                    : [];
-                if (!dias.length) {
-                    const vazio = document.createElement('span');
-                    vazio.className = 'dashboard-day-empty';
-                    vazio.textContent = 'Nenhum dia selecionado.';
-                    chips.appendChild(vazio);
-                    return;
+            if (!estado.dashboardIntervaloDias || typeof estado.dashboardIntervaloDias !== 'object') {
+                estado.dashboardIntervaloDias = { inicio: '', fim: '' };
+            }
+            if (!estado.dashboardIntervaloDias.inicio && !estado.dashboardIntervaloDias.fim) {
+                const hojeIso = new Date().toISOString().split('T')[0];
+                estado.dashboardIntervaloDias = { inicio: hojeIso, fim: hojeIso };
+            } else {
+                if (!estado.dashboardIntervaloDias.inicio) {
+                    estado.dashboardIntervaloDias.inicio = estado.dashboardIntervaloDias.fim || '';
                 }
-
-                dias.sort();
-                dias.forEach(dia => {
-                    const chip = document.createElement('div');
-                    chip.className = 'dashboard-day-chip';
-                    const texto = document.createElement('span');
-                    texto.textContent = formatarDia(dia);
-                    const remover = document.createElement('button');
-                    remover.type = 'button';
-                    remover.innerHTML = '&times;';
-                    remover.setAttribute('aria-label', `Remover dia ${formatarDia(dia)}`);
-                    remover.addEventListener('click', () => {
-                        estado.dashboardDiasEspecificos = estado.dashboardDiasEspecificos.filter(item => item !== dia);
-                        atualizarChips();
-                    });
-                    chip.appendChild(texto);
-                    chip.appendChild(remover);
-                    chips.appendChild(chip);
-                });
-            };
+                if (!estado.dashboardIntervaloDias.fim) {
+                    estado.dashboardIntervaloDias.fim = estado.dashboardIntervaloDias.inicio || '';
+                }
+            }
 
             const atualizarVisibilidade = () => {
                 const isDia = periodoSelect.value === 'dia';
                 container.classList.toggle('active', isDia);
                 const modoSelecionado = document.querySelector('input[name="dashboard-dia-modo"]:checked');
-                const modoMulti = isDia && modoSelecionado && modoSelecionado.value === 'multi';
-                picker.classList.toggle('active', modoMulti);
+                const modoIntervalo = isDia && modoSelecionado && modoSelecionado.value === 'intervalo';
+                intervaloWrapper.classList.toggle('active', modoIntervalo);
+            };
+
+            const sincronizarInputs = () => {
+                const dados = estado.dashboardIntervaloDias || {};
+                if (dados.inicio && inputInicio.value !== dados.inicio) {
+                    inputInicio.value = dados.inicio;
+                }
+                if (dados.fim && inputFim.value !== dados.fim) {
+                    inputFim.value = dados.fim;
+                }
+            };
+
+            const normalizarIntervalo = campoAlterado => {
+                const dados = estado.dashboardIntervaloDias || {};
+                const { inicio = '', fim = '' } = dados;
+                if (!inicio || !fim) {
+                    return;
+                }
+                if (inicio > fim) {
+                    if (campoAlterado === 'inicio') {
+                        estado.dashboardIntervaloDias.fim = inicio;
+                        inputFim.value = inicio;
+                    } else {
+                        estado.dashboardIntervaloDias.inicio = fim;
+                        inputInicio.value = fim;
+                    }
+                }
+            };
+
+            const atualizarEstado = (campo, valor) => {
+                if (!estado.dashboardIntervaloDias || typeof estado.dashboardIntervaloDias !== 'object') {
+                    estado.dashboardIntervaloDias = { inicio: '', fim: '' };
+                }
+                estado.dashboardIntervaloDias[campo] = valor || '';
+                normalizarIntervalo(campo);
             };
 
             if (periodoSelect.dataset.dashboardDiasListeners !== 'true') {
@@ -6241,39 +6247,22 @@
                 }
             });
 
-            const adicionarDia = () => {
-                if (!input || !input.value) {
-                    alert('Selecione um dia para adicionar.');
-                    return;
-                }
-                if (!Array.isArray(estado.dashboardDiasEspecificos)) {
-                    estado.dashboardDiasEspecificos = [];
-                }
-                if (!estado.dashboardDiasEspecificos.includes(input.value)) {
-                    estado.dashboardDiasEspecificos.push(input.value);
-                    estado.dashboardDiasEspecificos.sort();
-                    atualizarChips();
-                }
-                input.value = '';
-            };
-
-            if (adicionarBtn && adicionarBtn.dataset.dashboardDiasListeners !== 'true') {
-                adicionarBtn.addEventListener('click', adicionarDia);
-                adicionarBtn.dataset.dashboardDiasListeners = 'true';
-            }
-
-            if (input && input.dataset.dashboardDiasListeners !== 'true') {
-                input.addEventListener('keydown', event => {
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        adicionarDia();
-                    }
+            if (inputInicio.dataset.dashboardDiasListeners !== 'true') {
+                inputInicio.addEventListener('change', () => {
+                    atualizarEstado('inicio', inputInicio.value);
                 });
-                input.dataset.dashboardDiasListeners = 'true';
+                inputInicio.dataset.dashboardDiasListeners = 'true';
             }
 
+            if (inputFim.dataset.dashboardDiasListeners !== 'true') {
+                inputFim.addEventListener('change', () => {
+                    atualizarEstado('fim', inputFim.value);
+                });
+                inputFim.dataset.dashboardDiasListeners = 'true';
+            }
+
+            sincronizarInputs();
             atualizarVisibilidade();
-            atualizarChips();
         }
 
         function carregarDashboard() {
@@ -6288,17 +6277,25 @@
                 status: Array.isArray(estado.filtros.status)
                     ? estado.filtros.status.map(normalizarStatus)
                     : [],
-                diasEspecificos: []
+                diasEspecificos: [],
+                intervaloDias: null
             };
 
             if (periodo === 'dia') {
                 const modoSelecionado = document.querySelector('input[name="dashboard-dia-modo"]:checked');
-                if (modoSelecionado && modoSelecionado.value === 'multi') {
-                    if (!estado.dashboardDiasEspecificos || estado.dashboardDiasEspecificos.length === 0) {
-                        alert('Selecione pelo menos um dia específico para gerar o dashboard.');
+                if (modoSelecionado && modoSelecionado.value === 'intervalo') {
+                    const intervaloAtual = estado.dashboardIntervaloDias || {};
+                    const inicio = intervaloAtual.inicio || '';
+                    const fim = intervaloAtual.fim || '';
+                    if (!inicio || !fim) {
+                        alert('Selecione a data inicial e final para gerar o dashboard.');
                         return;
                     }
-                    filtrosDashboard.diasEspecificos = [...estado.dashboardDiasEspecificos];
+                    if (inicio > fim) {
+                        alert('A data inicial não pode ser maior que a data final.');
+                        return;
+                    }
+                    filtrosDashboard.intervaloDias = { inicio, fim };
                 } else {
                     const dataAtualIso = estado.dataAtual instanceof Date
                         ? estado.dataAtual.toISOString().split('T')[0]
