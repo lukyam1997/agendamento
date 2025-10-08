@@ -2418,6 +2418,10 @@
                         <select id="editar-categoria" required></select>
                     </div>
                     <div class="form-group">
+                        <label for="editar-sala"><i class="fas fa-door-open"></i> Sala</label>
+                        <select id="editar-sala" required></select>
+                    </div>
+                    <div class="form-group">
                         <label for="editar-status"><i class="fas fa-circle"></i> Status</label>
                         <select id="editar-status" required>
                             <option value="ocupado">Ocupado</option>
@@ -4646,6 +4650,83 @@
             return null;
         }
 
+        function obterDatasDoAgendamento(agendamento) {
+            if (!agendamento) return [];
+
+            if (Array.isArray(agendamento.datas) && agendamento.datas.length) {
+                return agendamento.datas.map(data => {
+                    if (typeof data === 'string') return data;
+                    const parsed = new Date(data);
+                    return isNaN(parsed.getTime()) ? null : parsed.toISOString().split('T')[0];
+                }).filter(Boolean);
+            }
+
+            const datas = [];
+            const inicio = agendamento.dataInicio ? new Date(`${agendamento.dataInicio}T00:00:00`) : null;
+            const fim = agendamento.dataFim ? new Date(`${agendamento.dataFim}T00:00:00`) : inicio;
+
+            if (inicio && !isNaN(inicio.getTime()) && fim && !isNaN(fim.getTime())) {
+                const cursor = new Date(inicio);
+                while (cursor.getTime() <= fim.getTime()) {
+                    datas.push(cursor.toISOString().split('T')[0]);
+                    cursor.setDate(cursor.getDate() + 1);
+                }
+            }
+
+            if (!datas.length && agendamento.dataInicio) {
+                datas.push(agendamento.dataInicio);
+            }
+
+            if (!datas.length && estado.dataAtual instanceof Date) {
+                datas.push(estado.dataAtual.toISOString().split('T')[0]);
+            }
+
+            return datas;
+        }
+
+        function obterSalasLivresParaPeriodo(datas, horaInicio, horaFim, turno, ignorarId = null, salaAtual = null) {
+            if (!Array.isArray(datas) || !datas.length) return [];
+
+            const salasOrdenadas = (Array.isArray(estado.salas) ? [...estado.salas] : [])
+                .sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+            const salaAtualStr = salaAtual != null ? String(salaAtual) : null;
+            const disponiveis = [];
+
+            salasOrdenadas.forEach(sala => {
+                const salaNumero = String(sala.numero);
+                if (salaAtualStr && salaNumero === salaAtualStr) {
+                    return;
+                }
+
+                const statusSala = normalizarStatus(sala.statusNormalizado || sala.statusGeral || sala.status);
+                if (statusBloqueiaAgendamento(statusSala)) {
+                    return;
+                }
+
+                let salaDisponivel = true;
+                for (const data of datas) {
+                    const conflito = verificarConflitoHorario(
+                        salaNumero,
+                        data,
+                        horaInicio,
+                        horaFim,
+                        turno,
+                        ignorarId
+                    );
+                    if (conflito) {
+                        salaDisponivel = false;
+                        break;
+                    }
+                }
+
+                if (salaDisponivel) {
+                    disponiveis.push(salaNumero);
+                }
+            });
+
+            return disponiveis;
+        }
+
         function mostrarAlerta(mensagem) {
             const alerta = document.getElementById('alert-conflito');
             const mensagemSpan = document.getElementById('alert-message');
@@ -4969,25 +5050,59 @@
                 .removerAgendamento(agendamentoId);
         }
 
-        function preencherOpcoesEditar() {
+        function preencherOpcoesEditar(agendamento = null) {
             const editarEspecialidade = document.getElementById('editar-especialidade');
-            const editarCategoria = document.getElementById('editar-categoria');
-            if (editarEspecialidade && editarEspecialidade.options.length <= 1) {
+            if (editarEspecialidade) {
                 editarEspecialidade.innerHTML = '<option value="">Selecione</option>';
-                estado.dadosMestres.especialidades.forEach(esp => {
+                (estado.dadosMestres.especialidades || []).forEach(esp => {
                     const option = document.createElement('option');
                     option.value = esp;
                     option.textContent = esp;
                     editarEspecialidade.appendChild(option);
                 });
             }
-            if (editarCategoria && editarCategoria.options.length <= 1) {
+
+            const editarCategoria = document.getElementById('editar-categoria');
+            if (editarCategoria) {
                 editarCategoria.innerHTML = '<option value="">Selecione</option>';
-                estado.dadosMestres.categorias.forEach(cat => {
+                (estado.dadosMestres.categorias || []).forEach(cat => {
                     const option = document.createElement('option');
                     option.value = cat;
                     option.textContent = cat;
                     editarCategoria.appendChild(option);
+                });
+            }
+
+            const editarSala = document.getElementById('editar-sala');
+            if (editarSala) {
+                const statusLabelMap = {
+                    livre: 'Livre',
+                    ocupado: 'Ocupada',
+                    reservado: 'Reservada',
+                    bloqueado: 'Bloqueada',
+                    manutencao: 'Em manutenção'
+                };
+
+                editarSala.innerHTML = '<option value="">Selecione</option>';
+                const salasOrdenadas = (Array.isArray(estado.salas) ? [...estado.salas] : [])
+                    .sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+                salasOrdenadas.forEach(sala => {
+                    const option = document.createElement('option');
+                    option.value = sala.numero;
+
+                    const statusSala = normalizarStatus(sala.statusNormalizado || sala.statusGeral || sala.status);
+                    const statusDescricao = statusLabelMap[statusSala] || statusSala;
+                    const descricaoStatus = statusSala && statusSala !== 'livre' ? ` (${statusDescricao})` : '';
+                    option.textContent = `Sala ${sala.numero} - Ilha ${sala.ilha}${descricaoStatus}`;
+
+                    if (
+                        statusBloqueiaAgendamento(statusSala) &&
+                        (!agendamento || String(agendamento.sala) !== String(sala.numero))
+                    ) {
+                        option.disabled = true;
+                    }
+
+                    editarSala.appendChild(option);
                 });
             }
         }
@@ -4999,13 +5114,14 @@
                 return;
             }
 
-            preencherOpcoesEditar();
+            preencherOpcoesEditar(ag);
 
             estado.agendamentoEditarId = String(agendamentoId);
 
             document.getElementById('editar-profissional').value = ag.profissional || '';
             const editarEspecialidade = document.getElementById('editar-especialidade');
             const editarCategoria = document.getElementById('editar-categoria');
+            const editarSala = document.getElementById('editar-sala');
             if (ag.especialidade && editarEspecialidade && !Array.from(editarEspecialidade.options).some(opt => opt.value === ag.especialidade)) {
                 const option = document.createElement('option');
                 option.value = ag.especialidade;
@@ -5018,8 +5134,17 @@
                 option.textContent = ag.categoria;
                 editarCategoria.appendChild(option);
             }
+            if (ag.sala && editarSala && !Array.from(editarSala.options).some(opt => opt.value === String(ag.sala))) {
+                const option = document.createElement('option');
+                option.value = ag.sala;
+                option.textContent = `Sala ${ag.sala}`;
+                editarSala.appendChild(option);
+            }
             document.getElementById('editar-especialidade').value = ag.especialidade || '';
             document.getElementById('editar-categoria').value = ag.categoria || '';
+            if (editarSala) {
+                editarSala.value = ag.sala || '';
+            }
             document.getElementById('editar-status').value = normalizarStatus(ag.status);
             document.getElementById('editar-turno').value = ag.turnoNormalizado || normalizarTurno(ag.turno) || 'manha';
             document.getElementById('editar-hora-inicio').value = ag.horaInicio || '';
@@ -5038,6 +5163,7 @@
                 return;
             }
 
+            const sala = document.getElementById('editar-sala').value;
             const profissional = document.getElementById('editar-profissional').value.trim();
             const especialidade = document.getElementById('editar-especialidade').value;
             const categoria = document.getElementById('editar-categoria').value;
@@ -5047,12 +5173,68 @@
             const horaFim = document.getElementById('editar-hora-fim').value;
             const observacoes = document.getElementById('editar-observacoes').value;
 
-            if (!profissional || !especialidade || !categoria || !status || !turno || !horaInicio || !horaFim) {
+            if (!sala || !profissional || !especialidade || !categoria || !status || !turno || !horaInicio || !horaFim) {
                 mostrarEditarAlerta('Preencha todos os campos obrigatórios.');
                 return;
             }
 
+            const agOriginal = estado.agendamentos.find(ag => String(ag.id) === String(estado.agendamentoEditarId));
+            if (!agOriginal) {
+                mostrarEditarAlerta('Não foi possível localizar o agendamento original para validação. Atualize a página e tente novamente.');
+                return;
+            }
+
+            const salaInfo = estado.salas.find(salaItem => String(salaItem.numero) === String(sala));
+            if (!salaInfo) {
+                mostrarEditarAlerta('Sala selecionada não encontrada. Atualize os dados e tente novamente.');
+                return;
+            }
+
+            if (statusBloqueiaAgendamento(status)) {
+                const datasVerificacao = obterDatasDoAgendamento(agOriginal);
+                let conflitoEncontrado = null;
+
+                for (const dataVerificar of datasVerificacao) {
+                    const conflito = verificarConflitoHorario(
+                        sala,
+                        dataVerificar,
+                        horaInicio,
+                        horaFim,
+                        turno,
+                        estado.agendamentoEditarId
+                    );
+                    if (conflito) {
+                        conflitoEncontrado = { data: dataVerificar, detalhes: conflito };
+                        break;
+                    }
+                }
+
+                if (conflitoEncontrado) {
+                    const salasDisponiveis = obterSalasLivresParaPeriodo(
+                        datasVerificacao,
+                        horaInicio,
+                        horaFim,
+                        turno,
+                        estado.agendamentoEditarId,
+                        sala
+                    );
+
+                    const salasTexto = salasDisponiveis.length
+                        ? salasDisponiveis.map(numero => `Sala ${numero}`).join(', ')
+                        : 'Nenhuma sala disponível para este período.';
+
+                    const mensagemConflito = salasDisponiveis.length
+                        ? `Conflito de horário na sala ${sala}. Já existe agendamento de ${conflitoEncontrado.detalhes.profissional} das ${conflitoEncontrado.detalhes.horaInicio} às ${conflitoEncontrado.detalhes.horaFim}. Salas livres neste período: ${salasTexto}. Selecione uma delas no campo de sala.`
+                        : `Conflito de horário na sala ${sala}. Já existe agendamento de ${conflitoEncontrado.detalhes.profissional} das ${conflitoEncontrado.detalhes.horaInicio} às ${conflitoEncontrado.detalhes.horaFim}. Nenhuma sala livre foi encontrada para este período. Ajuste o horário ou o turno.`;
+
+                    mostrarEditarAlerta(mensagemConflito);
+                    return;
+                }
+            }
+
             const payload = {
+                sala,
+                ilha: salaInfo.ilha,
                 profissional,
                 especialidade,
                 categoria,
