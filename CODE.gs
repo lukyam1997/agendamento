@@ -53,6 +53,8 @@ const USUARIOS_COLUMNS = {
 
 // Cache para melhor performance (cache por 5 minutos)
 const CACHE_DURATION = 300;
+const CACHE_KEYS_PROPERTY = 'CACHE_KEYS_LIST';
+const CACHE_KEYS_MAX = 200;
 
 // Total estimado de salas para cálculos de ocupação
 const TOTAL_SALAS_ESTIMADO = 56;
@@ -228,6 +230,7 @@ function getDadosCompletos(data) {
     
     // Armazenar em cache
     cache.put(cacheKey, JSON.stringify(resultado), CACHE_DURATION);
+    registrarCacheKey(cacheKey);
     console.log(`Dados carregados com sucesso: ${salas.length} salas, ${agendamentos.length} agendamentos`);
     
     return resultado;
@@ -962,17 +965,69 @@ function getSystemHealth() {
 /**
  * Limpa o cache do sistema
  */
+function registrarCacheKey(cacheKey) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const stored = props.getProperty(CACHE_KEYS_PROPERTY);
+    let keys = [];
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          keys = parsed;
+        } else if (parsed) {
+          keys = [parsed];
+        }
+      } catch (error) {
+        keys = stored.split(',').map(item => item.trim()).filter(Boolean);
+      }
+    }
+
+    if (!keys.includes(cacheKey)) {
+      keys.push(cacheKey);
+      if (keys.length > CACHE_KEYS_MAX) {
+        keys = keys.slice(-CACHE_KEYS_MAX);
+      }
+      props.setProperty(CACHE_KEYS_PROPERTY, JSON.stringify(keys));
+    }
+  } catch (error) {
+    console.warn('Não foi possível registrar a chave de cache:', cacheKey, error);
+  }
+}
+
 function limparCache() {
   try {
     const cache = CacheService.getScriptCache();
-    const keys = cache.getKeys();
-    keys.forEach(key => {
-      if (key.startsWith('dados_')) {
-        cache.remove(key);
+    const props = PropertiesService.getScriptProperties();
+    const stored = props.getProperty(CACHE_KEYS_PROPERTY);
+
+    if (stored) {
+      let keys = [];
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          keys = parsed;
+        } else if (parsed) {
+          keys = [parsed];
+        }
+      } catch (error) {
+        keys = stored.split(',').map(item => item.trim()).filter(Boolean);
       }
-    });
+
+      if (keys.length) {
+        keys.forEach(key => {
+          if (key && key.startsWith('dados_')) {
+            cache.remove(key);
+          }
+        });
+      }
+    }
+
+    props.deleteProperty(CACHE_KEYS_PROPERTY);
     return { success: true, message: 'Cache limpo com sucesso!' };
   } catch (error) {
+    console.error('Erro ao limpar cache:', error);
     return { success: false, message: 'Erro ao limpar cache: ' + error.toString() };
   }
 }
