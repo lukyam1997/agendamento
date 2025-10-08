@@ -672,6 +672,8 @@
           width: 100%;
           overflow-x: auto;
           padding-bottom: 8px;
+          height: 75vh;
+          max-height: 75vh;
       }
 
       .monitor-scroll::-webkit-scrollbar {
@@ -689,8 +691,9 @@
           justify-content: space-between;
           align-items: stretch;
           min-height: 65vh;
-          height: 75vh;
+          height: 100%;
           width: 100%;
+          overflow: hidden;
       }
 
       .monitor > .bloco {
@@ -698,6 +701,7 @@
           display: flex;
           flex-direction: column;
           min-width: 0;
+          height: 100%;
       }
 
       .monitor > .planta-container {
@@ -711,9 +715,15 @@
       }
 
       @media (max-width: 1100px) {
+          .monitor-scroll {
+              height: auto;
+              max-height: none;
+          }
+
           .monitor {
               flex-wrap: wrap;
               min-height: auto;
+              height: auto;
           }
 
           .monitor > .bloco {
@@ -783,6 +793,7 @@
           padding: 18px;
           min-width: 280px;
           min-height: 0;
+          height: 100%;
       }
 
       .bloco h3 {
@@ -792,16 +803,18 @@
           display: flex;
           align-items: center;
           gap: 8px;
+          flex-shrink: 0;
       }
 
       .salas-container {
           display: flex;
           flex-direction: column;
           gap: 12px;
-          flex: 1;
+          flex: 1 1 auto;
           overflow-y: auto;
           padding-right: 8px;
           min-height: 0;
+          max-height: 100%;
       }
 
       .sala {
@@ -813,6 +826,7 @@
           transition: transform var(--transition-fast), box-shadow var(--transition-fast);
           cursor: pointer;
           overflow: hidden;
+          flex: 0 0 auto;
       }
 
       .sala:hover {
