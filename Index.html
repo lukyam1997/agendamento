@@ -385,6 +385,30 @@
           box-shadow: 0 8px 18px rgba(7, 12, 26, 0.35);
       }
 
+      body.light-theme .btn-secondary {
+          background: rgba(79, 70, 229, 0.12);
+          color: var(--primary-strong);
+          border-color: rgba(79, 70, 229, 0.28);
+      }
+
+      body.light-theme .btn-secondary:hover,
+      body.light-theme .btn-secondary:focus-visible {
+          background: var(--primary);
+          color: #fff;
+          border-color: var(--primary);
+      }
+
+      body.light-theme .icon-button {
+          background: rgba(79, 70, 229, 0.08);
+          color: var(--primary-strong);
+      }
+
+      body.light-theme .icon-button:hover,
+      body.light-theme .icon-button:focus-visible {
+          background: var(--primary);
+          color: #fff;
+      }
+
       .main-nav {
           background: var(--surface-base);
           border-radius: var(--radius-md);
@@ -671,6 +695,24 @@
           padding: 8px 10px;
       }
 
+      .planejamento-planejada {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+      }
+
+      .planejamento-planejada-input {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+      }
+
+      .planejamento-status-inline {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+      }
+
       .planejamento-status {
           display: inline-flex;
           align-items: center;
@@ -887,13 +929,14 @@
 
       .planta-container {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-          gap: 12px;
-          padding: 16px;
+          grid-template-columns: repeat(22, minmax(90px, 1fr));
+          gap: 10px;
+          padding: 18px;
           background: var(--surface-elevated);
-          border-radius: var(--radius-sm);
+          border-radius: var(--radius-lg);
           border: 1px solid var(--border-soft);
-          overflow-x: auto;
+          box-shadow: var(--shadow-soft);
+          overflow: auto;
       }
 
       .planta-container::-webkit-scrollbar {
@@ -906,35 +949,124 @@
       }
 
       .planta-cell {
-          min-height: 70px;
+          min-height: 120px;
           display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: var(--radius-sm);
-          border: 1px dashed var(--border-soft);
-          color: var(--text-muted);
-          font-size: 0.85rem;
+          align-items: stretch;
+          justify-content: stretch;
       }
 
       .planta-cell.empty {
-          border: none;
-          background: transparent;
-      }
-
-      .planta-cell .mini-sala {
-          width: 100%;
-          height: 100%;
-          border-radius: inherit;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          color: #fff;
-          padding: 8px;
+          opacity: 0;
       }
 
       .planta-cell.filtered-out {
-          opacity: 0.25;
+          opacity: 0.18;
+          pointer-events: none;
+      }
+
+      .planta-card {
+          width: 100%;
+          border-radius: var(--radius-md);
+          border: 1px solid rgba(122, 141, 255, 0.18);
+          padding: 14px 16px;
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          background: linear-gradient(145deg, rgba(122, 141, 255, 0.14), rgba(15, 23, 42, 0.75));
+          box-shadow: 0 10px 28px rgba(7, 12, 26, 0.28);
+          cursor: pointer;
+          transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+          --planta-accent: var(--primary);
+      }
+
+      .planta-card:hover,
+      .planta-card:focus-visible {
+          transform: translateY(-4px);
+          box-shadow: 0 16px 36px rgba(7, 12, 26, 0.38);
+      }
+
+      .planta-card::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 45%);
+          pointer-events: none;
+      }
+
+      .planta-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          border: 1px solid rgba(255, 255, 255, 0.04);
+          pointer-events: none;
+      }
+
+      .planta-card .planta-numero {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #fff;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+      }
+
+      .planta-card .planta-numero span {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.12);
+          font-size: 0.8rem;
+          font-weight: 600;
+      }
+
+      .planta-card .planta-status {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.78rem;
+          font-weight: 600;
+          background: rgba(255, 255, 255, 0.14);
+          color: #fff;
+          border-radius: 999px;
+          padding: 4px 10px;
+          align-self: flex-start;
+      }
+
+      .planta-card .planta-status i {
+          font-size: 0.7rem;
+      }
+
+      .planta-card .planta-info {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 6px;
+          font-size: 0.82rem;
+          color: rgba(226, 232, 240, 0.9);
+      }
+
+      .planta-card .planta-info span {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+      }
+
+      .planta-card .planta-profissionais {
+          margin-top: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          font-size: 0.8rem;
+          color: rgba(226, 232, 240, 0.85);
+      }
+
+      .planta-card .planta-profissionais strong {
+          font-weight: 600;
       }
 
       .bloco {
@@ -1102,6 +1234,50 @@
       .color-bloqueado { background: rgba(248, 113, 113, 0.7); }
       .color-reservado { background: rgba(250, 204, 21, 0.7); }
 
+      .planta-card.color-livre {
+          --planta-accent: #4ade80;
+          border-color: rgba(74, 222, 128, 0.35);
+          background: linear-gradient(150deg, rgba(74, 222, 128, 0.22), rgba(15, 23, 42, 0.86));
+      }
+
+      .planta-card.color-ocupado {
+          --planta-accent: #7a8dff;
+          border-color: rgba(122, 141, 255, 0.38);
+          background: linear-gradient(150deg, rgba(122, 141, 255, 0.24), rgba(15, 23, 42, 0.86));
+      }
+
+      .planta-card.color-bloqueado {
+          --planta-accent: #f87171;
+          border-color: rgba(248, 113, 113, 0.42);
+          background: linear-gradient(150deg, rgba(248, 113, 113, 0.22), rgba(15, 23, 42, 0.86));
+      }
+
+      .planta-card.color-reservado {
+          --planta-accent: #fbbf24;
+          border-color: rgba(250, 191, 36, 0.32);
+          background: linear-gradient(150deg, rgba(250, 191, 36, 0.2), rgba(15, 23, 42, 0.86));
+      }
+
+      .planta-card.color-livre .planta-status {
+          background: rgba(74, 222, 128, 0.2);
+          color: #bbf7d0;
+      }
+
+      .planta-card.color-ocupado .planta-status {
+          background: rgba(122, 141, 255, 0.2);
+          color: #d8dcff;
+      }
+
+      .planta-card.color-bloqueado .planta-status {
+          background: rgba(248, 113, 113, 0.2);
+          color: #fecaca;
+      }
+
+      .planta-card.color-reservado .planta-status {
+          background: rgba(250, 191, 36, 0.2);
+          color: #fef08a;
+      }
+
       .indicador-card {
           background: var(--surface-elevated);
           border-radius: var(--radius-sm);
@@ -1189,6 +1365,32 @@
       }
 
       .report-filter-field input::placeholder {
+          color: var(--text-muted);
+      }
+
+      .filter-panel {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          margin-bottom: 20px;
+      }
+
+      .filter-panel-group {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 12px;
+      }
+
+      .filter-panel-title {
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          margin: 0;
+      }
+
+      .filter-panel-description {
+          margin: 0;
+          font-size: 0.85rem;
           color: var(--text-muted);
       }
 
@@ -1310,6 +1512,45 @@
           text-align: center;
       }
 
+      body.light-theme .report-multiselect-btn {
+          background: rgba(79, 70, 229, 0.08);
+          border-color: rgba(79, 70, 229, 0.22);
+          color: var(--primary-strong);
+      }
+
+      body.light-theme .report-multiselect-btn.open {
+          background: rgba(79, 70, 229, 0.16);
+      }
+
+      body.light-theme .report-multiselect-panel {
+          background: rgba(255, 255, 255, 0.98);
+          border-color: rgba(79, 70, 229, 0.2);
+          box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
+      }
+
+      body.light-theme .report-multiselect-options label {
+          background: rgba(79, 70, 229, 0.08);
+          color: var(--text-secondary);
+      }
+
+      body.light-theme .report-multiselect-options label:hover {
+          background: rgba(79, 70, 229, 0.18);
+          color: var(--text-primary);
+      }
+
+      body.light-theme .report-multiselect-actions {
+          border-bottom-color: rgba(79, 70, 229, 0.12);
+      }
+
+      body.light-theme .report-multiselect-actions button {
+          background: rgba(79, 70, 229, 0.12);
+          color: var(--primary-strong);
+      }
+
+      body.light-theme .report-multiselect-actions button:hover {
+          background: rgba(79, 70, 229, 0.18);
+      }
+
       .dashboard-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1321,7 +1562,7 @@
           background: var(--surface-elevated);
           border-radius: var(--radius-md);
           border: 1px solid var(--border-soft);
-          padding: 18px;
+          padding: 16px 16px 18px;
           box-shadow: var(--shadow-soft);
           display: flex;
           flex-direction: column;
@@ -1331,10 +1572,56 @@
           position: relative;
       }
 
-      .chart-container h3 {
+      .chart-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+      }
+
+      .chart-header h3 {
           margin: 0;
           font-size: 1rem;
           color: var(--text-secondary);
+          font-weight: 600;
+      }
+
+      .chart-actions {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+      }
+
+      .chart-action-btn {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          border: 1px solid var(--border-soft);
+          background: rgba(122, 141, 255, 0.15);
+          color: var(--primary);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: var(--transition-fast);
+      }
+
+      .chart-action-btn:hover,
+      .chart-action-btn:focus-visible {
+          border-color: var(--primary);
+          background: var(--primary);
+          color: #fff;
+      }
+
+      body.light-theme .chart-action-btn {
+          background: rgba(79, 70, 229, 0.12);
+          color: var(--primary-strong);
+          border-color: rgba(79, 70, 229, 0.24);
+      }
+
+      body.light-theme .chart-action-btn:hover,
+      body.light-theme .chart-action-btn:focus-visible {
+          color: #fff;
       }
 
       .chart-container canvas {
@@ -1342,6 +1629,77 @@
           flex: 1 1 auto;
           min-height: 0;
           height: 100% !important;
+      }
+
+      .chart-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(7, 12, 26, 0.72);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 24px;
+          z-index: 1200;
+          backdrop-filter: blur(6px);
+      }
+
+      body.light-theme .chart-overlay {
+          background: rgba(15, 23, 42, 0.45);
+      }
+
+      .chart-overlay.active {
+          display: flex;
+      }
+
+      .chart-overlay-content {
+          width: min(960px, 100%);
+          background: var(--surface-base);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--border-strong);
+          box-shadow: var(--shadow-strong);
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+      }
+
+      .chart-overlay-header {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          align-items: center;
+      }
+
+      .chart-overlay-header h3 {
+          margin: 0;
+          font-size: 1.25rem;
+          color: var(--text-primary);
+      }
+
+      .chart-overlay-header button {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          border: 1px solid var(--border-soft);
+          background: rgba(122, 141, 255, 0.1);
+          color: var(--primary);
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: var(--transition-fast);
+      }
+
+      .chart-overlay-header button:hover,
+      .chart-overlay-header button:focus-visible {
+          border-color: var(--primary);
+          background: var(--primary);
+          color: #fff;
+      }
+
+      .chart-overlay canvas {
+          width: 100%;
+          max-height: 520px;
       }
 
       @media (max-width: 768px) {
@@ -1361,6 +1719,425 @@
           padding: 18px;
           box-shadow: var(--shadow-soft);
           margin-bottom: 18px;
+      }
+
+      .monthly-summary {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 16px;
+      }
+
+      .monthly-summary-info {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          font-weight: 600;
+          color: var(--text-secondary);
+      }
+
+      .monthly-summary-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+      }
+
+      .monthly-summary-message {
+          color: var(--text-muted);
+          font-size: 0.9rem;
+      }
+
+      .status-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          font-size: 0.78rem;
+          font-weight: 600;
+          background: rgba(122, 141, 255, 0.18);
+          color: var(--text-secondary);
+      }
+
+      .status-chip.status-ocupado {
+          background: rgba(248, 113, 113, 0.2);
+          color: #fecaca;
+      }
+
+      .status-chip.status-reservado {
+          background: rgba(251, 191, 36, 0.22);
+          color: #fcd34d;
+      }
+
+      .status-chip.status-bloqueado,
+      .status-chip.status-manutencao {
+          background: rgba(96, 165, 250, 0.18);
+          color: #bfdbfe;
+      }
+
+      .status-chip.status-livre {
+          background: rgba(74, 222, 128, 0.22);
+          color: #bbf7d0;
+      }
+
+      .monthly-day-cell,
+      .monthly-events-cell {
+          vertical-align: top;
+          padding: 16px;
+          border-top: 1px solid var(--border-soft);
+      }
+
+      .monthly-day-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 10px;
+      }
+
+      .monthly-day-date {
+          font-size: 1.4rem;
+          font-weight: 700;
+          color: var(--text-primary);
+      }
+
+      .monthly-day-meta {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 4px;
+          text-align: right;
+      }
+
+      .monthly-day-weekday {
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          text-transform: capitalize;
+      }
+
+      .monthly-day-total {
+          font-size: 0.82rem;
+          color: var(--text-muted);
+      }
+
+      .monthly-status-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+      }
+
+      .monthly-events {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+      }
+
+      .monthly-event {
+          background: rgba(122, 141, 255, 0.12);
+          border: 1px solid var(--border-soft);
+          border-radius: var(--radius-md);
+          padding: 12px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+      }
+
+      .monthly-event.status-ocupado {
+          border-color: rgba(248, 113, 113, 0.45);
+          background: rgba(248, 113, 113, 0.12);
+      }
+
+      .monthly-event.status-reservado {
+          border-color: rgba(251, 191, 36, 0.45);
+          background: rgba(251, 191, 36, 0.14);
+      }
+
+      .monthly-event.status-bloqueado,
+      .monthly-event.status-manutencao {
+          border-color: rgba(96, 165, 250, 0.35);
+          background: rgba(96, 165, 250, 0.12);
+      }
+
+      .monthly-event.status-livre {
+          border-color: rgba(74, 222, 128, 0.35);
+          background: rgba(74, 222, 128, 0.12);
+      }
+
+      .monthly-event-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+      }
+
+      .monthly-event-time {
+          font-weight: 600;
+          color: var(--text-primary);
+      }
+
+      .monthly-event-status {
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 4px 10px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.12);
+          color: var(--text-secondary);
+      }
+
+      .monthly-event-body {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+      }
+
+      .monthly-event-main {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+      }
+
+      .monthly-event-profissional {
+          font-size: 1.05rem;
+          color: var(--text-primary);
+      }
+
+      .monthly-event-especialidade {
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+      }
+
+      .monthly-event-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+      }
+
+      .monthly-event-tag {
+          font-size: 0.75rem;
+          padding: 4px 8px;
+          background: rgba(15, 23, 42, 0.2);
+          color: var(--text-secondary);
+          border-radius: var(--radius-sm);
+      }
+
+      .monthly-event-notes {
+          margin: 0;
+          font-size: 0.85rem;
+          color: var(--text-muted);
+      }
+
+      .monthly-event-empty {
+          font-size: 0.9rem;
+          color: var(--text-muted);
+          padding: 12px;
+          border: 1px dashed var(--border-soft);
+          border-radius: var(--radius-sm);
+          text-align: center;
+      }
+
+      .monthly-day-row:nth-child(odd) {
+          background: rgba(15, 23, 42, 0.18);
+      }
+
+      .monthly-day-empty .monthly-day-cell,
+      .monthly-day-empty .monthly-events-cell {
+          opacity: 0.85;
+      }
+
+      body.light-theme .monthly-table,
+      body.light-theme .table-card {
+          background: #ffffff;
+          border-color: rgba(79, 70, 229, 0.16);
+          box-shadow: 0 18px 32px rgba(15, 23, 42, 0.12);
+      }
+
+      body.light-theme .status-chip {
+          background: rgba(79, 70, 229, 0.12);
+          color: var(--primary-strong);
+      }
+
+      body.light-theme .status-chip.status-ocupado {
+          background: rgba(248, 113, 113, 0.18);
+          color: #b91c1c;
+      }
+
+      body.light-theme .status-chip.status-reservado {
+          background: rgba(251, 191, 36, 0.18);
+          color: #b45309;
+      }
+
+      body.light-theme .status-chip.status-bloqueado,
+      body.light-theme .status-chip.status-manutencao {
+          background: rgba(59, 130, 246, 0.18);
+          color: #1d4ed8;
+      }
+
+      body.light-theme .status-chip.status-livre {
+          background: rgba(16, 185, 129, 0.18);
+          color: #047857;
+      }
+
+      body.light-theme .monthly-event {
+          background: rgba(79, 70, 229, 0.08);
+          border-color: rgba(79, 70, 229, 0.18);
+      }
+
+      body.light-theme .monthly-event.status-ocupado {
+          background: rgba(248, 113, 113, 0.12);
+          border-color: rgba(248, 113, 113, 0.28);
+      }
+
+      body.light-theme .monthly-event.status-reservado {
+          background: rgba(251, 191, 36, 0.12);
+          border-color: rgba(251, 191, 36, 0.28);
+      }
+
+      body.light-theme .monthly-event.status-bloqueado,
+      body.light-theme .monthly-event.status-manutencao {
+          background: rgba(59, 130, 246, 0.12);
+          border-color: rgba(59, 130, 246, 0.24);
+      }
+
+      body.light-theme .monthly-event.status-livre {
+          background: rgba(16, 185, 129, 0.12);
+          border-color: rgba(16, 185, 129, 0.24);
+      }
+
+      body.light-theme .monthly-event-status {
+          background: rgba(79, 70, 229, 0.16);
+          color: var(--primary-strong);
+      }
+
+      body.light-theme .monthly-event-tag {
+          background: rgba(79, 70, 229, 0.12);
+          color: var(--primary-strong);
+      }
+
+      .logs-table-wrapper {
+          background: var(--surface-elevated);
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-soft);
+          box-shadow: var(--shadow-soft);
+          overflow: hidden;
+      }
+
+      .log-tools {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 16px;
+          align-items: center;
+      }
+
+      .log-search {
+          flex: 1 1 260px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          background: var(--surface-elevated);
+          border: 1px solid var(--border-soft);
+          border-radius: var(--radius-sm);
+          padding: 10px 12px;
+      }
+
+      .log-search input {
+          flex: 1;
+          border: none;
+          background: transparent;
+          color: var(--text-primary);
+          font-size: 0.9rem;
+      }
+
+      .log-search input::placeholder {
+          color: var(--text-muted);
+      }
+
+      .logs-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 0.92rem;
+      }
+
+      .logs-table thead {
+          background: rgba(122, 141, 255, 0.12);
+      }
+
+      .logs-table th,
+      .logs-table td {
+          padding: 12px 16px;
+          text-align: left;
+          border-bottom: 1px solid var(--border-soft);
+      }
+
+      .logs-table th {
+          font-weight: 600;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          font-size: 0.75rem;
+          letter-spacing: 0.05em;
+      }
+
+      .logs-table tbody tr:hover {
+          background: rgba(122, 141, 255, 0.08);
+      }
+
+      .log-acao {
+          font-weight: 600;
+          color: var(--text-primary);
+      }
+
+      .log-detalhes {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+      }
+
+      .log-data {
+          white-space: nowrap;
+          color: var(--text-muted);
+      }
+
+      .log-status {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          border-radius: 999px;
+          padding: 4px 12px;
+          font-size: 0.75rem;
+          font-weight: 600;
+      }
+
+      .log-status.sucesso {
+          background: rgba(74, 222, 128, 0.18);
+          color: #4ade80;
+      }
+
+      .log-status.alerta {
+          background: rgba(251, 191, 36, 0.18);
+          color: #fbbf24;
+      }
+
+      .log-status.erro {
+          background: rgba(248, 113, 113, 0.18);
+          color: #f87171;
+      }
+
+      body.light-theme .logs-table-wrapper {
+          background: #ffffff;
+          border-color: rgba(79, 70, 229, 0.16);
+          box-shadow: 0 18px 32px rgba(15, 23, 42, 0.12);
+      }
+
+      body.light-theme .log-search {
+          background: #ffffff;
+          border-color: rgba(79, 70, 229, 0.18);
+      }
+
+      body.light-theme .logs-table thead {
+          background: rgba(79, 70, 229, 0.08);
+      }
+
+      body.light-theme .logs-table tbody tr:hover {
+          background: rgba(79, 70, 229, 0.12);
       }
 
       .resumo-grid {
@@ -2074,6 +2851,7 @@
             <button class="nav-btn" data-tab="dashboard">Dashboards</button>
             <button class="nav-btn" data-tab="relatorios">Relatórios</button>
             <button class="nav-btn" data-tab="sala-mes">Acompanhamento Sala/Mês</button>
+            <button class="nav-btn" data-tab="logs">Logs</button>
         </nav>
         <header>
             <div class="logo">
@@ -2245,7 +3023,6 @@
                                         <th>Turno</th>
                                         <th>Sala atual</th>
                                         <th>Sala planejada</th>
-                                        <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -2278,11 +3055,11 @@
                                 <span>Selecionar intervalo de dias</span>
                             </label>
                         </div>
-                        <div class="dashboard-day-range" id="dashboard-dia-range">
-                            <div class="dashboard-day-range-fields">
-                                <label class="dashboard-day-range-label" for="dashboard-dia-inicio">
-                                    <span>Início</span>
-                                    <input type="date" id="dashboard-dia-inicio" aria-label="Data inicial do intervalo">
+                    <div class="dashboard-day-range" id="dashboard-dia-range">
+                        <div class="dashboard-day-range-fields">
+                            <label class="dashboard-day-range-label" for="dashboard-dia-inicio">
+                                <span>Início</span>
+                                <input type="date" id="dashboard-dia-inicio" aria-label="Data inicial do intervalo">
                                 </label>
                                 <label class="dashboard-day-range-label" for="dashboard-dia-fim">
                                     <span>Fim</span>
@@ -2290,6 +3067,112 @@
                                 </label>
                             </div>
                             <span class="dashboard-day-range-hint">Escolha a data inicial e final para analisar o período.</span>
+                        </div>
+                    </div>
+                    <div class="filter-panel" id="dashboard-filter-panel">
+                        <div>
+                            <h3 class="filter-panel-title">Filtros avançados</h3>
+                            <p class="filter-panel-description">Personalize os indicadores combinando múltiplos critérios, como turnos, status, ilhas e especialidades.</p>
+                        </div>
+                        <div class="filter-panel-group">
+                            <div class="report-filter-field">
+                                <label for="dashboard-filtro-turno">Turnos</label>
+                                <div class="report-multiselect" data-select-id="dashboard-filtro-turno" data-placeholder="Todos os turnos">
+                                    <button type="button" class="report-multiselect-btn">Todos os turnos</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todos</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="dashboard-filtro-turno" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="dashboard-filtro-status">Status</label>
+                                <div class="report-multiselect" data-select-id="dashboard-filtro-status" data-placeholder="Todos os status">
+                                    <button type="button" class="report-multiselect-btn">Todos os status</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todos</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="dashboard-filtro-status" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="dashboard-filtro-ilha">Ilhas</label>
+                                <div class="report-multiselect" data-select-id="dashboard-filtro-ilha" data-placeholder="Todas as ilhas">
+                                    <button type="button" class="report-multiselect-btn">Todas as ilhas</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todas</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="dashboard-filtro-ilha" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="dashboard-filtro-sala">Salas</label>
+                                <div class="report-multiselect" data-select-id="dashboard-filtro-sala" data-placeholder="Todas as salas">
+                                    <button type="button" class="report-multiselect-btn">Todas as salas</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todas</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="dashboard-filtro-sala" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="dashboard-filtro-especialidade">Especialidades</label>
+                                <div class="report-multiselect" data-select-id="dashboard-filtro-especialidade" data-placeholder="Todas as especialidades">
+                                    <button type="button" class="report-multiselect-btn">Todas as especialidades</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todas</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="dashboard-filtro-especialidade" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="dashboard-filtro-categoria">Categorias</label>
+                                <div class="report-multiselect" data-select-id="dashboard-filtro-categoria" data-placeholder="Todas as categorias">
+                                    <button type="button" class="report-multiselect-btn">Todas as categorias</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todas</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="dashboard-filtro-categoria" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="dashboard-filtro-profissional">Profissionais</label>
+                                <div class="report-multiselect" data-select-id="dashboard-filtro-profissional" data-placeholder="Todos os profissionais">
+                                    <button type="button" class="report-multiselect-btn">Todos os profissionais</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todos</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="dashboard-filtro-profissional" multiple class="sr-only-input"></select>
+                            </div>
                         </div>
                     </div>
                     <div class="resumo-grid" id="dashboard-resumo">
@@ -2336,27 +3219,69 @@
                     </div>
                     <div class="dashboard-grid">
                         <div class="chart-container">
-                            <h3>Ocupação por Turno</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-header-title">Ocupação por Turno</h3>
+                                <div class="chart-actions">
+                                    <button class="chart-action-btn chart-expand" type="button" data-chart-target="chart-turno" data-chart-title="Ocupação por Turno" aria-label="Expandir gráfico Ocupação por Turno">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <canvas id="chart-turno"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Ocupação por Ilha</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-header-title">Ocupação por Ilha</h3>
+                                <div class="chart-actions">
+                                    <button class="chart-action-btn chart-expand" type="button" data-chart-target="chart-ilha" data-chart-title="Ocupação por Ilha" aria-label="Expandir gráfico Ocupação por Ilha">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <canvas id="chart-ilha"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Evolução de Ocupação</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-header-title">Evolução de Ocupação</h3>
+                                <div class="chart-actions">
+                                    <button class="chart-action-btn chart-expand" type="button" data-chart-target="chart-evolucao" data-chart-title="Evolução de Ocupação" aria-label="Expandir gráfico Evolução de Ocupação">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <canvas id="chart-evolucao"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Distribuição por Especialidade</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-header-title">Distribuição por Especialidade</h3>
+                                <div class="chart-actions">
+                                    <button class="chart-action-btn chart-expand" type="button" data-chart-target="chart-especialidade" data-chart-title="Distribuição por Especialidade" aria-label="Expandir gráfico Distribuição por Especialidade">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <canvas id="chart-especialidade"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Distribuição Geral de Ocupação</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-header-title">Distribuição Geral de Ocupação</h3>
+                                <div class="chart-actions">
+                                    <button class="chart-action-btn chart-expand" type="button" data-chart-target="chart-heatmap" data-chart-title="Distribuição Geral de Ocupação" aria-label="Expandir gráfico Distribuição Geral de Ocupação">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <canvas id="chart-heatmap"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Distribuição por Status</h3>
+                            <div class="chart-header">
+                                <h3 class="chart-header-title">Distribuição por Status</h3>
+                                <div class="chart-actions">
+                                    <button class="chart-action-btn chart-expand" type="button" data-chart-target="chart-aproveitamento" data-chart-title="Distribuição por Status" aria-label="Expandir gráfico Distribuição por Status">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <canvas id="chart-aproveitamento"></canvas>
                         </div>
                     </div>
@@ -2564,12 +3489,127 @@
                         <input type="month" id="sala-mes-periodo">
                         <button class="btn btn-primary" id="btn-atualizar-sala-mes">Atualizar</button>
                     </div>
+                    <div class="filter-panel" id="sala-mes-filter-panel">
+                        <div>
+                            <h3 class="filter-panel-title">Filtros da sala</h3>
+                            <p class="filter-panel-description">Refine a visualização mensal para entender quais perfis utilizaram a sala selecionada.</p>
+                        </div>
+                        <div class="filter-panel-group">
+                            <div class="report-filter-field">
+                                <label for="sala-mes-filtro-turno">Turnos</label>
+                                <div class="report-multiselect" data-select-id="sala-mes-filtro-turno" data-placeholder="Todos os turnos">
+                                    <button type="button" class="report-multiselect-btn">Todos os turnos</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todos</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="sala-mes-filtro-turno" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="sala-mes-filtro-status">Status</label>
+                                <div class="report-multiselect" data-select-id="sala-mes-filtro-status" data-placeholder="Todos os status">
+                                    <button type="button" class="report-multiselect-btn">Todos os status</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todos</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="sala-mes-filtro-status" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="sala-mes-filtro-especialidade">Especialidades</label>
+                                <div class="report-multiselect" data-select-id="sala-mes-filtro-especialidade" data-placeholder="Todas as especialidades">
+                                    <button type="button" class="report-multiselect-btn">Todas as especialidades</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todas</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="sala-mes-filtro-especialidade" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="sala-mes-filtro-categoria">Categorias</label>
+                                <div class="report-multiselect" data-select-id="sala-mes-filtro-categoria" data-placeholder="Todas as categorias">
+                                    <button type="button" class="report-multiselect-btn">Todas as categorias</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todas</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="sala-mes-filtro-categoria" multiple class="sr-only-input"></select>
+                            </div>
+                            <div class="report-filter-field">
+                                <label for="sala-mes-filtro-profissional">Profissionais</label>
+                                <div class="report-multiselect" data-select-id="sala-mes-filtro-profissional" data-placeholder="Todos os profissionais">
+                                    <button type="button" class="report-multiselect-btn">Todos os profissionais</button>
+                                    <div class="report-multiselect-panel">
+                                        <div class="report-multiselect-actions">
+                                            <button type="button" data-action="select-all">Selecionar todos</button>
+                                            <button type="button" data-action="clear">Limpar</button>
+                                        </div>
+                                        <div class="report-multiselect-options"></div>
+                                    </div>
+                                </div>
+                                <select id="sala-mes-filtro-profissional" multiple class="sr-only-input"></select>
+                            </div>
+                        </div>
+                    </div>
                     <div class="monthly-table">
+                        <div class="monthly-summary" id="monthly-summary" aria-live="polite"></div>
                         <table id="monthly-schedule">
                             <thead>
                                 <tr>
-                                    <th>Data</th>
-                                    <th>Horários</th>
+                                    <th>Dia</th>
+                                    <th>Agenda detalhada</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="dashboard-section" id="logs-section">
+                    <h2>Logs de alterações</h2>
+                    <p class="filter-panel-description">Acompanhe todas as ações relevantes executadas no sistema durante esta sessão.</p>
+                    <div class="log-tools">
+                        <div class="log-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="log-search-input" placeholder="Buscar por ação, usuário ou detalhes">
+                        </div>
+                        <div class="chart-actions">
+                            <button class="chart-action-btn" id="log-refresh" type="button" title="Atualizar">
+                                <i class="fas fa-rotate"></i>
+                            </button>
+                            <button class="chart-action-btn" id="log-download" type="button" title="Exportar CSV">
+                                <i class="fas fa-file-download"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-secondary" id="log-clear" type="button">
+                            <i class="fas fa-trash-alt"></i> Limpar histórico
+                        </button>
+                    </div>
+                    <div class="logs-table-wrapper">
+                        <table class="logs-table" id="logs-table">
+                            <thead>
+                                <tr>
+                                    <th>Data/Hora</th>
+                                    <th>Ação</th>
+                                    <th>Detalhes</th>
+                                    <th>Usuário</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -2578,6 +3618,18 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <div class="chart-overlay" id="chart-overlay" aria-hidden="true">
+        <div class="chart-overlay-content">
+            <div class="chart-overlay-header">
+                <h3 id="chart-overlay-title"></h3>
+                <button type="button" id="chart-overlay-close" aria-label="Fechar visualização ampliada">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <canvas id="chart-overlay-canvas"></canvas>
         </div>
     </div>
 
@@ -3038,14 +4090,259 @@
                 ilha: []
             },
             userRole: null,
+            userName: null,
             visualizacaoSimplificada: true,  // Novo estado para toggle simplificado
             planejamentoTurno: 'manha',
             planejamentoLinhas: [],
             agendamentoEditarId: null,
             dashboardDiasEspecificos: [],
             dashboardIntervaloDias: { inicio: '', fim: '' },
-            temaAtual: 'dark'
+            temaAtual: 'dark',
+            logs: [],
+            logFiltro: '',
+            dashboardUltimosDados: null,
+            chartOverlay: {
+                ativo: false,
+                chartId: null,
+                titulo: ''
+            }
         };
+
+        const LOGS_STORAGE_KEY = 'agendamento-logs';
+
+        function obterUsuarioAtual() {
+            const nomeSalvo = (estado.userName || localStorage.getItem('userName') || '').trim();
+            if (nomeSalvo) return nomeSalvo;
+            const role = (estado.userRole || localStorage.getItem('userRole') || '').trim();
+            if (role) {
+                if (role.toLowerCase() === 'admin') return 'Administrador';
+                return role.charAt(0).toUpperCase() + role.slice(1);
+            }
+            return 'Usuário';
+        }
+
+        function carregarLogsSalvos() {
+            try {
+                const dados = JSON.parse(localStorage.getItem(LOGS_STORAGE_KEY) || '[]');
+                if (Array.isArray(dados)) {
+                    estado.logs = dados.slice(-500);
+                } else {
+                    estado.logs = [];
+                }
+            } catch (error) {
+                console.warn('Não foi possível carregar logs salvos:', error);
+                estado.logs = [];
+            }
+            renderizarLogs();
+        }
+
+        function salvarLogsLocal() {
+            try {
+                const limite = 500;
+                if (Array.isArray(estado.logs) && estado.logs.length > limite) {
+                    estado.logs = estado.logs.slice(estado.logs.length - limite);
+                }
+                localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(estado.logs || []));
+            } catch (error) {
+                console.warn('Falha ao salvar logs localmente:', error);
+            }
+        }
+
+        function registrarLog(acao, detalhes = {}, meta = {}) {
+            if (!acao) return;
+            if (!Array.isArray(estado.logs)) {
+                estado.logs = [];
+            }
+
+            const agora = new Date();
+            const detalhesNormalizados = typeof detalhes === 'string'
+                ? { descrição: detalhes }
+                : (detalhes && typeof detalhes === 'object' ? detalhes : {});
+
+            const entrada = {
+                id: `${agora.getTime()}-${Math.random().toString(16).slice(2, 8)}`,
+                timestamp: agora.toISOString(),
+                acao,
+                detalhes: detalhesNormalizados,
+                mensagem: meta.mensagem || (typeof detalhes === 'string' ? detalhes : ''),
+                usuario: obterUsuarioAtual(),
+                status: meta.status || (meta.sucesso === false ? 'erro' : meta.alerta ? 'alerta' : 'sucesso')
+            };
+
+            estado.logs.push(entrada);
+            salvarLogsLocal();
+            renderizarLogs();
+        }
+
+        function normalizarValorDetalhe(valor) {
+            if (valor === null || valor === undefined) return '';
+            if (typeof valor === 'object') {
+                try {
+                    return JSON.stringify(valor);
+                } catch (e) {
+                    return String(valor);
+                }
+            }
+            return String(valor);
+        }
+
+        function formatarDetalhesLog(detalhes, mensagemExtra) {
+            if (!detalhes || (typeof detalhes === 'object' && Object.keys(detalhes).length === 0)) {
+                return mensagemExtra && mensagemExtra.trim() ? mensagemExtra : '-';
+            }
+            if (typeof detalhes === 'string') {
+                return detalhes;
+            }
+
+            const partes = Object.entries(detalhes).map(([chave, valor]) => {
+                const label = chave
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/[_-]+/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                const labelFormatado = label
+                    ? label.charAt(0).toUpperCase() + label.slice(1)
+                    : 'Detalhe';
+                return `${labelFormatado}: ${normalizarValorDetalhe(valor)}`;
+            });
+
+            if (mensagemExtra && mensagemExtra.trim()) {
+                partes.push(mensagemExtra.trim());
+            }
+
+            return partes.join(' • ');
+        }
+
+        function formatarDataHoraLog(iso) {
+            if (!iso) return '-';
+            const data = new Date(iso);
+            if (isNaN(data.getTime())) return '-';
+            return data.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
+        }
+
+        function renderizarLogs() {
+            const tbody = document.querySelector('#logs-table tbody');
+            if (!tbody) return;
+
+            const filtroInput = document.getElementById('log-search-input');
+            if (filtroInput && filtroInput.value !== (estado.logFiltro || '')) {
+                filtroInput.value = estado.logFiltro || '';
+            }
+
+            const filtro = (estado.logFiltro || '').trim().toLowerCase();
+            const logs = Array.isArray(estado.logs) ? [...estado.logs] : [];
+            logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            const filtrados = filtro
+                ? logs.filter(item => {
+                    const detalhesTexto = formatarDetalhesLog(item.detalhes, item.mensagem).toLowerCase();
+                    const campos = [
+                        item.acao,
+                        item.usuario,
+                        item.status,
+                        detalhesTexto
+                    ].map(campo => (campo || '').toString().toLowerCase());
+                    return campos.some(campo => campo.includes(filtro));
+                })
+                : logs;
+
+            tbody.innerHTML = '';
+
+            if (!filtrados.length) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 5;
+                td.textContent = filtro
+                    ? 'Nenhum log corresponde ao termo pesquisado.'
+                    : 'Nenhuma ação registrada ainda.';
+                td.style.color = 'var(--text-muted)';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                return;
+            }
+
+            filtrados.forEach(item => {
+                const tr = document.createElement('tr');
+
+                const tdData = document.createElement('td');
+                tdData.className = 'log-data';
+                tdData.textContent = formatarDataHoraLog(item.timestamp);
+
+                const tdAcao = document.createElement('td');
+                tdAcao.className = 'log-acao';
+                tdAcao.textContent = item.acao || '-';
+
+                const tdDetalhes = document.createElement('td');
+                tdDetalhes.className = 'log-detalhes';
+                tdDetalhes.textContent = formatarDetalhesLog(item.detalhes, item.mensagem);
+
+                const tdUsuario = document.createElement('td');
+                tdUsuario.textContent = item.usuario || '-';
+
+                const tdStatus = document.createElement('td');
+                const statusSpan = document.createElement('span');
+                const status = item.status || 'sucesso';
+                statusSpan.className = `log-status ${status}`;
+                statusSpan.textContent = status === 'erro'
+                    ? 'Erro'
+                    : status === 'alerta'
+                        ? 'Alerta'
+                        : 'Sucesso';
+                tdStatus.appendChild(statusSpan);
+
+                tr.appendChild(tdData);
+                tr.appendChild(tdAcao);
+                tr.appendChild(tdDetalhes);
+                tr.appendChild(tdUsuario);
+                tr.appendChild(tdStatus);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function exportarLogsCsv() {
+            const logs = Array.isArray(estado.logs) ? [...estado.logs] : [];
+            if (!logs.length) {
+                alert('Nenhum log disponível para exportação.');
+                return;
+            }
+
+            const cabecalho = ['Data/Hora', 'Ação', 'Detalhes', 'Usuário', 'Status'];
+            const linhas = logs
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .map(item => {
+                    const campos = [
+                        formatarDataHoraLog(item.timestamp),
+                        item.acao || '',
+                        formatarDetalhesLog(item.detalhes, item.mensagem || ''),
+                        item.usuario || '',
+                        item.status || 'sucesso'
+                    ];
+                    return campos.map(valor => `"${String(valor).replace(/"/g, '""')}"`).join(';');
+                });
+
+            const conteudo = [cabecalho.join(';'), ...linhas].join('\n');
+            const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `logs-agendamento-${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function limparLogs() {
+            if (!Array.isArray(estado.logs) || estado.logs.length === 0) {
+                renderizarLogs();
+                return;
+            }
+            const confirmar = confirm('Deseja limpar todo o histórico de logs desta sessão?');
+            if (!confirmar) return;
+            estado.logs = [];
+            salvarLogsLocal();
+            renderizarLogs();
+        }
 
         // Utilidades de normalização
         const removerAcentos = texto => String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -3142,8 +4439,9 @@
             return 'dark';
         }
 
-        function aplicarTema(tema) {
+        function aplicarTema(tema, registrar = false) {
             const normalizado = tema === 'light' ? 'light' : 'dark';
+            const anterior = estado.temaAtual;
             estado.temaAtual = normalizado;
             document.body.classList.toggle('light-theme', normalizado === 'light');
 
@@ -3164,6 +4462,24 @@
             }
 
             localStorage.setItem('themePreference', normalizado);
+
+            if (registrar && anterior !== normalizado) {
+                registrarLog('Tema atualizado', { tema: normalizado === 'light' ? 'Modo claro' : 'Modo escuro' }, { status: 'alerta' });
+            }
+
+            if (estado.dashboardUltimosDados) {
+                let dadosCache = estado.dashboardUltimosDados;
+                try {
+                    dadosCache = JSON.parse(JSON.stringify(estado.dashboardUltimosDados));
+                } catch (error) {
+                    console.warn('Não foi possível clonar dados do dashboard ao aplicar tema:', error);
+                }
+                if (dadosCache) {
+                    renderCharts(dadosCache);
+                }
+            } else {
+                sincronizarChartOverlayBase();
+            }
         }
 
         function inicializarTema() {
@@ -3177,7 +4493,7 @@
             if (input) {
                 input.checked = preferido === 'light';
                 input.addEventListener('change', () => {
-                    aplicarTema(input.checked ? 'light' : 'dark');
+                    aplicarTema(input.checked ? 'light' : 'dark', true);
                 });
             }
 
@@ -3222,10 +4538,12 @@
         // Inicialização da aplicação
         document.addEventListener('DOMContentLoaded', function() {
             inicializarTema();
+            carregarLogsSalvos();
             configurarLogin();
             inicializarAnimacaoBotoes();
             inicializarData();
             configurarEventListeners();
+            inicializarChartOverlay();
             setupResponsiveShell();
             carregarDadosMestres();
             carregarDados();
@@ -3236,6 +4554,10 @@
             const mainContainer = document.getElementById('main-container');
             const token = localStorage.getItem('authToken');
             const role = localStorage.getItem('userRole');
+            const nomeSalvo = localStorage.getItem('userName');
+            if (nomeSalvo) {
+                estado.userName = nomeSalvo;
+            }
             if (token && role) {
                 estado.userRole = role;
                 loginContainer.style.display = 'none';
@@ -3281,15 +4603,28 @@
                         localStorage.setItem('authToken', result.token);
                         localStorage.setItem('userRole', result.role);
                         estado.userRole = result.role;
+                        if (result.nome) {
+                            estado.userName = result.nome;
+                            localStorage.setItem('userName', result.nome);
+                        } else if (result.usuario) {
+                            estado.userName = result.usuario;
+                            localStorage.setItem('userName', result.usuario);
+                        } else {
+                            estado.userName = matricula;
+                            localStorage.setItem('userName', matricula);
+                        }
                         document.getElementById('login-container').style.display = 'none';
                         document.getElementById('main-container').style.display = 'block';
                         toggleAdminFeatures(result.role === 'admin');
+                        registrarLog('Login realizado', { matricula, perfil: result.role }, { status: 'sucesso', mensagem: 'Acesso concedido' });
                     } else {
                         mostrarLoginAlerta(result.message);
+                        registrarLog('Falha no login', { matricula }, { status: 'erro', mensagem: result.message || 'Credenciais inválidas' });
                     }
                 })
                 .withFailureHandler(error => {
                     mostrarLoginAlerta('Erro ao fazer login.');
+                    registrarLog('Erro no login', { matricula }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                 })
                 .login(matricula, senha);
         }
@@ -3297,7 +4632,10 @@
         function realizarLogout() {
             localStorage.removeItem('authToken');
             localStorage.removeItem('userRole');
+            localStorage.removeItem('userName');
             estado.userRole = null;
+            registrarLog('Logout realizado', {}, { status: 'alerta', mensagem: 'Sessão encerrada pelo usuário' });
+            estado.userName = null;
             document.getElementById('main-container').style.display = 'none';
             document.getElementById('login-container').style.display = 'flex';
         }
@@ -3328,12 +4666,15 @@
                         setTimeout(() => {
                             document.getElementById('forgot-modal').style.display = 'none';
                         }, 3000);
+                        registrarLog('Solicitação de redefinição de senha', { matricula }, { status: 'alerta', mensagem: 'Encaminhada ao administrador' });
                     } else {
                         alert(result.message);
+                        registrarLog('Solicitação de redefinição negada', { matricula }, { status: 'erro', mensagem: result.message || 'Não foi possível registrar a solicitação' });
                     }
                 })
                 .withFailureHandler(error => {
                     alert('Erro ao enviar solicitação.');
+                    registrarLog('Erro na solicitação de redefinição', { matricula }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                 })
                 .forgotPassword(matricula);
         }
@@ -3360,12 +4701,15 @@
                         alert('Usuário cadastrado com sucesso!');
                         document.getElementById('usuario-modal').style.display = 'none';
                         document.getElementById('form-usuario').reset();
+                        registrarLog('Usuário cadastrado', { nome, matricula, role }, { status: 'sucesso', mensagem: 'Cadastro concluído' });
                     } else {
                         mostrarUsuarioAlerta(result.message);
+                        registrarLog('Falha ao cadastrar usuário', { nome, matricula }, { status: 'erro', mensagem: result.message || 'Erro ao cadastrar' });
                     }
                 })
                 .withFailureHandler(error => {
                     mostrarUsuarioAlerta('Erro ao cadastrar usuário.');
+                    registrarLog('Erro ao cadastrar usuário', { nome, matricula }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                 })
                 .cadastrarUsuario({nome, matricula, setor, senha, role});
         }
@@ -3716,12 +5060,15 @@
         }
 
         function preencherRelatorioFiltros() {
-            definirRelatorioOpcoes('relatorio-filtro-turno', [
+            const opcoesTurnos = [
                 { value: 'manha', label: 'Manhã' },
                 { value: 'tarde', label: 'Tarde' },
                 { value: 'noite', label: 'Noite' },
                 { value: 'todos', label: 'Todos os turnos' }
-            ]);
+            ];
+            definirRelatorioOpcoes('relatorio-filtro-turno', opcoesTurnos);
+            definirRelatorioOpcoes('dashboard-filtro-turno', opcoesTurnos);
+            definirRelatorioOpcoes('sala-mes-filtro-turno', opcoesTurnos);
 
             const statusSet = new Set(['ocupado', 'reservado', 'bloqueado', 'livre', 'manutencao', 'cancelado']);
             estado.agendamentos.forEach(ag => {
@@ -3734,6 +5081,15 @@
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(status => ({ value: status, label: formatarStatusLabel(status) }));
             definirRelatorioOpcoes('relatorio-filtro-status', statusValores);
+            definirRelatorioOpcoes('dashboard-filtro-status', statusValores);
+            definirRelatorioOpcoes('sala-mes-filtro-status', statusValores);
+
+            const statusPadrao = Array.isArray(estado.filtros.status) && estado.filtros.status.length
+                ? estado.filtros.status
+                : ['livre', 'ocupado'];
+            aplicarSelecaoInicial('relatorio-filtro-status', statusPadrao, statusValores);
+            aplicarSelecaoInicial('dashboard-filtro-status', statusPadrao, statusValores);
+            aplicarSelecaoInicial('sala-mes-filtro-status', statusPadrao, statusValores);
 
             const ilhasSet = new Set();
             (estado.dadosMestres.ilhas || []).forEach(ilha => {
@@ -3751,6 +5107,7 @@
                 .sort(ordenarAlphaNumerico)
                 .map(ilha => ({ value: ilha, label: `Ilha ${ilha}` }));
             definirRelatorioOpcoes('relatorio-filtro-ilha', ilhasLista);
+            definirRelatorioOpcoes('dashboard-filtro-ilha', ilhasLista);
 
             const salasSet = new Set();
             estado.salas.forEach(sala => {
@@ -3763,6 +5120,7 @@
                 .sort(ordenarAlphaNumerico)
                 .map(numero => ({ value: numero, label: `Sala ${numero}` }));
             definirRelatorioOpcoes('relatorio-filtro-sala', salasLista);
+            definirRelatorioOpcoes('dashboard-filtro-sala', salasLista);
 
             const especialidadeMap = new Map();
             (estado.dadosMestres.especialidades || []).forEach(esp => {
@@ -3783,6 +5141,8 @@
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(esp => ({ value: esp, label: esp }));
             definirRelatorioOpcoes('relatorio-filtro-especialidade', especialidadesLista);
+            definirRelatorioOpcoes('dashboard-filtro-especialidade', especialidadesLista);
+            definirRelatorioOpcoes('sala-mes-filtro-especialidade', especialidadesLista);
 
             const categoriaMap = new Map();
             (estado.dadosMestres.categorias || []).forEach(cat => {
@@ -3803,6 +5163,8 @@
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(cat => ({ value: cat, label: cat }));
             definirRelatorioOpcoes('relatorio-filtro-categoria', categoriasLista);
+            definirRelatorioOpcoes('dashboard-filtro-categoria', categoriasLista);
+            definirRelatorioOpcoes('sala-mes-filtro-categoria', categoriasLista);
 
             const profissionaisSet = new Set();
             estado.agendamentos.forEach(ag => {
@@ -3816,6 +5178,8 @@
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(nome => ({ value: nome, label: nome }));
             definirRelatorioOpcoes('relatorio-filtro-profissional', profissionaisLista);
+            definirRelatorioOpcoes('dashboard-filtro-profissional', profissionaisLista);
+            definirRelatorioOpcoes('sala-mes-filtro-profissional', profissionaisLista);
         }
 
         function setupMultiselectListeners() {
@@ -4020,6 +5384,36 @@
                     });
                 });
             });
+
+            const logSearchInput = document.getElementById('log-search-input');
+            if (logSearchInput && !logSearchInput.dataset.logsListener) {
+                logSearchInput.addEventListener('input', () => {
+                    estado.logFiltro = logSearchInput.value || '';
+                    renderizarLogs();
+                });
+                logSearchInput.dataset.logsListener = 'true';
+            }
+
+            const logClearBtn = document.getElementById('log-clear');
+            if (logClearBtn && !logClearBtn.dataset.logsListener) {
+                logClearBtn.addEventListener('click', limparLogs);
+                logClearBtn.dataset.logsListener = 'true';
+            }
+
+            const logDownloadBtn = document.getElementById('log-download');
+            if (logDownloadBtn && !logDownloadBtn.dataset.logsListener) {
+                logDownloadBtn.addEventListener('click', exportarLogsCsv);
+                logDownloadBtn.dataset.logsListener = 'true';
+            }
+
+            const logRefreshBtn = document.getElementById('log-refresh');
+            if (logRefreshBtn && !logRefreshBtn.dataset.logsListener) {
+                logRefreshBtn.addEventListener('click', () => {
+                    carregarLogsSalvos();
+                    registrarLog('Logs sincronizados', {}, { status: 'sucesso', mensagem: 'Histórico atualizado a partir do armazenamento local' });
+                });
+                logRefreshBtn.dataset.logsListener = 'true';
+            }
 
             // Botão de cadastro
             document.getElementById('btn-cadastro').addEventListener('click', function() {
@@ -4620,7 +6014,7 @@
             if (!Array.isArray(estado.planejamentoLinhas) || estado.planejamentoLinhas.length === 0) {
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.colSpan = 7;
+                td.colSpan = 6;
                 td.textContent = 'Nenhum agendamento encontrado para o turno selecionado.';
                 tr.appendChild(td);
                 tbody.appendChild(tr);
@@ -4649,6 +6043,10 @@
                 tdSalaAtual.textContent = item.salaAtual || '-';
 
                 const tdPlanejada = document.createElement('td');
+                const planejadaWrapper = document.createElement('div');
+                planejadaWrapper.className = 'planejamento-planejada';
+                const inputWrapper = document.createElement('div');
+                inputWrapper.className = 'planejamento-planejada-input';
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.placeholder = 'Sala desejada';
@@ -4677,12 +6075,16 @@
                         }
                     }
                 });
-                tdPlanejada.appendChild(input);
+                inputWrapper.appendChild(input);
+                planejadaWrapper.appendChild(inputWrapper);
 
-                const tdStatus = document.createElement('td');
+                const statusWrapper = document.createElement('div');
+                statusWrapper.className = 'planejamento-status-inline';
                 statusSpan = document.createElement('span');
                 statusSpan.className = 'planejamento-status';
-                tdStatus.appendChild(statusSpan);
+                statusWrapper.appendChild(statusSpan);
+                planejadaWrapper.appendChild(statusWrapper);
+                tdPlanejada.appendChild(planejadaWrapper);
 
                 const tdAcao = document.createElement('td');
                 const containerAcoes = document.createElement('div');
@@ -4711,7 +6113,6 @@
                 tr.appendChild(tdTurno);
                 tr.appendChild(tdSalaAtual);
                 tr.appendChild(tdPlanejada);
-                tr.appendChild(tdStatus);
                 tr.appendChild(tdAcao);
 
                 tbody.appendChild(tr);
@@ -4916,13 +6317,37 @@
                             const form = document.getElementById('form-planejamento-inserir');
                             if (form) form.reset();
                             carregarDados();
+                            registrarLog('Agendamento inserido (planejamento)', {
+                                sala,
+                                turno,
+                                profissional,
+                                especialidade,
+                                categoria,
+                                data
+                            }, { status: 'sucesso', mensagem: 'Agendamento criado manualmente' });
                         } else {
                             mostrarPlanejamentoInserirAlerta(result.message || 'Não foi possível salvar o agendamento.');
+                            registrarLog('Falha ao inserir agendamento (planejamento)', {
+                                sala,
+                                turno,
+                                profissional,
+                                especialidade,
+                                categoria,
+                                data
+                            }, { status: 'erro', mensagem: result.message || 'Erro ao salvar agendamento' });
                         }
                     })
                     .withFailureHandler(error => {
                         if (salvarBtn) salvarBtn.disabled = false;
                         mostrarPlanejamentoInserirAlerta('Erro ao salvar agendamento: ' + error.toString());
+                        registrarLog('Erro ao inserir agendamento (planejamento)', {
+                            sala,
+                            turno,
+                            profissional,
+                            especialidade,
+                            categoria,
+                            data
+                        }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                     })
                     .salvarAgendamento(payload);
             };
@@ -4970,15 +6395,30 @@
                         if (!result.success) {
                             if (salvarBtn) salvarBtn.disabled = false;
                             mostrarPlanejamentoInserirAlerta(result.message || 'Não foi possível mover o agendamento existente.');
+                            registrarLog('Falha ao remanejar agendamento existente', {
+                                agendamentoId: conflito.id,
+                                novaSala: salaDestinoProfissional.numero,
+                                profissionalAtual: conflito.profissional
+                            }, { status: 'erro', mensagem: result.message || 'Não foi possível mover o agendamento atual' });
                             return;
                         }
 
                         mostrarPlanejamentoInserirAlerta('Profissional movido com sucesso. Salvando novo agendamento...');
+                        registrarLog('Agendamento remanejado para liberar sala', {
+                            agendamentoId: conflito.id,
+                            novaSala: salaDestinoProfissional.numero,
+                            profissionalAtual: conflito.profissional
+                        }, { status: 'sucesso', mensagem: 'Sala liberada para novo agendamento' });
                         executarSalvarAgendamento();
                     })
                     .withFailureHandler(error => {
                         if (salvarBtn) salvarBtn.disabled = false;
                         mostrarPlanejamentoInserirAlerta('Erro ao mover agendamento existente: ' + error.toString());
+                        registrarLog('Erro ao remanejar agendamento existente', {
+                            agendamentoId: conflito.id,
+                            novaSala: salaDestinoProfissional.numero,
+                            profissionalAtual: conflito.profissional
+                        }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                     })
                     .atualizarAgendamento(conflito.id, payloadMovimento);
 
@@ -5099,15 +6539,32 @@
                         .withSuccessHandler(result => {
                             if (result.success) {
                                 mostrarPlanejamentoMensagem('Troca realizada com sucesso. Atualizando dados...', true);
+                                registrarLog('Troca de agendamentos (planejamento)', {
+                                    origemId: linha.id,
+                                    destinoId: conflito.id,
+                                    salaSolicitada: salaDestino,
+                                    profissionalOrigem: linha.profissional,
+                                    profissionalDestino: conflito.profissional
+                                }, { status: 'sucesso', mensagem: 'Agendamentos trocados para resolver conflito' });
                                 carregarDados();
                             } else {
                                 if (btnLinha) btnLinha.disabled = false;
                                 mostrarPlanejamentoMensagem(result.message || 'Não foi possível trocar os agendamentos.', false, true);
+                                registrarLog('Falha na troca de agendamentos (planejamento)', {
+                                    origemId: linha.id,
+                                    destinoId: conflito.id,
+                                    salaSolicitada: salaDestino
+                                }, { status: 'erro', mensagem: result.message || 'Não foi possível trocar os agendamentos' });
                             }
                         })
                         .withFailureHandler(error => {
                             if (btnLinha) btnLinha.disabled = false;
                             mostrarPlanejamentoMensagem('Erro ao realizar troca: ' + error.toString(), false, true);
+                            registrarLog('Erro na troca de agendamentos (planejamento)', {
+                                origemId: linha.id,
+                                destinoId: conflito.id,
+                                salaSolicitada: salaDestino
+                            }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                         })
                         .trocarAgendamentos(linha.id, conflito.id);
 
@@ -5126,15 +6583,30 @@
                 .withSuccessHandler(result => {
                     if (result.success) {
                         mostrarPlanejamentoMensagem('Substituição realizada com sucesso. Atualizando dados...', true);
+                        registrarLog('Agendamento atualizado (planejamento)', {
+                            agendamentoId: linha.id,
+                            novaSala: salaInfo.numero,
+                            profissional: linha.profissional
+                        }, { status: 'sucesso', mensagem: 'Sala ajustada no planejamento' });
                         carregarDados();
                     } else {
                         if (btnLinha) btnLinha.disabled = false;
                         mostrarPlanejamentoMensagem(result.message || 'Não foi possível atualizar o agendamento.', false, true);
+                        registrarLog('Falha ao atualizar agendamento (planejamento)', {
+                            agendamentoId: linha.id,
+                            novaSala: salaInfo.numero,
+                            profissional: linha.profissional
+                        }, { status: 'erro', mensagem: result.message || 'Erro ao atualizar agendamento' });
                     }
                 })
                 .withFailureHandler(error => {
                     if (btnLinha) btnLinha.disabled = false;
                     mostrarPlanejamentoMensagem('Erro ao substituir: ' + error.toString(), false, true);
+                    registrarLog('Erro ao atualizar agendamento (planejamento)', {
+                        agendamentoId: linha.id,
+                        novaSala: salaInfo.numero,
+                        profissional: linha.profissional
+                    }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                 })
                 .atualizarAgendamento(linha.id, payload);
         }
@@ -5169,9 +6641,19 @@
 
                     if (result.success) {
                         mostrarPlanejamentoMensagem('Agendamento removido com sucesso. Atualizando dados...', true);
+                        registrarLog('Agendamento removido (planejamento)', {
+                            agendamentoId: linha.id,
+                            sala: linha.salaAtual || linha.salaPlanejada,
+                            profissional: linha.profissional
+                        }, { status: 'sucesso', mensagem: 'Agendamento excluído a partir do planejamento' });
                         carregarDados();
                     } else {
                         mostrarPlanejamentoMensagem(result.message || 'Não foi possível remover o agendamento.', false, true);
+                        registrarLog('Falha ao remover agendamento (planejamento)', {
+                            agendamentoId: linha.id,
+                            sala: linha.salaAtual || linha.salaPlanejada,
+                            profissional: linha.profissional
+                        }, { status: 'erro', mensagem: result.message || 'Erro ao remover agendamento' });
                     }
                 })
                 .withFailureHandler(error => {
@@ -5181,6 +6663,11 @@
                         botaoExcluir.classList.remove('is-processing');
                     }
                     mostrarPlanejamentoMensagem('Erro ao excluir agendamento: ' + error.toString(), false, true);
+                    registrarLog('Erro ao remover agendamento (planejamento)', {
+                        agendamentoId: linha.id,
+                        sala: linha.salaAtual || linha.salaPlanejada,
+                        profissional: linha.profissional
+                    }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                 })
                 .removerAgendamento(linha.id);
         }
@@ -5248,15 +6735,30 @@
                         google.script.run
                             .withSuccessHandler(result => {
                                 if (result.success) {
+                                    registrarLog('Troca de agendamentos em lote (planejamento)', {
+                                        origemId: item.id,
+                                        destinoId: conflito.id,
+                                        salaSolicitada: salaDestino
+                                    }, { status: 'sucesso', mensagem: 'Agendamentos trocados durante aplicação em massa' });
                                     processar(index + 1);
                                 } else {
                                     if (aplicarBtn) aplicarBtn.disabled = false;
                                     mostrarPlanejamentoMensagem(result.message || 'Não foi possível trocar os agendamentos.', false, true);
+                                    registrarLog('Falha na troca de agendamentos em lote (planejamento)', {
+                                        origemId: item.id,
+                                        destinoId: conflito.id,
+                                        salaSolicitada: salaDestino
+                                    }, { status: 'erro', mensagem: result.message || 'Não foi possível trocar os agendamentos' });
                                 }
                             })
                             .withFailureHandler(error => {
                                 if (aplicarBtn) aplicarBtn.disabled = false;
                                 mostrarPlanejamentoMensagem('Erro ao realizar troca: ' + error.toString(), false, true);
+                                registrarLog('Erro na troca de agendamentos em lote (planejamento)', {
+                                    origemId: item.id,
+                                    destinoId: conflito.id,
+                                    salaSolicitada: salaDestino
+                                }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                             })
                             .trocarAgendamentos(item.id, conflito.id);
 
@@ -5272,15 +6774,30 @@
                 google.script.run
                     .withSuccessHandler(result => {
                         if (result.success) {
+                            registrarLog('Agendamento atualizado em lote (planejamento)', {
+                                agendamentoId: item.id,
+                                novaSala: salaInfo.numero,
+                                profissional: item.profissional
+                            }, { status: 'sucesso', mensagem: 'Agendamento ajustado durante aplicação em massa' });
                             processar(index + 1);
                         } else {
                             if (aplicarBtn) aplicarBtn.disabled = false;
                             mostrarPlanejamentoMensagem(result.message || 'Falha ao substituir um dos agendamentos.', false, true);
+                            registrarLog('Falha ao atualizar agendamento em lote (planejamento)', {
+                                agendamentoId: item.id,
+                                novaSala: salaInfo.numero,
+                                profissional: item.profissional
+                            }, { status: 'erro', mensagem: result.message || 'Erro ao atualizar agendamento' });
                         }
                     })
                     .withFailureHandler(error => {
                         if (aplicarBtn) aplicarBtn.disabled = false;
                         mostrarPlanejamentoMensagem('Erro ao substituir: ' + error.toString(), false, true);
+                        registrarLog('Erro ao atualizar agendamento em lote (planejamento)', {
+                            agendamentoId: item.id,
+                            novaSala: salaInfo.numero,
+                            profissional: item.profissional
+                        }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                     })
                     .atualizarAgendamento(item.id, payload);
             };
@@ -5908,14 +7425,34 @@
                 console.log('Resultado da troca:', result);
                 if (result.success) {
                     alert('Conflito detectado! Troca realizada com sucesso entre as salas.');
+                    registrarLog('Troca de agendamentos (mover)', {
+                        origemId: estado.agendamentoMoverId,
+                        destinoId: conflito.id,
+                        salaOrigem: agOrigem.sala,
+                        salaDestino,
+                        profissionalOrigem: agOrigem.profissional,
+                        profissionalDestino: conflito.profissional
+                    }, { status: 'sucesso', mensagem: 'Agendamentos trocados ao mover manualmente' });
                     fecharModalsAndReload();
                 } else {
                     mostrarMoverAlerta(result.message);
+                    registrarLog('Falha na troca de agendamentos (mover)', {
+                        origemId: estado.agendamentoMoverId,
+                        destinoId: conflito.id,
+                        salaOrigem: agOrigem.sala,
+                        salaDestino
+                    }, { status: 'erro', mensagem: result.message || 'Não foi possível trocar os agendamentos' });
                 }
             })
             .withFailureHandler(error => {
                 console.error('Erro ao trocar:', error);
                 mostrarMoverAlerta('Erro ao realizar troca: ' + error.toString());
+                registrarLog('Erro na troca de agendamentos (mover)', {
+                    origemId: estado.agendamentoMoverId,
+                    destinoId: conflito.id,
+                    salaOrigem: agOrigem.sala,
+                    salaDestino
+                }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
             })
             .trocarAgendamentos(estado.agendamentoMoverId, conflito.id);
     } else {
@@ -5932,14 +7469,32 @@
                 console.log('Resultado do mover:', result);
                 if (result.success) {
                     alert('Agendamento movido com sucesso!');
+                    registrarLog('Agendamento movido de sala', {
+                        agendamentoId: estado.agendamentoMoverId,
+                        salaOrigem: agOrigem.sala,
+                        salaDestino,
+                        profissional: agOrigem.profissional
+                    }, { status: 'sucesso', mensagem: 'Agendamento transferido para outra sala' });
                     fecharModalsAndReload();
                 } else {
                     mostrarMoverAlerta(result.message);
+                    registrarLog('Falha ao mover agendamento', {
+                        agendamentoId: estado.agendamentoMoverId,
+                        salaOrigem: agOrigem.sala,
+                        salaDestino,
+                        profissional: agOrigem.profissional
+                    }, { status: 'erro', mensagem: result.message || 'Erro ao mover agendamento' });
                 }
             })
             .withFailureHandler(error => {
                 console.error('Erro ao mover:', error);
                 mostrarMoverAlerta('Erro ao mover agendamento: ' + error.toString());
+                registrarLog('Erro ao mover agendamento', {
+                    agendamentoId: estado.agendamentoMoverId,
+                    salaOrigem: agOrigem.sala,
+                    salaDestino,
+                    profissional: agOrigem.profissional
+                }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
             })
             .atualizarAgendamento(estado.agendamentoMoverId, {sala: salaDestino, ilha: ilhaDestino});
     }
@@ -5972,15 +7527,27 @@
                 .withSuccessHandler(result => {
                     if (result.success) {
                         alert('Agendamento removido com sucesso!');
+                        registrarLog('Agendamento removido', {
+                            agendamentoId,
+                            origem: 'modal-sala'
+                        }, { status: 'sucesso', mensagem: 'Agendamento excluído pelo painel detalhado' });
                         fecharModalsAndReload();
                     } else {
                         if (botaoReferencia) botaoReferencia.disabled = false;
                         alert(result.message || 'Não foi possível remover o agendamento.');
+                        registrarLog('Falha ao remover agendamento', {
+                            agendamentoId,
+                            origem: 'modal-sala'
+                        }, { status: 'erro', mensagem: result.message || 'Erro ao remover agendamento' });
                     }
                 })
                 .withFailureHandler(error => {
                     if (botaoReferencia) botaoReferencia.disabled = false;
                     alert('Erro ao remover agendamento: ' + error.toString());
+                    registrarLog('Erro ao remover agendamento', {
+                        agendamentoId,
+                        origem: 'modal-sala'
+                    }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                 })
                 .removerAgendamento(agendamentoId);
         }
@@ -6180,6 +7747,8 @@
                 observacoes
             };
 
+            const agendamentoIdAtual = estado.agendamentoEditarId;
+
             google.script.run
                 .withSuccessHandler(result => {
                     if (result.success) {
@@ -6187,12 +7756,36 @@
                         estado.agendamentoEditarId = null;
                         document.getElementById('editar-modal').style.display = 'none';
                         carregarDados();
+                        registrarLog('Agendamento editado', {
+                            agendamentoId: agendamentoIdAtual,
+                            sala,
+                            profissional,
+                            especialidade,
+                            categoria,
+                            status
+                        }, { status: 'sucesso', mensagem: 'Agendamento atualizado pelo modal de edição' });
                     } else {
                         mostrarEditarAlerta(result.message || 'Não foi possível atualizar o agendamento.');
+                    registrarLog('Falha ao editar agendamento', {
+                            agendamentoId: agendamentoIdAtual,
+                            sala,
+                            profissional,
+                            especialidade,
+                            categoria,
+                            status
+                        }, { status: 'erro', mensagem: result.message || 'Erro ao atualizar agendamento' });
                     }
                 })
                 .withFailureHandler(error => {
                     mostrarEditarAlerta('Erro ao atualizar agendamento: ' + error.toString());
+                    registrarLog('Erro ao editar agendamento', {
+                        agendamentoId: agendamentoIdAtual,
+                        sala,
+                        profissional,
+                        especialidade,
+                        categoria,
+                        status
+                    }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                 })
                 .atualizarAgendamento(estado.agendamentoEditarId, payload);
         }
@@ -6370,12 +7963,35 @@
                         document.getElementById('cadastro-modal').style.display = 'none';
                         document.getElementById('form-cadastro').reset();
                         carregarDados();
+                        registrarLog('Agendamento cadastrado', {
+                            sala: formDataBase.sala,
+                            turno: formDataBase.turno,
+                            profissional: formDataBase.profissional,
+                            especialidade: formDataBase.especialidade,
+                            categoria: formDataBase.categoria,
+                            dataInicio: usarDiasEspecificos ? (datas ? datas[0] : dataInicioStr) : dataInicioStr,
+                            dataFim: usarDiasEspecificos ? (datas ? datas[datas.length - 1] : dataFimStr) : dataFimStr
+                        }, { status: 'sucesso', mensagem: 'Cadastro realizado pelo formulário rápido' });
                     } else {
                         alert('Erro: ' + result.message);
+                        registrarLog('Falha ao cadastrar agendamento', {
+                            sala: formDataBase.sala,
+                            turno: formDataBase.turno,
+                            profissional: formDataBase.profissional,
+                            especialidade: formDataBase.especialidade,
+                            categoria: formDataBase.categoria
+                        }, { status: 'erro', mensagem: result.message || 'Erro ao salvar agendamento' });
                     }
                 })
                 .withFailureHandler(function(error) {
                     alert('Erro ao salvar agendamento: ' + error.toString());
+                    registrarLog('Erro ao cadastrar agendamento', {
+                        sala: formDataBase.sala,
+                        turno: formDataBase.turno,
+                        profissional: formDataBase.profissional,
+                        especialidade: formDataBase.especialidade,
+                        categoria: formDataBase.categoria
+                    }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                 })
                 .salvarAgendamento(payload);
         }
@@ -6400,12 +8016,27 @@
                         document.getElementById('bloqueio-modal').style.display = 'none';
                         document.getElementById('form-bloqueio').reset();
                         carregarDados();
+                        registrarLog('Status de salas atualizado', {
+                            salas: salasSelecionadas,
+                            status,
+                            motivo
+                        }, { status: 'sucesso', mensagem: `Atualização aplicada a ${salasSelecionadas.length} sala(s)` });
                     } else {
                         alert('Erro: ' + result.message);
+                        registrarLog('Falha ao atualizar status de salas', {
+                            salas: salasSelecionadas,
+                            status,
+                            motivo
+                        }, { status: 'erro', mensagem: result.message || 'Erro ao atualizar status' });
                     }
                 })
                 .withFailureHandler(function(error) {
                     alert('Erro ao salvar status das salas: ' + error.toString());
+                    registrarLog('Erro ao atualizar status de salas', {
+                        salas: salasSelecionadas,
+                        status,
+                        motivo
+                    }, { status: 'erro', mensagem: error && error.toString ? error.toString() : 'Erro desconhecido' });
                 })
                 .atualizarStatusMultiplasSalas(salasSelecionadas, status, motivo);
         }
@@ -6559,18 +8190,56 @@
             atualizarVisibilidade();
         }
 
+        function obterValoresMultiselect(selectId, { normalizador, fallbackLista } = {}) {
+            const select = document.getElementById(selectId);
+            if (!select) return [];
+
+            const obterSelecionados = () => Array.from(select.selectedOptions || [])
+                .map(opt => opt.value)
+                .filter(valor => valor !== undefined && valor !== null && valor !== '');
+
+            let valores = obterSelecionados();
+
+            if ((!valores || valores.length === 0) && fallbackLista) {
+                if (typeof fallbackLista === 'function') {
+                    const fallback = fallbackLista(select);
+                    valores = Array.isArray(fallback) ? [...fallback] : [];
+                } else if (Array.isArray(fallbackLista)) {
+                    valores = [...fallbackLista];
+                }
+            }
+
+            if (normalizador) {
+                valores = valores
+                    .map(valor => normalizador(valor))
+                    .filter(valor => valor !== undefined && valor !== null && String(valor).trim() !== '');
+            }
+
+            return valores;
+        }
+
         function carregarDashboard() {
             const periodoSelect = document.getElementById('dashboard-periodo');
             const periodo = periodoSelect ? periodoSelect.value : 'dia';
             const filtrosDashboard = {
-                turnos: [],
-                ilhas: Array.isArray(estado.filtros.ilha) ? estado.filtros.ilha : [],
-                especialidades: Array.isArray(estado.filtros.especialidade)
-                    ? estado.filtros.especialidade.map(normalizarTexto)
-                    : [],
-                status: Array.isArray(estado.filtros.status)
-                    ? estado.filtros.status.map(normalizarStatus)
-                    : [],
+                turnos: obterValoresMultiselect('dashboard-filtro-turno', { normalizador: normalizarTurno }),
+                ilhas: obterValoresMultiselect('dashboard-filtro-ilha', {
+                    fallbackLista: Array.isArray(estado.filtros.ilha) ? estado.filtros.ilha : []
+                }),
+                salas: obterValoresMultiselect('dashboard-filtro-sala'),
+                especialidades: obterValoresMultiselect('dashboard-filtro-especialidade', {
+                    normalizador: normalizarTexto,
+                    fallbackLista: Array.isArray(estado.filtros.especialidade) ? estado.filtros.especialidade : []
+                }),
+                categorias: obterValoresMultiselect('dashboard-filtro-categoria', {
+                    normalizador: normalizarTexto,
+                    fallbackLista: Array.isArray(estado.filtros.categoria) ? estado.filtros.categoria : []
+                }),
+                profissionais: obterValoresMultiselect('dashboard-filtro-profissional', { normalizador: normalizarTexto }),
+                status: obterValoresMultiselect('dashboard-filtro-status', {
+                    normalizador: normalizarStatus,
+                    fallbackLista: Array.isArray(estado.filtros.status) ? estado.filtros.status : []
+                }),
                 diasEspecificos: [],
                 intervaloDias: null
             };
@@ -6609,6 +8278,17 @@
                 console.error('Erro ao carregar dados do dashboard:', dados && dados.error ? dados.error : 'Dados indisponíveis');
             }
 
+            if (dados && !dados.error) {
+                try {
+                    estado.dashboardUltimosDados = JSON.parse(JSON.stringify(dados));
+                } catch (error) {
+                    console.warn('Não foi possível clonar dados do dashboard para cache, usando referência direta.', error);
+                    estado.dashboardUltimosDados = dados;
+                }
+            } else if (!dados) {
+                estado.dashboardUltimosDados = null;
+            }
+
             const informacoes = dados && !dados.error ? dados : {
                 resumo: {},
                 ocupacaoTurno: {},
@@ -6628,14 +8308,16 @@
             const ocupacaoGeral = informacoes.ocupacaoGeral || {};
             const statusDistribuicao = informacoes.statusDistribuicao || {};
 
-            const legendColor = '#dbe8ff';
-            const gridColor = 'rgba(255, 255, 255, 0.08)';
+            const temaClaro = estado.temaAtual === 'light';
+            const legendColor = temaClaro ? '#1f2937' : '#dbe8ff';
+            const gridColor = temaClaro ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.08)';
             const tooltipConfig = {
                 enabled: true,
-                backgroundColor: 'rgba(13, 23, 46, 0.92)',
-                titleColor: '#f8fafc',
-                bodyColor: '#f8fafc',
-                borderWidth: 0
+                backgroundColor: temaClaro ? 'rgba(255, 255, 255, 0.95)' : 'rgba(13, 23, 46, 0.92)',
+                titleColor: temaClaro ? '#0f172a' : '#f8fafc',
+                bodyColor: temaClaro ? '#0f172a' : '#f8fafc',
+                borderColor: temaClaro ? 'rgba(79, 70, 229, 0.25)' : 'transparent',
+                borderWidth: temaClaro ? 1 : 0
             };
 
             ['turno', 'ilha', 'evolucao', 'especialidade', 'heatmap', 'aproveitamento'].forEach(id => {
@@ -6844,6 +8526,160 @@
                     }
                 }
             });
+
+            sincronizarChartOverlayBase();
+        }
+
+        function clonarConfigChart(chart) {
+            if (!chart) return null;
+            try {
+                const baseConfig = chart.config || {};
+                const dataClone = typeof structuredClone === 'function'
+                    ? structuredClone(baseConfig.data)
+                    : JSON.parse(JSON.stringify(baseConfig.data));
+                const optionsClone = typeof structuredClone === 'function'
+                    ? structuredClone(baseConfig.options || {})
+                    : JSON.parse(JSON.stringify(baseConfig.options || {}));
+                return {
+                    type: baseConfig.type,
+                    data: dataClone,
+                    options: optionsClone
+                };
+            } catch (error) {
+                console.warn('Falha ao clonar configuração do gráfico:', error);
+                return null;
+            }
+        }
+
+        function abrirChartOverlay(canvas, titulo) {
+            const overlay = document.getElementById('chart-overlay');
+            const overlayTitle = document.getElementById('chart-overlay-title');
+            const overlayCanvas = document.getElementById('chart-overlay-canvas');
+            if (!overlay || !overlayTitle || !overlayCanvas) return;
+
+            if (!canvas || !canvas.chart) {
+                alert('Carregue o dashboard para visualizar este gráfico.');
+                return;
+            }
+
+            const config = clonarConfigChart(canvas.chart);
+            if (!config) {
+                alert('Não foi possível expandir este gráfico no momento.');
+                return;
+            }
+
+            if (overlayCanvas.chart) {
+                overlayCanvas.chart.destroy();
+                delete overlayCanvas.chart;
+            }
+
+            overlayTitle.textContent = titulo || 'Visualização detalhada';
+            overlay.classList.add('active');
+            overlay.setAttribute('aria-hidden', 'false');
+
+            const ctx = overlayCanvas.getContext('2d');
+            overlayCanvas.chart = new Chart(ctx, config);
+
+            estado.chartOverlay = {
+                ativo: true,
+                chartId: canvas.id,
+                titulo: overlayTitle.textContent
+            };
+
+            const overlayClose = document.getElementById('chart-overlay-close');
+            if (overlayClose) {
+                overlayClose.focus();
+            }
+        }
+
+        function fecharChartOverlay() {
+            const overlay = document.getElementById('chart-overlay');
+            const overlayCanvas = document.getElementById('chart-overlay-canvas');
+            if (overlayCanvas && overlayCanvas.chart) {
+                overlayCanvas.chart.destroy();
+                delete overlayCanvas.chart;
+            }
+            if (overlay) {
+                overlay.classList.remove('active');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+            estado.chartOverlay = { ativo: false, chartId: null, titulo: '' };
+        }
+
+        function sincronizarChartOverlayBase() {
+            if (!estado.chartOverlay || !estado.chartOverlay.ativo || !estado.chartOverlay.chartId) {
+                return;
+            }
+
+            const overlay = document.getElementById('chart-overlay');
+            if (!overlay || !overlay.classList.contains('active')) {
+                estado.chartOverlay = { ativo: false, chartId: null, titulo: '' };
+                return;
+            }
+
+            const canvasBase = document.getElementById(estado.chartOverlay.chartId);
+            const overlayCanvas = document.getElementById('chart-overlay-canvas');
+            if (!canvasBase || !canvasBase.chart || !overlayCanvas) {
+                fecharChartOverlay();
+                return;
+            }
+
+            const config = clonarConfigChart(canvasBase.chart);
+            if (!config) {
+                fecharChartOverlay();
+                return;
+            }
+
+            if (overlayCanvas.chart) {
+                overlayCanvas.chart.destroy();
+                delete overlayCanvas.chart;
+            }
+
+            const ctx = overlayCanvas.getContext('2d');
+            overlayCanvas.chart = new Chart(ctx, config);
+
+            const overlayTitle = document.getElementById('chart-overlay-title');
+            if (overlayTitle && estado.chartOverlay.titulo) {
+                overlayTitle.textContent = estado.chartOverlay.titulo;
+            }
+        }
+
+        function inicializarChartOverlay() {
+            const overlay = document.getElementById('chart-overlay');
+            const overlayClose = document.getElementById('chart-overlay-close');
+            if (!overlay || !overlayClose) return;
+            if (overlay.dataset.overlayInitialized === 'true') return;
+            overlay.dataset.overlayInitialized = 'true';
+
+            overlayClose.addEventListener('click', fecharChartOverlay);
+            overlay.addEventListener('click', event => {
+                if (event.target === overlay) {
+                    fecharChartOverlay();
+                }
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && overlay.classList.contains('active')) {
+                    fecharChartOverlay();
+                }
+            });
+
+            document.addEventListener('click', event => {
+                const btn = event.target.closest('.chart-action-btn.chart-expand');
+                if (!btn) return;
+                const targetId = btn.getAttribute('data-chart-target');
+                const container = btn.closest('.chart-container');
+                const canvas = targetId
+                    ? document.getElementById(targetId)
+                    : (container ? container.querySelector('canvas') : null);
+                if (!canvas || !canvas.chart) {
+                    alert('Este gráfico ainda não possui dados para visualização ampliada.');
+                    return;
+                }
+                const tituloBtn = btn.getAttribute('data-chart-title');
+                const header = container ? container.querySelector('.chart-header-title') : null;
+                const titulo = tituloBtn || (header ? header.textContent.trim() : 'Visualização detalhada');
+                abrirChartOverlay(canvas, titulo);
+            });
         }
 
         function inicializarRelatorios() {
@@ -7041,25 +8877,185 @@
                 alert('Selecione sala e mês');
                 return;
             }
+            const filtrosSalaMes = {
+                turnos: obterValoresMultiselect('sala-mes-filtro-turno', { normalizador: normalizarTurno }),
+                status: obterValoresMultiselect('sala-mes-filtro-status', {
+                    normalizador: normalizarStatus,
+                    fallbackLista: Array.isArray(estado.filtros.status) ? estado.filtros.status : []
+                }),
+                especialidades: obterValoresMultiselect('sala-mes-filtro-especialidade', { normalizador: normalizarTexto }),
+                categorias: obterValoresMultiselect('sala-mes-filtro-categoria', { normalizador: normalizarTexto }),
+                profissionais: obterValoresMultiselect('sala-mes-filtro-profissional', { normalizador: normalizarTexto })
+            };
             google.script.run
                 .withSuccessHandler(renderMonthlyTable)
                 .withFailureHandler(error => console.error('Erro no sala-mes:', error))
-                .getAgendamentosSalaMes(sala, mes);
+                .getAgendamentosSalaMes(sala, mes, JSON.stringify(filtrosSalaMes));
         }
 
         function renderMonthlyTable(dados) {
             const tbody = document.querySelector('#monthly-schedule tbody');
+            const resumoEl = document.getElementById('monthly-summary');
+            if (resumoEl) resumoEl.innerHTML = '';
             tbody.innerHTML = '';
-            if (dados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="2">Nenhum agendamento neste mês</td></tr>';
+
+            if (!dados || dados.error) {
+                tbody.innerHTML = '<tr><td colspan="2">Não foi possível carregar os agendamentos deste mês.</td></tr>';
+                if (resumoEl) {
+                    resumoEl.innerHTML = '<span class="monthly-summary-message">Erro ao consultar a agenda mensal.</span>';
+                }
                 return;
             }
-            dados.forEach(item => {
+
+            const dias = Array.isArray(dados.dias) ? dados.dias : [];
+            const totais = dados.totais || {};
+            const periodoLabel = dados.periodo && dados.periodo.label ? dados.periodo.label : '';
+            const salaLabel = dados.sala ? `Sala ${dados.sala}` : '';
+
+            if (resumoEl) {
+                const info = [];
+                if (salaLabel) info.push(`<strong>${salaLabel}</strong>`);
+                if (periodoLabel) info.push(`<span>${periodoLabel}</span>`);
+                if (info.length) {
+                    const infoWrapper = document.createElement('div');
+                    infoWrapper.className = 'monthly-summary-info';
+                    infoWrapper.innerHTML = info.join(' • ');
+                    resumoEl.appendChild(infoWrapper);
+                }
+
+                const chipsWrapper = document.createElement('div');
+                chipsWrapper.className = 'monthly-summary-chips';
+                const entradasTotais = Object.entries(totais)
+                    .filter(([, valor]) => Number(valor) > 0)
+                    .sort((a, b) => Number(b[1]) - Number(a[1]));
+
+                if (entradasTotais.length) {
+                    entradasTotais.forEach(([status, valor]) => {
+                        const chip = document.createElement('span');
+                        chip.className = `status-chip status-${statusParaClasseVisual(status)}`;
+                        const label = formatarStatusLabel(status);
+                        chip.textContent = `${label}: ${valor}`;
+                        chipsWrapper.appendChild(chip);
+                    });
+                    resumoEl.appendChild(chipsWrapper);
+                }
+            }
+
+            if (dias.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2">Nenhum agendamento encontrado para os filtros selecionados.</td></tr>';
+                return;
+            }
+
+            dias.forEach(dia => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${item.data}</td>
-                    <td>${item.horarios.join(', ') || 'Nenhum'}</td>
+                tr.className = 'monthly-day-row';
+                if (!dia || !Array.isArray(dia.eventos) || dia.eventos.length === 0) {
+                    tr.classList.add('monthly-day-empty');
+                }
+
+                const tdDia = document.createElement('td');
+                tdDia.className = 'monthly-day-cell';
+                const dataTexto = dia.data ? formatarDataCurtaGrafico(dia.data) : '-';
+                const diaSemana = dia.diaSemana || '';
+                const totalEventos = Array.isArray(dia.eventos) ? dia.eventos.length : 0;
+                const resumoStatus = dia.resumoStatus || {};
+                const resumoChips = Object.entries(resumoStatus)
+                    .filter(([, valor]) => Number(valor) > 0)
+                    .sort((a, b) => Number(b[1]) - Number(a[1]));
+
+                const diaHeader = document.createElement('div');
+                diaHeader.className = 'monthly-day-header';
+                diaHeader.innerHTML = `
+                    <span class="monthly-day-date">${dataTexto}</span>
+                    <div class="monthly-day-meta">
+                        <span class="monthly-day-weekday">${diaSemana}</span>
+                        <span class="monthly-day-total">${totalEventos} agendamento${totalEventos === 1 ? '' : 's'}</span>
+                    </div>
                 `;
+                tdDia.appendChild(diaHeader);
+
+                if (resumoChips.length) {
+                    const chips = document.createElement('div');
+                    chips.className = 'monthly-status-chips';
+                    resumoChips.forEach(([status, valor]) => {
+                        const chip = document.createElement('span');
+                        chip.className = `status-chip status-${statusParaClasseVisual(status)}`;
+                        chip.textContent = `${formatarStatusLabel(status)}: ${valor}`;
+                        chips.appendChild(chip);
+                    });
+                    tdDia.appendChild(chips);
+                }
+
+                const tdEventos = document.createElement('td');
+                tdEventos.className = 'monthly-events-cell';
+                const eventosWrapper = document.createElement('div');
+                eventosWrapper.className = 'monthly-events';
+
+                if (totalEventos === 0) {
+                    const vazio = document.createElement('div');
+                    vazio.className = 'monthly-event-empty';
+                    vazio.textContent = 'Nenhum agendamento registrado.';
+                    eventosWrapper.appendChild(vazio);
+                } else {
+                    dia.eventos.forEach(evento => {
+                        const statusClasse = `status-${statusParaClasseVisual(evento.status)}`;
+                        const eventDiv = document.createElement('div');
+                        eventDiv.className = `monthly-event ${statusClasse}`;
+
+                        const horario = [evento.horaInicio, evento.horaFim].filter(Boolean).join(' – ');
+                        const statusLabel = formatarStatusLabel(evento.status);
+                        const profissional = evento.profissional || 'Profissional não informado';
+                        const especialidade = evento.especialidade || 'Especialidade não informada';
+
+                        const header = document.createElement('div');
+                        header.className = 'monthly-event-header';
+                        header.innerHTML = `
+                            <span class="monthly-event-time">${horario || 'Horário não informado'}</span>
+                            <span class="monthly-event-status">${statusLabel}</span>
+                        `;
+
+                        const corpo = document.createElement('div');
+                        corpo.className = 'monthly-event-body';
+                        corpo.innerHTML = `
+                            <div class="monthly-event-main">
+                                <strong class="monthly-event-profissional">${profissional}</strong>
+                                <span class="monthly-event-especialidade">${especialidade}</span>
+                            </div>
+                        `;
+
+                        const meta = document.createElement('div');
+                        meta.className = 'monthly-event-meta';
+                        const tags = [];
+                        if (evento.categoria) tags.push(`Categoria: ${evento.categoria}`);
+                        if (evento.turno) tags.push(`Turno: ${formatarTurnoLabel(evento.turno)}`);
+                        if (evento.ilha) tags.push(`Ilha ${evento.ilha}`);
+                        tags.forEach(texto => {
+                            const tag = document.createElement('span');
+                            tag.className = 'monthly-event-tag';
+                            tag.textContent = texto;
+                            meta.appendChild(tag);
+                        });
+
+                        if (tags.length) {
+                            corpo.appendChild(meta);
+                        }
+
+                        if (evento.observacoes) {
+                            const notes = document.createElement('p');
+                            notes.className = 'monthly-event-notes';
+                            notes.textContent = evento.observacoes;
+                            corpo.appendChild(notes);
+                        }
+
+                        eventDiv.appendChild(header);
+                        eventDiv.appendChild(corpo);
+                        eventosWrapper.appendChild(eventDiv);
+                    });
+                }
+
+                tdEventos.appendChild(eventosWrapper);
+                tr.appendChild(tdDia);
+                tr.appendChild(tdEventos);
                 tbody.appendChild(tr);
             });
         }
