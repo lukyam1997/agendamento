@@ -385,6 +385,17 @@
           box-shadow: 0 8px 18px rgba(7, 12, 26, 0.35);
       }
 
+      body.light-theme .btn-secondary {
+          background: rgba(79, 70, 229, 0.12);
+          color: var(--primary-strong);
+          border: 1px solid rgba(79, 70, 229, 0.2);
+      }
+
+      body.light-theme .btn-secondary:hover {
+          background: rgba(79, 70, 229, 0.2);
+          color: var(--primary-strong);
+      }
+
       .main-nav {
           background: var(--surface-base);
           border-radius: var(--radius-md);
@@ -662,6 +673,16 @@
           z-index: 1;
       }
 
+      body.light-theme .planejamento-table th {
+          background: rgba(255, 255, 255, 0.92);
+          color: var(--text-secondary);
+          border-bottom: 1px solid var(--border-soft);
+      }
+
+      body.light-theme .planejamento-table td {
+          border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
       .planejamento-table input[type="text"] {
           width: 100%;
           border-radius: var(--radius-sm);
@@ -671,7 +692,20 @@
           padding: 8px 10px;
       }
 
-      .planejamento-status {
+      body.light-theme .planejamento-table input[type="text"] {
+          background: #fff;
+          color: var(--text-secondary);
+          border: 1px solid rgba(148, 163, 184, 0.35);
+      }
+
+      .planejamento-planejada-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+      }
+
+      .planejamento-status,
+      .planejamento-status-chip {
           display: inline-flex;
           align-items: center;
           gap: 6px;
@@ -679,19 +713,24 @@
           border-radius: 999px;
           font-weight: 600;
           font-size: 0.78rem;
+          letter-spacing: 0.01em;
+          align-self: flex-start;
       }
 
-      .planejamento-status.ok {
+      .planejamento-status.ok,
+      .planejamento-status-chip.ok {
           background: rgba(74, 222, 128, 0.22);
           color: #bbf7d0;
       }
 
-      .planejamento-status.alerta {
+      .planejamento-status.alerta,
+      .planejamento-status-chip.alerta {
           background: rgba(248, 113, 113, 0.25);
           color: #fecaca;
       }
 
-      .planejamento-status.pendente {
+      .planejamento-status.pendente,
+      .planejamento-status-chip.pendente {
           background: rgba(96, 165, 250, 0.18);
           color: #bfdbfe;
       }
@@ -736,11 +775,29 @@
       }
 
       body.light-theme .planejamento-row-ok {
-          background: rgba(16, 185, 129, 0.18);
+          background: rgba(16, 185, 129, 0.14);
       }
 
       body.light-theme .planejamento-row-erro {
-          background: rgba(248, 113, 113, 0.22);
+          background: rgba(248, 113, 113, 0.18);
+      }
+
+      body.light-theme .planejamento-status.ok,
+      body.light-theme .planejamento-status-chip.ok {
+          background: rgba(34, 197, 94, 0.16);
+          color: #166534;
+      }
+
+      body.light-theme .planejamento-status.alerta,
+      body.light-theme .planejamento-status-chip.alerta {
+          background: rgba(248, 113, 113, 0.18);
+          color: #b91c1c;
+      }
+
+      body.light-theme .planejamento-status.pendente,
+      body.light-theme .planejamento-status-chip.pendente {
+          background: rgba(59, 130, 246, 0.15);
+          color: #1d4ed8;
       }
 
       .planejamento-feedback {
@@ -912,12 +969,13 @@
 
       .planta-container {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+          grid-template-columns: repeat(22, minmax(88px, 1fr));
           gap: 12px;
-          padding: 16px;
+          padding: 20px;
           background: var(--surface-elevated);
-          border-radius: var(--radius-sm);
+          border-radius: var(--radius-lg);
           border: 1px solid var(--border-soft);
+          box-shadow: var(--shadow-soft);
           overflow-x: auto;
       }
 
@@ -931,35 +989,218 @@
       }
 
       .planta-cell {
-          min-height: 70px;
+          min-height: 110px;
+          padding: 4px;
+          border: none;
           display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: var(--radius-sm);
-          border: 1px dashed var(--border-soft);
-          color: var(--text-muted);
-          font-size: 0.85rem;
       }
 
       .planta-cell.empty {
-          border: none;
-          background: transparent;
+          opacity: 0;
+          pointer-events: none;
       }
 
-      .planta-cell .mini-sala {
+      .planta-card {
           width: 100%;
           height: 100%;
-          border-radius: inherit;
+          border-radius: var(--radius-md);
+          border: 1px solid transparent;
+          padding: 12px;
           display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          color: #fff;
-          padding: 8px;
+          flex-direction: column;
+          justify-content: space-between;
+          gap: 10px;
+          color: var(--text-secondary);
+          position: relative;
+          overflow: hidden;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          background: linear-gradient(135deg, rgba(30, 64, 175, 0.25), rgba(14, 165, 233, 0.12));
+          cursor: pointer;
+      }
+
+      .planta-card::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 55%);
+          pointer-events: none;
+      }
+
+      .planta-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 18px 36px rgba(7, 12, 26, 0.35);
+      }
+
+      .planta-card.status-livre {
+          background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(59, 130, 246, 0.08));
+          border-color: rgba(74, 222, 128, 0.35);
+      }
+
+      .planta-card.status-ocupado {
+          background: linear-gradient(135deg, rgba(96, 165, 250, 0.25), rgba(168, 85, 247, 0.18));
+          border-color: rgba(96, 165, 250, 0.4);
+      }
+
+      .planta-card.status-bloqueado,
+      .planta-card.status-manutencao {
+          background: linear-gradient(135deg, rgba(248, 113, 113, 0.28), rgba(248, 180, 107, 0.22));
+          border-color: rgba(248, 113, 113, 0.4);
+      }
+
+      .planta-card.status-reservado {
+          background: linear-gradient(135deg, rgba(250, 204, 21, 0.28), rgba(79, 70, 229, 0.22));
+          border-color: rgba(250, 204, 21, 0.35);
       }
 
       .planta-cell.filtered-out {
           opacity: 0.25;
+      }
+
+      .planta-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+      }
+
+      .planta-card-title {
+          font-weight: 700;
+          font-size: 1rem;
+          color: #fff;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .planta-card-meta {
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.78);
+      }
+
+      .planta-card-body {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          z-index: 1;
+      }
+
+      .planta-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px;
+          border-radius: 999px;
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          background: rgba(15, 23, 42, 0.35);
+          color: #fff;
+      }
+
+      .planta-agenda-resumo {
+          font-size: 0.82rem;
+          color: rgba(255, 255, 255, 0.86);
+          line-height: 1.35;
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: grid;
+          gap: 6px;
+      }
+
+      .planta-agenda-resumo li {
+          list-style: none;
+          display: grid;
+          gap: 4px;
+      }
+
+      .planta-agenda-horario {
+          font-weight: 600;
+          letter-spacing: 0.03em;
+      }
+
+      .planta-agenda-detalhes {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px 12px;
+          font-size: 0.78rem;
+          color: rgba(226, 232, 240, 0.9);
+      }
+
+      .planta-agenda-status {
+          padding: 2px 8px;
+          border-radius: 999px;
+          background: rgba(59, 130, 246, 0.18);
+          color: #bfdbfe;
+          font-weight: 600;
+      }
+
+      .planta-agenda-extra {
+          font-size: 0.75rem;
+          color: rgba(148, 163, 184, 0.9);
+      }
+
+      .planta-card-estatico {
+          cursor: default;
+      }
+
+      .planta-card-estatico .planta-card-meta {
+          font-size: 0.75rem;
+          color: rgba(148, 163, 184, 0.85);
+      }
+
+      .planta-card-estatico:hover {
+          transform: none;
+          box-shadow: none;
+      }
+
+      .planta-agenda-vazia {
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.72);
+      }
+
+      body.light-theme .planta-container {
+          background: #fff;
+          border-color: rgba(148, 163, 184, 0.35);
+      }
+
+      body.light-theme .planta-card {
+          color: var(--text-secondary);
+          box-shadow: none;
+      }
+
+      body.light-theme .planta-card::after {
+          background: radial-gradient(circle at top right, rgba(148, 163, 184, 0.24), transparent 55%);
+      }
+
+      body.light-theme .planta-card-title {
+          color: var(--text-primary);
+          text-shadow: none;
+      }
+
+      body.light-theme .planta-badge {
+          background: rgba(79, 70, 229, 0.12);
+          color: var(--primary-strong);
+      }
+
+      body.light-theme .planta-agenda-resumo {
+          color: var(--text-secondary);
+      }
+
+      body.light-theme .planta-agenda-vazia {
+          color: var(--text-muted);
+      }
+
+      body.light-theme .planta-agenda-detalhes {
+          color: var(--text-secondary);
+      }
+
+      body.light-theme .planta-agenda-status {
+          background: rgba(59, 130, 246, 0.16);
+          color: var(--primary);
+      }
+
+      body.light-theme .planta-agenda-extra {
+          color: var(--text-muted);
       }
 
       .bloco {
@@ -1182,6 +1423,11 @@
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
       }
 
+      .report-filters.compact {
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          padding: 14px;
+      }
+
       .report-filter-field {
           display: flex;
           flex-direction: column;
@@ -1346,20 +1592,59 @@
           background: var(--surface-elevated);
           border-radius: var(--radius-md);
           border: 1px solid var(--border-soft);
-          padding: 18px;
+          padding: 20px;
           box-shadow: var(--shadow-soft);
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          min-height: 260px;
-          height: 320px;
+          gap: 16px;
+          min-height: 280px;
+          height: 340px;
           position: relative;
       }
 
-      .chart-container h3 {
+      .chart-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+      }
+
+      .chart-header h3 {
           margin: 0;
           font-size: 1rem;
           color: var(--text-secondary);
+      }
+
+      .chart-action {
+          border: 1px solid var(--border-soft);
+          background: var(--surface-base);
+          color: var(--text-muted);
+          border-radius: 999px;
+          width: 34px;
+          height: 34px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: var(--transition-fast);
+      }
+
+      .chart-action:hover,
+      .chart-action:focus-visible {
+          background: var(--primary);
+          color: #fff;
+          border-color: transparent;
+      }
+
+      body.light-theme .chart-action {
+          background: rgba(226, 232, 240, 0.85);
+          border-color: rgba(148, 163, 184, 0.45);
+          color: var(--text-muted);
+      }
+
+      body.light-theme .chart-action:hover,
+      body.light-theme .chart-action:focus-visible {
+          color: #fff;
       }
 
       .chart-container canvas {
@@ -1386,6 +1671,162 @@
           padding: 18px;
           box-shadow: var(--shadow-soft);
           margin-bottom: 18px;
+      }
+
+      .sala-mes-eventos {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: grid;
+          gap: 10px;
+      }
+
+      .sala-mes-eventos li {
+          border-radius: var(--radius-sm);
+          border: 1px solid rgba(148, 163, 184, 0.18);
+          background: rgba(79, 70, 229, 0.08);
+          padding: 10px 14px;
+          display: grid;
+          gap: 6px;
+      }
+
+      .sala-mes-evento-horario {
+          font-weight: 600;
+          color: #c7d2fe;
+          letter-spacing: 0.02em;
+      }
+
+      .sala-mes-evento-detalhes {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px 12px;
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+      }
+
+      .sala-mes-evento-detalhes strong {
+          color: var(--text-primary);
+      }
+
+      .sala-mes-evento-status {
+          background: rgba(79, 70, 229, 0.22);
+          color: #e0e7ff;
+          padding: 2px 10px;
+          border-radius: 999px;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+      }
+
+      .sala-mes-evento-vazio {
+          display: inline-block;
+          padding: 6px 12px;
+          border-radius: var(--radius-sm);
+          background: rgba(148, 163, 184, 0.12);
+          color: var(--text-muted);
+          font-size: 0.9rem;
+      }
+
+      .sala-mes-eventos-resumo li {
+          border-style: dashed;
+          background: rgba(148, 163, 184, 0.08);
+      }
+
+      body.light-theme .sala-mes-eventos li {
+          background: rgba(226, 232, 240, 0.65);
+          border-color: rgba(148, 163, 184, 0.38);
+      }
+
+      body.light-theme .sala-mes-evento-horario {
+          color: var(--primary);
+      }
+
+      body.light-theme .sala-mes-evento-status {
+          background: rgba(59, 130, 246, 0.16);
+          color: var(--primary);
+      }
+
+      body.light-theme .sala-mes-evento-vazio {
+          background: rgba(226, 232, 240, 0.7);
+          color: var(--text-muted);
+      }
+
+      body.light-theme .sala-mes-eventos-resumo li {
+          border-color: rgba(148, 163, 184, 0.45);
+      }
+
+      .logs-controls {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+      }
+
+      .logs-controls input,
+      .logs-controls select {
+          padding: 10px 12px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-elevated);
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+      }
+
+      .logs-table-wrapper {
+          background: var(--surface-elevated);
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-soft);
+          overflow: hidden;
+          box-shadow: var(--shadow-soft);
+      }
+
+      #logs-tabela {
+          width: 100%;
+          border-collapse: collapse;
+      }
+
+      #logs-tabela th,
+      #logs-tabela td {
+          padding: 12px 16px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          text-align: left;
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+      }
+
+      #logs-tabela th {
+          background: rgba(15, 23, 42, 0.55);
+          font-weight: 600;
+      }
+
+      #logs-tabela tbody tr:hover {
+          background: rgba(79, 70, 229, 0.12);
+      }
+
+      .log-dados {
+          font-family: 'Fira Code', 'Roboto Mono', monospace;
+          font-size: 0.78rem;
+          color: var(--text-muted);
+          max-width: 420px;
+          word-break: break-word;
+          white-space: pre-wrap;
+      }
+
+      body.light-theme #logs-tabela th {
+          background: rgba(226, 232, 240, 0.85);
+          color: var(--text-secondary);
+          border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+      }
+
+      body.light-theme #logs-tabela td {
+          border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      }
+
+      body.light-theme .logs-controls input,
+      body.light-theme .logs-controls select {
+          background: #fff;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          color: var(--text-secondary);
       }
 
       .resumo-grid {
@@ -1603,6 +2044,51 @@
 
       .close-modal:hover {
           color: #fff;
+      }
+
+      .modal-content.chart-modal-content {
+          max-width: 960px;
+          width: min(92vw, 980px);
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+      }
+
+      .chart-modal-body {
+          display: grid;
+          gap: 18px;
+      }
+
+      #chart-modal-canvas {
+          width: 100%;
+          height: 420px;
+      }
+
+      .chart-modal-details {
+          display: grid;
+          gap: 10px;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+
+      .chart-modal-details li {
+          list-style: none;
+          background: var(--surface-base);
+          border: 1px solid var(--border-soft);
+          border-radius: var(--radius-sm);
+          padding: 12px 14px;
+          display: grid;
+          gap: 6px;
+          color: var(--text-secondary);
+      }
+
+      .chart-modal-detalhe-label {
+          font-weight: 700;
+          color: var(--text-primary);
+      }
+
+      .chart-modal-details li span {
+          font-weight: 500;
+          display: block;
       }
 
       .form-cadastro,
@@ -2106,6 +2592,7 @@
             <button class="nav-btn" data-tab="dashboard">Dashboards</button>
             <button class="nav-btn" data-tab="relatorios">Relatórios</button>
             <button class="nav-btn" data-tab="sala-mes">Acompanhamento Sala/Mês</button>
+            <button class="nav-btn" data-tab="logs">Logs</button>
         </nav>
         <header>
             <div class="logo">
@@ -2271,15 +2758,14 @@
                         <div class="planejamento-table-wrapper">
                             <table class="planejamento-table">
                                 <thead>
-                                    <tr>
-                                        <th>Profissional</th>
-                                        <th>Especialidade</th>
-                                        <th>Turno</th>
-                                        <th>Sala atual</th>
-                                        <th>Sala planejada</th>
-                                        <th>Status</th>
-                                        <th>Ações</th>
-                                    </tr>
+                                <tr>
+                                    <th>Profissional</th>
+                                    <th>Especialidade</th>
+                                    <th>Turno</th>
+                                    <th>Sala atual</th>
+                                    <th>Sala planejada</th>
+                                    <th>Ações</th>
+                                </tr>
                                 </thead>
                                 <tbody id="planejamento-tbody"></tbody>
                             </table>
@@ -2322,6 +2808,106 @@
                                 </label>
                             </div>
                             <span class="dashboard-day-range-hint">Escolha a data inicial e final para analisar o período.</span>
+                        </div>
+                    </div>
+                    <div class="report-filters compact" id="dashboard-filtros">
+                        <div class="report-filter-field">
+                            <label for="dashboard-filtro-turno">Turnos</label>
+                            <div class="report-multiselect" data-select-id="dashboard-filtro-turno" data-placeholder="Todos os turnos">
+                                <button type="button" class="report-multiselect-btn">Todos os turnos</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="dashboard-filtro-turno" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="dashboard-filtro-status">Status</label>
+                            <div class="report-multiselect" data-select-id="dashboard-filtro-status" data-placeholder="Todos os status">
+                                <button type="button" class="report-multiselect-btn">Todos os status</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="dashboard-filtro-status" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="dashboard-filtro-ilha">Ilhas</label>
+                            <div class="report-multiselect" data-select-id="dashboard-filtro-ilha" data-placeholder="Todas as ilhas">
+                                <button type="button" class="report-multiselect-btn">Todas as ilhas</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="dashboard-filtro-ilha" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="dashboard-filtro-sala">Salas</label>
+                            <div class="report-multiselect" data-select-id="dashboard-filtro-sala" data-placeholder="Todas as salas">
+                                <button type="button" class="report-multiselect-btn">Todas as salas</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="dashboard-filtro-sala" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="dashboard-filtro-especialidade">Especialidades</label>
+                            <div class="report-multiselect" data-select-id="dashboard-filtro-especialidade" data-placeholder="Todas as especialidades">
+                                <button type="button" class="report-multiselect-btn">Todas as especialidades</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="dashboard-filtro-especialidade" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="dashboard-filtro-categoria">Categorias</label>
+                            <div class="report-multiselect" data-select-id="dashboard-filtro-categoria" data-placeholder="Todas as categorias">
+                                <button type="button" class="report-multiselect-btn">Todas as categorias</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="dashboard-filtro-categoria" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="dashboard-filtro-profissional">Profissionais</label>
+                            <div class="report-multiselect" data-select-id="dashboard-filtro-profissional" data-placeholder="Todos os profissionais">
+                                <button type="button" class="report-multiselect-btn">Todos os profissionais</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="dashboard-filtro-profissional" multiple class="sr-only-input"></select>
                         </div>
                     </div>
                     <div class="resumo-grid" id="dashboard-resumo">
@@ -2368,27 +2954,57 @@
                     </div>
                     <div class="dashboard-grid">
                         <div class="chart-container">
-                            <h3>Ocupação por Turno</h3>
+                            <div class="chart-header">
+                                <h3>Ocupação por Turno</h3>
+                                <button class="chart-action" data-chart-target="turno" type="button" aria-label="Expandir gráfico de ocupação por turno">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                             <canvas id="chart-turno"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Ocupação por Ilha</h3>
+                            <div class="chart-header">
+                                <h3>Ocupação por Ilha</h3>
+                                <button class="chart-action" data-chart-target="ilha" type="button" aria-label="Expandir gráfico de ocupação por ilha">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                             <canvas id="chart-ilha"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Evolução de Ocupação</h3>
+                            <div class="chart-header">
+                                <h3>Evolução de Ocupação</h3>
+                                <button class="chart-action" data-chart-target="evolucao" type="button" aria-label="Expandir gráfico de evolução de ocupação">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                             <canvas id="chart-evolucao"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Distribuição por Especialidade</h3>
+                            <div class="chart-header">
+                                <h3>Distribuição por Especialidade</h3>
+                                <button class="chart-action" data-chart-target="especialidade" type="button" aria-label="Expandir gráfico por especialidade">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                             <canvas id="chart-especialidade"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Distribuição Geral de Ocupação</h3>
+                            <div class="chart-header">
+                                <h3>Distribuição Geral de Ocupação</h3>
+                                <button class="chart-action" data-chart-target="heatmap" type="button" aria-label="Expandir gráfico de distribuição geral">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                             <canvas id="chart-heatmap"></canvas>
                         </div>
                         <div class="chart-container">
-                            <h3>Distribuição por Status</h3>
+                            <div class="chart-header">
+                                <h3>Distribuição por Status</h3>
+                                <button class="chart-action" data-chart-target="aproveitamento" type="button" aria-label="Expandir gráfico por status">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                             <canvas id="chart-aproveitamento"></canvas>
                         </div>
                     </div>
@@ -2596,6 +3212,78 @@
                         <input type="month" id="sala-mes-periodo">
                         <button class="btn btn-primary" id="btn-atualizar-sala-mes">Atualizar</button>
                     </div>
+                    <div class="report-filters compact" id="sala-mes-filtros">
+                        <div class="report-filter-field">
+                            <label for="sala-mes-filtro-turno">Turnos</label>
+                            <div class="report-multiselect" data-select-id="sala-mes-filtro-turno" data-placeholder="Todos os turnos">
+                                <button type="button" class="report-multiselect-btn">Todos os turnos</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="sala-mes-filtro-turno" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="sala-mes-filtro-status">Status</label>
+                            <div class="report-multiselect" data-select-id="sala-mes-filtro-status" data-placeholder="Todos os status">
+                                <button type="button" class="report-multiselect-btn">Todos os status</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="sala-mes-filtro-status" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="sala-mes-filtro-especialidade">Especialidades</label>
+                            <div class="report-multiselect" data-select-id="sala-mes-filtro-especialidade" data-placeholder="Todas as especialidades">
+                                <button type="button" class="report-multiselect-btn">Todas as especialidades</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="sala-mes-filtro-especialidade" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="sala-mes-filtro-categoria">Categorias</label>
+                            <div class="report-multiselect" data-select-id="sala-mes-filtro-categoria" data-placeholder="Todas as categorias">
+                                <button type="button" class="report-multiselect-btn">Todas as categorias</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="sala-mes-filtro-categoria" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="sala-mes-filtro-profissional">Profissionais</label>
+                            <div class="report-multiselect" data-select-id="sala-mes-filtro-profissional" data-placeholder="Todos os profissionais">
+                                <button type="button" class="report-multiselect-btn">Todos os profissionais</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="sala-mes-filtro-profissional" multiple class="sr-only-input"></select>
+                        </div>
+                    </div>
                     <div class="monthly-table">
                         <table id="monthly-schedule">
                             <thead>
@@ -2605,6 +3293,35 @@
                                 </tr>
                             </thead>
                             <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="dashboard-section" id="logs-section">
+                    <h2>Logs do Sistema</h2>
+                    <div class="logs-controls">
+                        <input type="text" id="logs-busca" placeholder="Filtrar por usuário, ação ou detalhes">
+                        <select id="logs-limit">
+                            <option value="50">Últimos 50</option>
+                            <option value="100" selected>Últimos 100</option>
+                            <option value="200">Últimos 200</option>
+                        </select>
+                        <button class="btn btn-primary" id="btn-atualizar-logs" type="button">
+                            <i class="fas fa-rotate"></i> Atualizar
+                        </button>
+                    </div>
+                    <div class="logs-table-wrapper">
+                        <table id="logs-tabela">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Usuário</th>
+                                    <th>Ação</th>
+                                    <th>Detalhes</th>
+                                    <th>Dados</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-tbody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -2640,6 +3357,19 @@
                 <h3><i class="fas fa-list-alt"></i> Agendamentos do Dia</h3>
                 <div class="agendamentos-list" id="agendamentos-list">
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="chart-modal">
+        <div class="modal-content chart-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="chart-modal-title"><i class="fas fa-chart-pie"></i> Visualização detalhada</h2>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
+            </div>
+            <div class="modal-body chart-modal-body">
+                <canvas id="chart-modal-canvas"></canvas>
+                <ul class="chart-modal-details" id="chart-modal-detalhes"></ul>
             </div>
         </div>
     </div>
@@ -3083,6 +3813,36 @@
         const horariosTarde = ['13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'];
         const horariosNoite = ['19:00-20:00', '20:00-21:00', '21:00-22:00', '22:00-23:00', '23:00-00:00', '00:00-01:00', '01:00-02:00', '02:00-03:00', '03:00-04:00', '04:00-05:00', '05:00-06:00', '06:00-07:00'];
 
+        const criarEstadoFiltrosContexto = () => ({
+            turnos: [],
+            status: [],
+            ilhas: [],
+            salas: [],
+            especialidades: [],
+            categorias: [],
+            profissionais: []
+        });
+
+        const FILTRO_CHAVES = {
+            turno: 'turnos',
+            status: 'status',
+            ilha: 'ilhas',
+            sala: 'salas',
+            especialidade: 'especialidades',
+            categoria: 'categorias',
+            profissional: 'profissionais'
+        };
+
+        const FILTRO_ID_MAP = {
+            turnos: 'turno',
+            status: 'status',
+            ilhas: 'ilha',
+            salas: 'sala',
+            especialidades: 'especialidade',
+            categorias: 'categoria',
+            profissionais: 'profissional'
+        };
+
         // Layout da planta como array 2D
         const plantaLayout = [
             ['10','11','12','13','14','-','-','-','15','16','17','18','19','20','21','22','-','-','23','24','25','26'],
@@ -3109,6 +3869,8 @@
                 status: ['livre', 'ocupado'],
                 ilha: []
             },
+            filtrosDashboard: criarEstadoFiltrosContexto(),
+            filtrosSalaMes: criarEstadoFiltrosContexto(),
             userRole: null,
             visualizacaoSimplificada: true,  // Novo estado para toggle simplificado
             planejamentoTurno: 'manha',
@@ -3116,6 +3878,10 @@
             agendamentoEditarId: null,
             dashboardDiasEspecificos: [],
             dashboardIntervaloDias: { inicio: '', fim: '' },
+            dashboardDados: null,
+            logs: [],
+            logsLimite: 100,
+            logsFiltroTexto: '',
             temaAtual: 'dark'
         };
 
@@ -3236,6 +4002,10 @@
             }
 
             localStorage.setItem('themePreference', normalizado);
+
+            if (estado.dashboardDados) {
+                renderCharts(estado.dashboardDados);
+            }
         }
 
         function inicializarTema() {
@@ -3566,7 +4336,10 @@
                     console.log('Estado atualizado - Salas:', estado.salas.length, 'Agendamentos:', estado.agendamentos.length);
                     aplicarFiltros();
                     atualizarPlanejamento();
-                    preencherRelatorioFiltros();
+                    const opcoesFiltros = preencherRelatorioFiltros();
+                    preencherDashboardFiltros(opcoesFiltros);
+                    preencherSalaMesFiltros(opcoesFiltros);
+                    registrarEventosFiltrosEspecificos();
                     esconderLoading();
                     console.log('Loading escondido - Verificando se monitor está visível');
                     isLoading = false;  // Libera para próximas chamadas
@@ -3597,7 +4370,10 @@
                     preencherFiltros();
                     setupMultiselectListeners();
                     preencherFormularios();
-                    preencherRelatorioFiltros();
+                    const opcoes = preencherRelatorioFiltros();
+                    preencherDashboardFiltros(opcoes);
+                    preencherSalaMesFiltros(opcoes);
+                    registrarEventosFiltrosEspecificos();
                 })
                 .withFailureHandler(function(error) {
                     console.error('Erro ao carregar dados mestres:', error);
@@ -3774,7 +4550,7 @@
 
             const selecionados = new Set(Array.from(select.selectedOptions || []).map(opt => opt.value));
             select.innerHTML = '';
-            valores.forEach(({ value, label }) => {
+            (valores || []).forEach(({ value, label }) => {
                 const option = document.createElement('option');
                 option.value = value;
                 option.textContent = label;
@@ -3787,13 +4563,13 @@
             atualizarReportMultiselect(selectId, valores);
         }
 
-        function preencherRelatorioFiltros() {
-            definirRelatorioOpcoes('relatorio-filtro-turno', [
+        function obterOpcoesFiltroComuns() {
+            const turnos = [
                 { value: 'manha', label: 'Manhã' },
                 { value: 'tarde', label: 'Tarde' },
                 { value: 'noite', label: 'Noite' },
                 { value: 'todos', label: 'Todos os turnos' }
-            ]);
+            ];
 
             const statusSet = new Set(['ocupado', 'reservado', 'bloqueado', 'livre', 'manutencao', 'cancelado']);
             estado.agendamentos.forEach(ag => {
@@ -3805,7 +4581,6 @@
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(status => ({ value: status, label: formatarStatusLabel(status) }));
-            definirRelatorioOpcoes('relatorio-filtro-status', statusValores);
 
             const ilhasSet = new Set();
             (estado.dadosMestres.ilhas || []).forEach(ilha => {
@@ -3822,7 +4597,6 @@
                 .filter(Boolean)
                 .sort(ordenarAlphaNumerico)
                 .map(ilha => ({ value: ilha, label: `Ilha ${ilha}` }));
-            definirRelatorioOpcoes('relatorio-filtro-ilha', ilhasLista);
 
             const salasSet = new Set();
             estado.salas.forEach(sala => {
@@ -3830,16 +4604,20 @@
                     salasSet.add(String(sala.numero).trim());
                 }
             });
+            estado.agendamentos.forEach(ag => {
+                if (ag.sala !== undefined && ag.sala !== null && `${ag.sala}`.trim()) {
+                    salasSet.add(String(ag.sala).trim());
+                }
+            });
             const salasLista = Array.from(salasSet)
                 .filter(Boolean)
                 .sort(ordenarAlphaNumerico)
                 .map(numero => ({ value: numero, label: `Sala ${numero}` }));
-            definirRelatorioOpcoes('relatorio-filtro-sala', salasLista);
 
             const especialidadeMap = new Map();
             (estado.dadosMestres.especialidades || []).forEach(esp => {
                 const chave = normalizarTexto(esp);
-                if (chave) {
+                if (chave && !especialidadeMap.has(chave)) {
                     especialidadeMap.set(chave, esp);
                 }
             });
@@ -3854,12 +4632,11 @@
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(esp => ({ value: esp, label: esp }));
-            definirRelatorioOpcoes('relatorio-filtro-especialidade', especialidadesLista);
 
             const categoriaMap = new Map();
             (estado.dadosMestres.categorias || []).forEach(cat => {
                 const chave = normalizarTexto(cat);
-                if (chave) {
+                if (chave && !categoriaMap.has(chave)) {
                     categoriaMap.set(chave, cat);
                 }
             });
@@ -3874,7 +4651,6 @@
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(cat => ({ value: cat, label: cat }));
-            definirRelatorioOpcoes('relatorio-filtro-categoria', categoriasLista);
 
             const profissionaisSet = new Set();
             estado.agendamentos.forEach(ag => {
@@ -3887,7 +4663,73 @@
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(nome => ({ value: nome, label: nome }));
-            definirRelatorioOpcoes('relatorio-filtro-profissional', profissionaisLista);
+
+            return {
+                turnos,
+                status: statusValores,
+                ilhas: ilhasLista,
+                salas: salasLista,
+                especialidades: especialidadesLista,
+                categorias: categoriasLista,
+                profissionais: profissionaisLista
+            };
+        }
+
+        function aplicarOpcoesFiltros(prefixo, opcoes) {
+            if (!opcoes) return;
+            definirRelatorioOpcoes(`${prefixo}-filtro-turno`, opcoes.turnos);
+            definirRelatorioOpcoes(`${prefixo}-filtro-status`, opcoes.status);
+            definirRelatorioOpcoes(`${prefixo}-filtro-ilha`, opcoes.ilhas);
+            definirRelatorioOpcoes(`${prefixo}-filtro-sala`, opcoes.salas);
+            definirRelatorioOpcoes(`${prefixo}-filtro-especialidade`, opcoes.especialidades);
+            definirRelatorioOpcoes(`${prefixo}-filtro-categoria`, opcoes.categorias);
+            definirRelatorioOpcoes(`${prefixo}-filtro-profissional`, opcoes.profissionais);
+        }
+
+        function preencherRelatorioFiltros() {
+            const opcoes = obterOpcoesFiltroComuns();
+            aplicarOpcoesFiltros('relatorio', opcoes);
+            return opcoes;
+        }
+
+        function preencherDashboardFiltros(opcoesExistentes) {
+            const opcoes = opcoesExistentes || obterOpcoesFiltroComuns();
+            aplicarOpcoesFiltros('dashboard', opcoes);
+        }
+
+        function preencherSalaMesFiltros(opcoesExistentes) {
+            const opcoes = opcoesExistentes || obterOpcoesFiltroComuns();
+            definirRelatorioOpcoes('sala-mes-filtro-turno', opcoes.turnos);
+            definirRelatorioOpcoes('sala-mes-filtro-status', opcoes.status);
+            definirRelatorioOpcoes('sala-mes-filtro-especialidade', opcoes.especialidades);
+            definirRelatorioOpcoes('sala-mes-filtro-categoria', opcoes.categorias);
+            definirRelatorioOpcoes('sala-mes-filtro-profissional', opcoes.profissionais);
+        }
+
+        function registrarEventosFiltrosEspecificos() {
+            const dashboardFiltros = document.getElementById('dashboard-filtros');
+            if (dashboardFiltros && dashboardFiltros.dataset.listenersAttached !== 'true') {
+                dashboardFiltros.querySelectorAll('select').forEach(select => {
+                    select.addEventListener('change', () => {
+                        carregarDashboard();
+                    });
+                });
+                dashboardFiltros.dataset.listenersAttached = 'true';
+            }
+
+            const salaMesFiltros = document.getElementById('sala-mes-filtros');
+            if (salaMesFiltros && salaMesFiltros.dataset.listenersAttached !== 'true') {
+                salaMesFiltros.querySelectorAll('select').forEach(select => {
+                    select.addEventListener('change', () => {
+                        const salaSelecionada = document.getElementById('sala-mes-select');
+                        const periodoSelecionado = document.getElementById('sala-mes-periodo');
+                        if (salaSelecionada && periodoSelecionado && salaSelecionada.value && periodoSelecionado.value) {
+                            atualizarSalaMes();
+                        }
+                    });
+                });
+                salaMesFiltros.dataset.listenersAttached = 'true';
+            }
         }
 
         function setupMultiselectListeners() {
@@ -4087,12 +4929,14 @@
             // Modal de detalhes da sala
             document.querySelectorAll('.close-modal').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    if (btn.closest('#planejamento-frequencia-modal')) {
+                    const modal = btn.closest('.modal');
+                    if (!modal) return;
+                    if (modal.id === 'planejamento-frequencia-modal') {
                         fecharModalPlanejamentoFrequencia();
+                    } else if (modal.id === 'chart-modal') {
+                        fecharChartModal();
                     } else {
-                        document.querySelectorAll('.modal').forEach(modal => {
-                            modal.style.display = 'none';
-                        });
+                        modal.style.display = 'none';
                     }
                 });
             });
@@ -4202,6 +5046,8 @@
                     if (e.target === modal) {
                         if (modal.id === 'planejamento-frequencia-modal') {
                             fecharModalPlanejamentoFrequencia();
+                        } else if (modal.id === 'chart-modal') {
+                            fecharChartModal();
                         } else {
                             modal.style.display = 'none';
                         }
@@ -4229,6 +5075,7 @@
                     if (tab === 'sala-mes') carregarSalaMesOptions();
                     if (tab === 'relatorios') inicializarRelatorios();
                     if (tab === 'planejamento') atualizarPlanejamento();
+                    if (tab === 'logs') carregarLogs();
                 });
             });
 
@@ -4240,6 +5087,26 @@
 
             // Sala/Mês
             document.getElementById('btn-atualizar-sala-mes').addEventListener('click', atualizarSalaMes);
+
+            const btnAtualizarLogs = document.getElementById('btn-atualizar-logs');
+            if (btnAtualizarLogs) {
+                btnAtualizarLogs.addEventListener('click', carregarLogs);
+            }
+
+            const logsLimit = document.getElementById('logs-limit');
+            if (logsLimit) {
+                logsLimit.addEventListener('change', carregarLogs);
+            }
+
+            const logsBusca = document.getElementById('logs-busca');
+            if (logsBusca) {
+                logsBusca.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        carregarLogs();
+                    }
+                });
+            }
 
             // Novo: Formulário de mover
             document.getElementById('form-mover').addEventListener('submit', function(e) {
@@ -4269,6 +5136,7 @@
             }
 
             inicializarDashboardDiasEspecificos();
+            inicializarExpansaoGraficos();
         }
 
         function setupResponsiveShell() {
@@ -4466,18 +5334,20 @@
                     row.forEach(cell => {
                         const cellDiv = document.createElement('div');
                         cellDiv.className = 'planta-cell';
-                        if (cell !== '-') {
-                            const salaNum = isNaN(parseInt(cell)) ? cell : parseInt(cell).toString();
-                            const sala = estado.salas.find(s => String(s.numero) === String(salaNum));
-                            if (sala && salaAtendeFiltros(sala)) {
-                                const statusClass = getStatusClass(sala);
-                                cellDiv.innerHTML = `<div class="mini-sala color-${statusClass}">${sala.numero}</div>`;
-                                cellDiv.addEventListener('click', () => abrirModalSala(sala.numero));
-                            } else {
-                                cellDiv.classList.add('filtered-out');
-                            }
-                        } else {
+                        const valor = String(cell || '').trim();
+                        if (valor === '-') {
                             cellDiv.classList.add('empty');
+                        } else if (!/^[0-9]+$/.test(valor)) {
+                            cellDiv.appendChild(criarCardEstatistico(valor));
+                        } else {
+                            const sala = estado.salas.find(s => String(s.numero) === valor);
+                            if (sala && salaAtendeFiltros(sala)) {
+                                cellDiv.appendChild(criarCardPlanta(sala));
+                            } else if (sala) {
+                                cellDiv.classList.add('filtered-out');
+                            } else {
+                                cellDiv.appendChild(criarCardEstatistico(`Sala ${valor}`));
+                            }
                         }
                         plantaDiv.appendChild(cellDiv);
                     });
@@ -4502,6 +5372,112 @@
             });
 
             return agendamentosSala.length > 0 ? 'ocupado' : 'livre';
+        }
+
+        function formatarJanelaHorario(inicio, fim) {
+            if (inicio && fim) {
+                return `${inicio} - ${fim}`;
+            }
+            if (inicio || fim) {
+                return inicio || fim;
+            }
+            return 'Horário não definido';
+        }
+
+        function obterResumoSalaDetalhado(sala) {
+            const numero = String(sala.numero || '').trim();
+            const statusClasse = getStatusClass(sala);
+            const agendamentosSala = estado.agendamentos
+                .filter(ag => String(ag.sala) === numero)
+                .filter(ag => statusBloqueiaAgendamento(ag.statusNormalizado || ag.status))
+                .sort((a, b) => (a.horaInicio || '').localeCompare(b.horaInicio || ''));
+
+            const agenda = agendamentosSala.slice(0, 3).map(ag => ({
+                horario: formatarJanelaHorario(ag.horaInicio, ag.horaFim),
+                profissional: ag.profissional || 'Profissional não informado',
+                especialidade: ag.especialidade || '',
+                status: ag.statusNormalizado || ag.status
+            }));
+
+            return {
+                statusClasse,
+                statusLabel: formatarStatusLabel(statusClasse),
+                ilha: sala.ilha,
+                agenda,
+                total: agendamentosSala.length
+            };
+        }
+
+        function criarCardPlanta(sala) {
+            const resumo = obterResumoSalaDetalhado(sala);
+            const card = document.createElement('article');
+            card.className = `planta-card status-${resumo.statusClasse}`;
+
+            const header = document.createElement('div');
+            header.className = 'planta-card-header';
+            const titulo = document.createElement('div');
+            titulo.className = 'planta-card-title';
+            titulo.textContent = `Sala ${sala.numero}`;
+            const meta = document.createElement('div');
+            meta.className = 'planta-card-meta';
+            const badge = document.createElement('span');
+            badge.className = 'planta-badge';
+            badge.textContent = resumo.statusLabel;
+            meta.appendChild(badge);
+            const ilhaSpan = document.createElement('span');
+            ilhaSpan.textContent = resumo.ilha ? `Ilha ${resumo.ilha}` : 'Sem ilha';
+            meta.appendChild(ilhaSpan);
+            header.appendChild(titulo);
+            header.appendChild(meta);
+
+            const corpo = document.createElement('div');
+            corpo.className = 'planta-card-body';
+
+            if (resumo.agenda.length) {
+                const lista = document.createElement('ul');
+                lista.className = 'planta-agenda-resumo';
+                resumo.agenda.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div class="planta-agenda-horario">${item.horario}</div>
+                        <div class="planta-agenda-detalhes">
+                            <span>${item.profissional}</span>
+                            <span>${item.especialidade || 'Especialidade não informada'}</span>
+                            <span class="planta-agenda-status">${formatarStatusLabel(item.status)}</span>
+                        </div>
+                    `;
+                    lista.appendChild(li);
+                });
+                corpo.appendChild(lista);
+                if (resumo.total > resumo.agenda.length) {
+                    const extra = document.createElement('div');
+                    extra.className = 'planta-agenda-extra';
+                    extra.textContent = `+${resumo.total - resumo.agenda.length} agendamento(s)`;
+                    corpo.appendChild(extra);
+                }
+            } else {
+                const vazio = document.createElement('div');
+                vazio.className = 'planta-agenda-vazia';
+                vazio.textContent = 'Sem agendamentos para o dia.';
+                corpo.appendChild(vazio);
+            }
+
+            card.appendChild(header);
+            card.appendChild(corpo);
+            card.addEventListener('click', () => abrirModalSala(sala.numero));
+            return card;
+        }
+
+        function criarCardEstatistico(label) {
+            const card = document.createElement('article');
+            card.className = 'planta-card planta-card-estatico';
+            card.innerHTML = `
+                <div class="planta-card-header">
+                    <div class="planta-card-title">${label}</div>
+                    <div class="planta-card-meta"><span>Área técnica</span></div>
+                </div>
+            `;
+            return card;
         }
 
         function atualizarIndicadores() {
@@ -4687,7 +5663,7 @@
             }
 
             if (statusSpan) {
-                statusSpan.className = 'planejamento-status';
+                statusSpan.className = 'planejamento-status-chip';
                 if (status === 'ok') {
                     statusSpan.classList.add('ok');
                     statusSpan.textContent = mensagem || 'Sala conferida';
@@ -4720,7 +5696,7 @@
             if (!Array.isArray(estado.planejamentoLinhas) || estado.planejamentoLinhas.length === 0) {
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.colSpan = 7;
+                td.colSpan = 6;
                 td.textContent = 'Nenhum agendamento encontrado para o turno selecionado.';
                 tr.appendChild(td);
                 tbody.appendChild(tr);
@@ -4777,12 +5753,13 @@
                         }
                     }
                 });
-                tdPlanejada.appendChild(input);
-
-                const tdStatus = document.createElement('td');
+                const planejarWrapper = document.createElement('div');
+                planejarWrapper.className = 'planejamento-planejada-wrapper';
+                planejarWrapper.appendChild(input);
                 statusSpan = document.createElement('span');
-                statusSpan.className = 'planejamento-status';
-                tdStatus.appendChild(statusSpan);
+                statusSpan.className = 'planejamento-status-chip';
+                planejarWrapper.appendChild(statusSpan);
+                tdPlanejada.appendChild(planejarWrapper);
 
                 const tdAcao = document.createElement('td');
                 const containerAcoes = document.createElement('div');
@@ -4828,7 +5805,6 @@
                 tr.appendChild(tdTurno);
                 tr.appendChild(tdSalaAtual);
                 tr.appendChild(tdPlanejada);
-                tr.appendChild(tdStatus);
                 tr.appendChild(tdAcao);
 
                 tbody.appendChild(tr);
@@ -6853,6 +7829,122 @@
             return `${dia}/${mes}`;
         }
 
+        function clonarConfigChart(chart) {
+            if (!chart || !chart.config) return null;
+            const { type, data, options } = chart.config;
+            return {
+                type,
+                data: JSON.parse(JSON.stringify(data || {})),
+                options: JSON.parse(JSON.stringify(options || {}))
+            };
+        }
+
+        function gerarDetalhesGrafico(chart) {
+            if (!chart || !chart.config) return [];
+            const labels = Array.isArray(chart.config.data?.labels) ? chart.config.data.labels : [];
+            const datasets = Array.isArray(chart.config.data?.datasets) ? chart.config.data.datasets : [];
+            return labels.map((label, index) => ({
+                label,
+                valores: datasets.map(dataset => ({
+                    legenda: dataset.label || '',
+                    valor: Array.isArray(dataset.data) ? dataset.data[index] : dataset.data
+                }))
+            }));
+        }
+
+        function atualizarDetalhesGraficoModal(chart) {
+            const lista = document.getElementById('chart-modal-detalhes');
+            if (!lista) return;
+            lista.innerHTML = '';
+            const detalhes = gerarDetalhesGrafico(chart);
+            if (!detalhes.length) {
+                const li = document.createElement('li');
+                li.textContent = 'Nenhum dado disponível para detalhamento.';
+                lista.appendChild(li);
+                return;
+            }
+
+            detalhes.forEach(item => {
+                const li = document.createElement('li');
+                const titulo = document.createElement('span');
+                titulo.textContent = item.label || '-';
+                titulo.className = 'chart-modal-detalhe-label';
+                li.appendChild(titulo);
+
+                item.valores.forEach(valorItem => {
+                    const span = document.createElement('span');
+                    const valorNumero = Number(valorItem.valor);
+                    const textoValor = Number.isFinite(valorNumero)
+                        ? valorNumero.toLocaleString('pt-BR')
+                        : (valorItem.valor ?? '0');
+                    span.textContent = valorItem.legenda
+                        ? `${valorItem.legenda}: ${textoValor}`
+                        : textoValor;
+                    li.appendChild(span);
+                });
+
+                lista.appendChild(li);
+            });
+        }
+
+        function abrirGraficoDetalhe(alvo) {
+            const canvasOrigem = document.getElementById(`chart-${alvo}`);
+            if (!canvasOrigem || !canvasOrigem.chart) {
+                console.warn('Gráfico não encontrado para expandir:', alvo);
+                return;
+            }
+
+            const modal = document.getElementById('chart-modal');
+            const modalCanvas = document.getElementById('chart-modal-canvas');
+            const modalTitulo = document.getElementById('chart-modal-title');
+            if (!modal || !modalCanvas) return;
+
+            const chartOrigem = canvasOrigem.chart;
+            const configClonada = clonarConfigChart(chartOrigem);
+            if (!configClonada) return;
+
+            const tituloOrigem = canvasOrigem.closest('.chart-container')?.querySelector('.chart-header h3');
+            if (modalTitulo && tituloOrigem) {
+                modalTitulo.innerHTML = `<i class="fas fa-chart-bar"></i> ${tituloOrigem.textContent.trim()}`;
+            }
+
+            const contexto = modalCanvas.getContext('2d');
+            if (modalCanvas.chart) {
+                modalCanvas.chart.destroy();
+            }
+            modalCanvas.chart = new Chart(contexto, configClonada);
+            atualizarDetalhesGraficoModal(chartOrigem);
+
+            modal.style.display = 'flex';
+        }
+
+        function fecharChartModal() {
+            const modal = document.getElementById('chart-modal');
+            const modalCanvas = document.getElementById('chart-modal-canvas');
+            const detalhes = document.getElementById('chart-modal-detalhes');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            if (modalCanvas && modalCanvas.chart) {
+                modalCanvas.chart.destroy();
+                modalCanvas.chart = null;
+            }
+            if (detalhes) {
+                detalhes.innerHTML = '';
+            }
+        }
+
+        function inicializarExpansaoGraficos() {
+            document.querySelectorAll('.chart-action').forEach(botao => {
+                botao.addEventListener('click', () => {
+                    const alvo = botao.dataset.chartTarget;
+                    if (alvo) {
+                        abrirGraficoDetalhe(alvo);
+                    }
+                });
+            });
+        }
+
         
         function inicializarDashboardDiasEspecificos() {
             const periodoSelect = document.getElementById('dashboard-periodo');
@@ -6957,18 +8049,20 @@
         function carregarDashboard() {
             const periodoSelect = document.getElementById('dashboard-periodo');
             const periodo = periodoSelect ? periodoSelect.value : 'dia';
+            const limparLista = lista => (lista || []).map(item => String(item || '').trim()).filter(Boolean);
+            const obterListaDashboard = id => limparLista(obterValoresMultiplo(id));
             const filtrosDashboard = {
-                turnos: [],
-                ilhas: Array.isArray(estado.filtros.ilha) ? estado.filtros.ilha : [],
-                especialidades: Array.isArray(estado.filtros.especialidade)
-                    ? estado.filtros.especialidade.map(normalizarTexto)
-                    : [],
-                status: Array.isArray(estado.filtros.status)
-                    ? estado.filtros.status.map(normalizarStatus)
-                    : [],
+                turnos: obterListaDashboard('dashboard-filtro-turno'),
+                status: obterListaDashboard('dashboard-filtro-status'),
+                ilhas: obterListaDashboard('dashboard-filtro-ilha'),
+                salas: obterListaDashboard('dashboard-filtro-sala'),
+                especialidades: obterListaDashboard('dashboard-filtro-especialidade'),
+                categorias: obterListaDashboard('dashboard-filtro-categoria'),
+                profissionais: obterListaDashboard('dashboard-filtro-profissional'),
                 diasEspecificos: [],
                 intervaloDias: null
             };
+            estado.filtrosDashboard = { ...filtrosDashboard };
 
             if (periodo === 'dia') {
                 const modoSelecionado = document.querySelector('input[name="dashboard-dia-modo"]:checked');
@@ -7013,6 +8107,8 @@
                 ocupacaoGeral: {},
                 statusDistribuicao: {}
             };
+
+            estado.dashboardDados = informacoes;
 
             atualizarResumoIndicadores('dashboard-resumo', informacoes.resumo);
 
@@ -7245,7 +8341,10 @@
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('relatorio-data-inicio').value = hoje;
             document.getElementById('relatorio-data-fim').value = hoje;
-            preencherRelatorioFiltros();
+            const opcoesAtualizadas = preencherRelatorioFiltros();
+            preencherDashboardFiltros(opcoesAtualizadas);
+            preencherSalaMesFiltros(opcoesAtualizadas);
+            registrarEventosFiltrosEspecificos();
 
             const filtrosContainer = document.querySelector('.report-filters');
             if (filtrosContainer && !filtrosContainer.dataset.listenersAttached) {
@@ -7418,15 +8517,17 @@
         function carregarSalaMesOptions() {
             const select = document.getElementById('sala-mes-select');
             select.innerHTML = '<option value="">Selecione uma sala</option>';
-            estado.salas.sort((a, b) => parseInt(a.numero) - parseInt(b.numero)).forEach(sala => {
+            [...estado.salas].sort((a, b) => ordenarAlphaNumerico(a.numero, b.numero)).forEach(sala => {
                 const option = document.createElement('option');
                 option.value = sala.numero;
                 option.textContent = `Sala ${sala.numero}`;
                 select.appendChild(option);
             });
-            
+
             const mesAtual = new Date().toISOString().slice(0, 7);
             document.getElementById('sala-mes-periodo').value = mesAtual;
+            preencherSalaMesFiltros();
+            registrarEventosFiltrosEspecificos();
         }
 
         function atualizarSalaMes() {
@@ -7436,27 +8537,160 @@
                 alert('Selecione sala e mês');
                 return;
             }
+            const limparLista = lista => (lista || []).map(item => String(item || '').trim()).filter(Boolean);
+            const filtros = {
+                turnos: limparLista(obterValoresMultiplo('sala-mes-filtro-turno')),
+                status: limparLista(obterValoresMultiplo('sala-mes-filtro-status')),
+                especialidades: limparLista(obterValoresMultiplo('sala-mes-filtro-especialidade')),
+                categorias: limparLista(obterValoresMultiplo('sala-mes-filtro-categoria')),
+                profissionais: limparLista(obterValoresMultiplo('sala-mes-filtro-profissional'))
+            };
+            estado.filtrosSalaMes = { ...filtros };
             google.script.run
                 .withSuccessHandler(renderMonthlyTable)
                 .withFailureHandler(error => console.error('Erro no sala-mes:', error))
-                .getAgendamentosSalaMes(sala, mes);
+                .getAgendamentosSalaMes(sala, mes, JSON.stringify(filtros));
         }
 
         function renderMonthlyTable(dados) {
             const tbody = document.querySelector('#monthly-schedule tbody');
             tbody.innerHTML = '';
-            if (dados.length === 0) {
+            if (!Array.isArray(dados) || dados.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="2">Nenhum agendamento neste mês</td></tr>';
                 return;
             }
             dados.forEach(item => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${item.data}</td>
-                    <td>${item.horarios.join(', ') || 'Nenhum'}</td>
-                `;
+                const tdData = document.createElement('td');
+                tdData.textContent = item.data || '-';
+
+                const tdEventos = document.createElement('td');
+                const eventos = Array.isArray(item.eventos) ? item.eventos : [];
+                if (eventos.length === 0) {
+                    const horarios = Array.isArray(item.horarios) ? item.horarios.filter(Boolean) : [];
+                    if (horarios.length) {
+                        const listaResumo = document.createElement('ul');
+                        listaResumo.className = 'sala-mes-eventos sala-mes-eventos-resumo';
+                        horarios.forEach(texto => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `<div class="sala-mes-evento-horario">${texto}</div>`;
+                            listaResumo.appendChild(li);
+                        });
+                        tdEventos.appendChild(listaResumo);
+                    } else {
+                        const vazio = document.createElement('span');
+                        vazio.className = 'sala-mes-evento-vazio';
+                        vazio.textContent = 'Sem agendamentos';
+                        tdEventos.appendChild(vazio);
+                    }
+                } else {
+                    const lista = document.createElement('ul');
+                    lista.className = 'sala-mes-eventos';
+                    eventos.forEach(evento => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <div class="sala-mes-evento-horario">${(evento.horaInicio || '--')} - ${(evento.horaFim || '--')}</div>
+                            <div class="sala-mes-evento-detalhes">
+                                <strong>${evento.profissional || 'Profissional não informado'}</strong>
+                                <span>${evento.especialidade || 'Especialidade não informada'}</span>
+                                <span>${evento.categoria || 'Categoria não informada'}</span>
+                                <span class="sala-mes-evento-status">${formatarStatusLabel(evento.status)}</span>
+                            </div>
+                        `;
+                        lista.appendChild(li);
+                    });
+                    tdEventos.appendChild(lista);
+                }
+
+                tr.appendChild(tdData);
+                tr.appendChild(tdEventos);
                 tbody.appendChild(tr);
             });
+        }
+
+        function formatarTimestampLog(valor) {
+            if (!valor) return '-';
+            const data = new Date(valor);
+            if (Number.isNaN(data.getTime())) {
+                return String(valor);
+            }
+            const dataTexto = data.toLocaleDateString('pt-BR');
+            const horaTexto = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            return `${dataTexto} ${horaTexto}`;
+        }
+
+        function renderLogs(dados) {
+            const tbody = document.getElementById('logs-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const registros = Array.isArray(dados) ? dados : [];
+            if (registros.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 5;
+                td.textContent = 'Nenhum log encontrado para o filtro selecionado.';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                return;
+            }
+
+            registros.forEach(log => {
+                const tr = document.createElement('tr');
+
+                const tdData = document.createElement('td');
+                tdData.textContent = formatarTimestampLog(log.timestamp);
+
+                const tdUsuario = document.createElement('td');
+                tdUsuario.textContent = log.usuario || '-';
+
+                const tdAcao = document.createElement('td');
+                tdAcao.textContent = log.acao || '-';
+
+                const tdDetalhes = document.createElement('td');
+                tdDetalhes.textContent = log.detalhes || '-';
+
+                const tdDados = document.createElement('td');
+                tdDados.className = 'log-dados';
+                tdDados.textContent = log.dados || '-';
+
+                tr.appendChild(tdData);
+                tr.appendChild(tdUsuario);
+                tr.appendChild(tdAcao);
+                tr.appendChild(tdDetalhes);
+                tr.appendChild(tdDados);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function carregarLogs() {
+            const botao = document.getElementById('btn-atualizar-logs');
+            const limiteSelect = document.getElementById('logs-limit');
+            const buscaInput = document.getElementById('logs-busca');
+            const limite = limiteSelect ? Number(limiteSelect.value) || 100 : 100;
+            const filtroTexto = buscaInput ? buscaInput.value.trim() : '';
+            estado.logsLimite = limite;
+            estado.logsFiltroTexto = filtroTexto;
+
+            if (botao) {
+                botao.disabled = true;
+            }
+
+            google.script.run
+                .withSuccessHandler(registros => {
+                    estado.logs = Array.isArray(registros) ? registros : [];
+                    renderLogs(estado.logs);
+                    if (botao) {
+                        botao.disabled = false;
+                    }
+                })
+                .withFailureHandler(error => {
+                    console.error('Erro ao carregar logs:', error);
+                    if (botao) {
+                        botao.disabled = false;
+                    }
+                })
+                .getLogs(limite, filtroTexto);
         }
     </script>
 </body>
