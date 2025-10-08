@@ -3620,6 +3620,10 @@
                     profissional: ag.profissional || '—',
                     especialidade: ag.especialidade || '—',
                     turno: ag.turnoNormalizado || normalizarTurno(ag.turno) || 'manha',
+                    dataInicio: ag.dataInicio || '',
+                    dataFim: ag.dataFim || '',
+                    horaInicio: ag.horaInicio || '',
+                    horaFim: ag.horaFim || '',
                     salaAtual: ag.sala != null ? String(ag.sala) : '—',
                     salaPlanejada: anterior.salaPlanejada || '',
                     resultado: null,
@@ -4180,6 +4184,47 @@
                 return;
             }
 
+            const agendamentoOriginal = estado.agendamentos.find(ag => String(ag.id) === linha.id);
+            const dataIso = estado.dataAtual.toISOString().split('T')[0];
+            const horaInicioRef = linha.horaInicio || (agendamentoOriginal ? agendamentoOriginal.horaInicio : '');
+            const horaFimRef = linha.horaFim || (agendamentoOriginal ? agendamentoOriginal.horaFim : '');
+            const turnoRef = (agendamentoOriginal && (agendamentoOriginal.turnoNormalizado || normalizarTurno(agendamentoOriginal.turno)))
+                || linha.turno
+                || 'todos';
+
+            if (agendamentoOriginal && horaInicioRef && horaFimRef) {
+                const conflito = verificarConflitoHorario(
+                    salaDestino,
+                    dataIso,
+                    horaInicioRef,
+                    horaFimRef,
+                    turnoRef,
+                    linha.id
+                );
+
+                if (conflito) {
+                    mostrarPlanejamentoMensagem(`Conflito identificado com ${conflito.profissional || 'outro agendamento'} na sala ${salaDestino}. Realizando troca automática...`, false);
+
+                    google.script.run
+                        .withSuccessHandler(result => {
+                            if (result.success) {
+                                mostrarPlanejamentoMensagem('Troca realizada com sucesso. Atualizando dados...', true);
+                                carregarDados();
+                            } else {
+                                if (btnLinha) btnLinha.disabled = false;
+                                mostrarPlanejamentoMensagem(result.message || 'Não foi possível trocar os agendamentos.', false, true);
+                            }
+                        })
+                        .withFailureHandler(error => {
+                            if (btnLinha) btnLinha.disabled = false;
+                            mostrarPlanejamentoMensagem('Erro ao realizar troca: ' + error.toString(), false, true);
+                        })
+                        .trocarAgendamentos(linha.id, conflito.id);
+
+                    return;
+                }
+            }
+
             const payload = { sala: salaInfo.numero };
             if (salaInfo.ilha) {
                 payload.ilha = salaInfo.ilha;
@@ -4216,6 +4261,8 @@
 
             mostrarPlanejamentoMensagem(`Substituindo ${divergentes.length} registro${divergentes.length === 1 ? '' : 's'}...`, false);
 
+            const dataIso = estado.dataAtual.toISOString().split('T')[0];
+
             const processar = (index) => {
                 if (index >= divergentes.length) {
                     if (aplicarBtn) aplicarBtn.disabled = false;
@@ -4231,6 +4278,51 @@
                     if (aplicarBtn) aplicarBtn.disabled = false;
                     mostrarPlanejamentoMensagem(`Sala ${salaDestino} não encontrada no cadastro. Operação interrompida.`, false, true);
                     return;
+                }
+
+                const agendamentoOriginal = estado.agendamentos.find(ag => String(ag.id) === item.id);
+                if (!agendamentoOriginal) {
+                    if (aplicarBtn) aplicarBtn.disabled = false;
+                    mostrarPlanejamentoMensagem('Não foi possível localizar um dos agendamentos originais. Operação interrompida.', false, true);
+                    return;
+                }
+
+                const horaInicioRef = item.horaInicio || agendamentoOriginal.horaInicio || '';
+                const horaFimRef = item.horaFim || agendamentoOriginal.horaFim || '';
+                const turnoRef = (agendamentoOriginal.turnoNormalizado || normalizarTurno(agendamentoOriginal.turno))
+                    || item.turno
+                    || 'todos';
+
+                if (horaInicioRef && horaFimRef) {
+                    const conflito = verificarConflitoHorario(
+                        salaDestino,
+                        dataIso,
+                        horaInicioRef,
+                        horaFimRef,
+                        turnoRef,
+                        item.id
+                    );
+
+                    if (conflito) {
+                        mostrarPlanejamentoMensagem(`Conflito identificado na sala ${salaDestino}. Trocando com ${conflito.profissional || 'outro agendamento'}...`, false);
+
+                        google.script.run
+                            .withSuccessHandler(result => {
+                                if (result.success) {
+                                    processar(index + 1);
+                                } else {
+                                    if (aplicarBtn) aplicarBtn.disabled = false;
+                                    mostrarPlanejamentoMensagem(result.message || 'Não foi possível trocar os agendamentos.', false, true);
+                                }
+                            })
+                            .withFailureHandler(error => {
+                                if (aplicarBtn) aplicarBtn.disabled = false;
+                                mostrarPlanejamentoMensagem('Erro ao realizar troca: ' + error.toString(), false, true);
+                            })
+                            .trocarAgendamentos(item.id, conflito.id);
+
+                        return;
+                    }
                 }
 
                 const payload = { sala: salaInfo.numero };
