@@ -1040,26 +1040,40 @@
 
       .report-filters {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 16px;
-          margin-top: 16px;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 18px;
+          margin-top: 18px;
+          padding: 20px;
+          border-radius: var(--radius-lg);
+          background: linear-gradient(160deg, rgba(37, 54, 96, 0.55), rgba(22, 36, 74, 0.85));
+          border: 1px solid rgba(122, 141, 255, 0.12);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
       }
 
       .report-filter-field {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 10px;
+          padding: 18px;
+          border-radius: var(--radius-md);
+          border: 1px solid rgba(148, 163, 255, 0.16);
+          background: rgba(15, 23, 42, 0.35);
+          box-shadow: 0 12px 24px rgba(8, 15, 32, 0.35);
+          position: relative;
+          overflow: visible;
       }
 
       .report-filter-field label {
-          font-weight: 600;
-          color: var(--text-secondary);
+          font-weight: 700;
+          letter-spacing: 0.02em;
+          color: #f1f5ff;
+          text-transform: uppercase;
+          font-size: 0.75rem;
       }
 
-      .report-filter-field select,
       .report-filter-field input {
-          background: var(--surface-elevated);
-          border: 1px solid var(--border-soft);
+          background: rgba(15, 23, 42, 0.7);
+          border: 1px solid rgba(122, 141, 255, 0.28);
           border-radius: var(--radius-sm);
           color: var(--text-primary);
           padding: 10px 12px;
@@ -1067,12 +1081,123 @@
           min-height: 44px;
       }
 
-      .report-filter-field select[multiple] {
-          height: 124px;
-      }
-
       .report-filter-field input::placeholder {
           color: var(--text-muted);
+      }
+
+      .report-multiselect {
+          position: relative;
+      }
+
+      .report-multiselect-btn {
+          width: 100%;
+          text-align: left;
+          padding: 12px 14px;
+          border-radius: var(--radius-sm);
+          border: 1px solid rgba(122, 141, 255, 0.32);
+          background: rgba(17, 27, 58, 0.82);
+          color: #e2e8ff;
+          font-weight: 500;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          cursor: pointer;
+          transition: var(--transition-fast);
+      }
+
+      .report-multiselect-btn::after {
+          content: '\f107';
+          font-family: 'Font Awesome 6 Free';
+          font-weight: 900;
+          font-size: 0.85rem;
+          opacity: 0.75;
+      }
+
+      .report-multiselect-btn.open {
+          border-color: rgba(122, 141, 255, 0.6);
+          background: rgba(30, 46, 92, 0.85);
+      }
+
+      .report-multiselect-panel {
+          position: absolute;
+          z-index: 20;
+          top: calc(100% + 8px);
+          left: 0;
+          right: 0;
+          background: rgba(12, 20, 44, 0.96);
+          border-radius: var(--radius-md);
+          border: 1px solid rgba(122, 141, 255, 0.28);
+          box-shadow: var(--shadow-strong);
+          display: none;
+          flex-direction: column;
+          max-height: 280px;
+      }
+
+      .report-multiselect-panel.open {
+          display: flex;
+      }
+
+      .report-multiselect-actions {
+          display: flex;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 12px 14px;
+          border-bottom: 1px solid rgba(122, 141, 255, 0.12);
+      }
+
+      .report-multiselect-actions button {
+          flex: 1;
+          border: none;
+          border-radius: var(--radius-sm);
+          background: rgba(96, 165, 250, 0.14);
+          color: #dbe8ff;
+          padding: 8px 10px;
+          cursor: pointer;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          font-size: 0.7rem;
+          transition: var(--transition-fast);
+      }
+
+      .report-multiselect-actions button:hover {
+          background: rgba(96, 165, 250, 0.24);
+      }
+
+      .report-multiselect-options {
+          padding: 12px 14px 14px;
+          display: grid;
+          gap: 8px;
+          overflow-y: auto;
+      }
+
+      .report-multiselect-options label {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 10px;
+          border-radius: var(--radius-sm);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: var(--transition-fast);
+          background: rgba(30, 41, 78, 0.55);
+      }
+
+      .report-multiselect-options label:hover {
+          background: rgba(96, 165, 250, 0.18);
+          color: #fff;
+      }
+
+      .report-multiselect-options input[type="checkbox"] {
+          accent-color: var(--primary);
+      }
+
+      .report-multiselect-empty {
+          padding: 12px 14px;
+          color: var(--text-muted);
+          font-size: 0.85rem;
+          text-align: center;
       }
 
       .dashboard-grid {
@@ -1184,6 +1309,103 @@
           background: var(--surface-elevated);
           color: var(--text-primary);
           padding: 10px 12px;
+      }
+
+      .dashboard-day-selector {
+          width: 100%;
+          display: none;
+          flex-direction: column;
+          gap: 12px;
+          padding: 14px 18px;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-base);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+
+      .dashboard-day-selector.active {
+          display: flex;
+      }
+
+      .dashboard-day-mode {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 14px;
+      }
+
+      .dashboard-day-mode label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 12px;
+          border-radius: var(--radius-sm);
+          background: rgba(255, 255, 255, 0.04);
+          cursor: pointer;
+          transition: var(--transition-fast);
+      }
+
+      .dashboard-day-mode input[type="radio"] {
+          accent-color: var(--primary);
+      }
+
+      .dashboard-day-mode label:hover {
+          background: rgba(122, 141, 255, 0.14);
+      }
+
+      .dashboard-day-picker {
+          display: none;
+          flex-direction: column;
+          gap: 12px;
+      }
+
+      .dashboard-day-picker.active {
+          display: flex;
+      }
+
+      .dashboard-day-input {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          align-items: center;
+      }
+
+      .dashboard-day-input input[type="date"] {
+          padding: 10px 12px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-elevated);
+          color: var(--text-primary);
+      }
+
+      .dashboard-day-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+      }
+
+      .dashboard-day-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          background: rgba(96, 165, 250, 0.18);
+          color: #dbe8ff;
+          font-size: 0.85rem;
+      }
+
+      .dashboard-day-chip button {
+          border: none;
+          background: transparent;
+          color: inherit;
+          cursor: pointer;
+          font-size: 0.85rem;
+          padding: 0 2px;
+      }
+
+      .dashboard-day-empty {
+          color: var(--text-muted);
+          font-size: 0.85rem;
       }
 
       table {
@@ -1939,6 +2161,29 @@
                         </select>
                         <button class="btn btn-primary" id="btn-atualizar-dashboard">Atualizar</button>
                     </div>
+                    <div class="dashboard-day-selector" id="dashboard-dia-especifico-container">
+                        <div class="dashboard-day-mode">
+                            <label>
+                                <input type="radio" name="dashboard-dia-modo" value="hoje" checked>
+                                Usar data atual do monitor
+                            </label>
+                            <label>
+                                <input type="radio" name="dashboard-dia-modo" value="multi">
+                                Selecionar dias específicos
+                            </label>
+                        </div>
+                        <div class="dashboard-day-picker" id="dashboard-dia-picker">
+                            <div class="dashboard-day-input">
+                                <input type="date" id="dashboard-dia-input">
+                                <button type="button" class="btn btn-secondary" id="dashboard-dia-adicionar">
+                                    <i class="fas fa-plus"></i> Adicionar dia
+                                </button>
+                            </div>
+                            <div class="dashboard-day-chips" id="dashboard-dia-chips">
+                                <span class="dashboard-day-empty">Nenhum dia selecionado.</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="resumo-grid" id="dashboard-resumo">
                         <div class="resumo-card">
                             <span class="resumo-label">Período analisado</span>
@@ -2019,31 +2264,101 @@
                     <div class="report-filters">
                         <div class="report-filter-field">
                             <label for="relatorio-filtro-turno">Turnos</label>
-                            <select id="relatorio-filtro-turno" multiple></select>
+                            <div class="report-multiselect" data-select-id="relatorio-filtro-turno" data-placeholder="Todos os turnos">
+                                <button type="button" class="report-multiselect-btn">Todos os turnos</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="relatorio-filtro-turno" multiple class="sr-only-input"></select>
                         </div>
                         <div class="report-filter-field">
                             <label for="relatorio-filtro-status">Status</label>
-                            <select id="relatorio-filtro-status" multiple></select>
+                            <div class="report-multiselect" data-select-id="relatorio-filtro-status" data-placeholder="Todos os status">
+                                <button type="button" class="report-multiselect-btn">Todos os status</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="relatorio-filtro-status" multiple class="sr-only-input"></select>
                         </div>
                         <div class="report-filter-field">
                             <label for="relatorio-filtro-ilha">Ilhas</label>
-                            <select id="relatorio-filtro-ilha" multiple></select>
+                            <div class="report-multiselect" data-select-id="relatorio-filtro-ilha" data-placeholder="Todas as ilhas">
+                                <button type="button" class="report-multiselect-btn">Todas as ilhas</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="relatorio-filtro-ilha" multiple class="sr-only-input"></select>
                         </div>
                         <div class="report-filter-field">
                             <label for="relatorio-filtro-sala">Salas</label>
-                            <select id="relatorio-filtro-sala" multiple></select>
+                            <div class="report-multiselect" data-select-id="relatorio-filtro-sala" data-placeholder="Todas as salas">
+                                <button type="button" class="report-multiselect-btn">Todas as salas</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="relatorio-filtro-sala" multiple class="sr-only-input"></select>
                         </div>
                         <div class="report-filter-field">
                             <label for="relatorio-filtro-especialidade">Especialidades</label>
-                            <select id="relatorio-filtro-especialidade" multiple></select>
+                            <div class="report-multiselect" data-select-id="relatorio-filtro-especialidade" data-placeholder="Todas as especialidades">
+                                <button type="button" class="report-multiselect-btn">Todas as especialidades</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="relatorio-filtro-especialidade" multiple class="sr-only-input"></select>
                         </div>
                         <div class="report-filter-field">
                             <label for="relatorio-filtro-categoria">Categorias</label>
-                            <select id="relatorio-filtro-categoria" multiple></select>
+                            <div class="report-multiselect" data-select-id="relatorio-filtro-categoria" data-placeholder="Todas as categorias">
+                                <button type="button" class="report-multiselect-btn">Todas as categorias</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="relatorio-filtro-categoria" multiple class="sr-only-input"></select>
                         </div>
                         <div class="report-filter-field">
                             <label for="relatorio-filtro-profissional">Profissionais</label>
-                            <select id="relatorio-filtro-profissional" multiple></select>
+                            <div class="report-multiselect" data-select-id="relatorio-filtro-profissional" data-placeholder="Todos os profissionais">
+                                <button type="button" class="report-multiselect-btn">Todos os profissionais</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="relatorio-filtro-profissional" multiple class="sr-only-input"></select>
                         </div>
                         <div class="report-filter-field">
                             <label for="relatorio-filtro-busca">Busca rápida</label>
@@ -2619,7 +2934,8 @@
             visualizacaoSimplificada: true,  // Novo estado para toggle simplificado
             planejamentoTurno: 'manha',
             planejamentoLinhas: [],
-            agendamentoEditarId: null
+            agendamentoEditarId: null,
+            dashboardDiasEspecificos: []
         };
 
         // Utilidades de normalização
@@ -2895,7 +3211,14 @@
             }
             isLoading = true;
             mostrarLoading();
-            
+
+            estado.planejamentoLinhas = [];
+            try {
+                renderPlanejamento();
+            } catch (err) {
+                console.warn('Não foi possível atualizar visual do planejamento imediatamente:', err);
+            }
+
             google.script.run
                 .withSuccessHandler(function(dados) {
                     console.log('Dados recebidos do server:', dados);
@@ -3016,23 +3339,124 @@
             }
         }
 
-        function preencherRelatorioFiltros() {
-            const atualizarSelect = (select, valores) => {
-                if (!select) return;
-                const selecionados = new Set(Array.from(select.selectedOptions || []).map(opt => opt.value));
-                select.innerHTML = '';
-                valores.forEach(({ value, label }) => {
-                    const option = document.createElement('option');
-                    option.value = value;
-                    option.textContent = label;
-                    if (selecionados.has(value)) {
-                        option.selected = true;
-                    }
-                    select.appendChild(option);
-                });
+        function atualizarReportMultiselect(selectId, opcoes) {
+            const select = document.getElementById(selectId);
+            const container = document.querySelector(`.report-multiselect[data-select-id="${selectId}"]`);
+            if (!select || !container) {
+                return;
+            }
+
+            const placeholder = container.dataset.placeholder || 'Selecionar';
+            const button = container.querySelector('.report-multiselect-btn');
+            const panel = container.querySelector('.report-multiselect-panel');
+            const optionsWrapper = container.querySelector('.report-multiselect-options');
+
+            const obterSelecionados = () => Array.from(select.options).filter(opt => opt.selected).map(opt => opt.value);
+
+            const atualizarBotao = () => {
+                const selecionados = obterSelecionados();
+                if (selecionados.length === 0) {
+                    button.textContent = placeholder;
+                } else if (selecionados.length === 1) {
+                    const item = opcoes.find(opcao => opcao.value === selecionados[0]);
+                    button.textContent = item ? item.label : `${selecionados.length} selecionado`;
+                } else {
+                    button.textContent = `${selecionados.length} selecionados`;
+                }
             };
 
-            atualizarSelect(document.getElementById('relatorio-filtro-turno'), [
+            optionsWrapper.innerHTML = '';
+            if (!opcoes || opcoes.length === 0) {
+                const vazio = document.createElement('div');
+                vazio.className = 'report-multiselect-empty';
+                vazio.textContent = 'Nenhuma opção disponível.';
+                optionsWrapper.appendChild(vazio);
+            } else {
+                opcoes.forEach(({ value, label }) => {
+                    const checkboxId = `${selectId}-${value}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+                    const linha = document.createElement('label');
+                    const input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.value = value;
+                    input.id = checkboxId;
+                    input.checked = Array.from(select.options).some(opt => opt.value === value && opt.selected);
+                    const texto = document.createElement('span');
+                    texto.textContent = label;
+                    linha.appendChild(input);
+                    linha.appendChild(texto);
+                    optionsWrapper.appendChild(linha);
+
+                    input.addEventListener('change', () => {
+                        const option = Array.from(select.options).find(opt => opt.value === value);
+                        if (option) {
+                            option.selected = input.checked;
+                        }
+                        atualizarBotao();
+                    });
+                });
+            }
+
+            if (!container.dataset.initialized) {
+                button.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const estavaAberto = panel.classList.contains('open');
+                    document.querySelectorAll('.report-multiselect-panel').forEach(outroPainel => outroPainel.classList.remove('open'));
+                    document.querySelectorAll('.report-multiselect-btn').forEach(outroBotao => outroBotao.classList.remove('open'));
+                    if (!estavaAberto) {
+                        panel.classList.add('open');
+                        button.classList.add('open');
+                    }
+                });
+
+                const botoesAcao = panel.querySelectorAll('.report-multiselect-actions button');
+                botoesAcao.forEach(botao => {
+                    botao.addEventListener('click', () => {
+                        const acao = botao.dataset.action;
+                        const checkboxes = panel.querySelectorAll('.report-multiselect-options input[type="checkbox"]');
+                        if (acao === 'select-all') {
+                            checkboxes.forEach(cb => {
+                                cb.checked = true;
+                                const option = Array.from(select.options).find(opt => opt.value === cb.value);
+                                if (option) option.selected = true;
+                            });
+                        } else if (acao === 'clear') {
+                            checkboxes.forEach(cb => {
+                                cb.checked = false;
+                                const option = Array.from(select.options).find(opt => opt.value === cb.value);
+                                if (option) option.selected = false;
+                            });
+                        }
+                        atualizarBotao();
+                    });
+                });
+
+                container.dataset.initialized = 'true';
+            }
+
+            atualizarBotao();
+        }
+
+        function definirRelatorioOpcoes(selectId, valores) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            const selecionados = new Set(Array.from(select.selectedOptions || []).map(opt => opt.value));
+            select.innerHTML = '';
+            valores.forEach(({ value, label }) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                if (selecionados.has(value)) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+
+            atualizarReportMultiselect(selectId, valores);
+        }
+
+        function preencherRelatorioFiltros() {
+            definirRelatorioOpcoes('relatorio-filtro-turno', [
                 { value: 'manha', label: 'Manhã' },
                 { value: 'tarde', label: 'Tarde' },
                 { value: 'noite', label: 'Noite' },
@@ -3049,7 +3473,7 @@
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(status => ({ value: status, label: formatarStatusLabel(status) }));
-            atualizarSelect(document.getElementById('relatorio-filtro-status'), statusValores);
+            definirRelatorioOpcoes('relatorio-filtro-status', statusValores);
 
             const ilhasSet = new Set();
             (estado.dadosMestres.ilhas || []).forEach(ilha => {
@@ -3066,7 +3490,7 @@
                 .filter(Boolean)
                 .sort(ordenarAlphaNumerico)
                 .map(ilha => ({ value: ilha, label: `Ilha ${ilha}` }));
-            atualizarSelect(document.getElementById('relatorio-filtro-ilha'), ilhasLista);
+            definirRelatorioOpcoes('relatorio-filtro-ilha', ilhasLista);
 
             const salasSet = new Set();
             estado.salas.forEach(sala => {
@@ -3078,7 +3502,7 @@
                 .filter(Boolean)
                 .sort(ordenarAlphaNumerico)
                 .map(numero => ({ value: numero, label: `Sala ${numero}` }));
-            atualizarSelect(document.getElementById('relatorio-filtro-sala'), salasLista);
+            definirRelatorioOpcoes('relatorio-filtro-sala', salasLista);
 
             const especialidadeMap = new Map();
             (estado.dadosMestres.especialidades || []).forEach(esp => {
@@ -3098,7 +3522,7 @@
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(esp => ({ value: esp, label: esp }));
-            atualizarSelect(document.getElementById('relatorio-filtro-especialidade'), especialidadesLista);
+            definirRelatorioOpcoes('relatorio-filtro-especialidade', especialidadesLista);
 
             const categoriaMap = new Map();
             (estado.dadosMestres.categorias || []).forEach(cat => {
@@ -3118,7 +3542,7 @@
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(cat => ({ value: cat, label: cat }));
-            atualizarSelect(document.getElementById('relatorio-filtro-categoria'), categoriasLista);
+            definirRelatorioOpcoes('relatorio-filtro-categoria', categoriasLista);
 
             const profissionaisSet = new Set();
             estado.agendamentos.forEach(ag => {
@@ -3131,7 +3555,7 @@
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
                 .map(nome => ({ value: nome, label: nome }));
-            atualizarSelect(document.getElementById('relatorio-filtro-profissional'), profissionaisLista);
+            definirRelatorioOpcoes('relatorio-filtro-profissional', profissionaisLista);
         }
 
         function setupMultiselectListeners() {
@@ -3322,6 +3746,10 @@
                         }
                     });
                 }
+                if (!e.target.closest('.report-multiselect')) {
+                    document.querySelectorAll('.report-multiselect-panel').forEach(panel => panel.classList.remove('open'));
+                    document.querySelectorAll('.report-multiselect-btn').forEach(btn => btn.classList.remove('open'));
+                }
             });
 
             // Modal de detalhes da sala
@@ -3509,6 +3937,8 @@
                     salvarEdicaoAgendamento();
                 });
             }
+
+            inicializarDashboardDiasEspecificos();
         }
 
         function setupResponsiveShell() {
@@ -3998,6 +4428,22 @@
                         atualizarVisualPlanejamento(linha, tr, statusSpan, botaoAcao);
                     }
                 });
+                input.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        const todosInputs = Array.from(document.querySelectorAll('#planejamento-tbody input[type="text"]'));
+                        const indiceAtual = todosInputs.indexOf(event.currentTarget);
+                        if (indiceAtual >= 0) {
+                            const proximo = todosInputs[indiceAtual + 1];
+                            if (proximo) {
+                                proximo.focus();
+                                proximo.select();
+                            } else {
+                                event.currentTarget.blur();
+                            }
+                        }
+                    }
+                });
                 tdPlanejada.appendChild(input);
 
                 const tdStatus = document.createElement('td');
@@ -4181,14 +4627,20 @@
                 return;
             }
 
-            const conflito = verificarConflitoHorario(sala, data, horaInicio, horaFim, turno);
-            if (conflito) {
-                mostrarPlanejamentoInserirAlerta(`Conflito de horário: ${conflito.profissional} das ${conflito.horaInicio} às ${conflito.horaFim}`);
+            const salvarBtn = document.querySelector('#form-planejamento-inserir button[type="submit"]');
+
+            const salaInfo = estado.salas.find(s => String(s.numero) === String(sala));
+            if (!salaInfo) {
+                mostrarPlanejamentoInserirAlerta('Sala selecionada não encontrada no cadastro.');
                 return;
             }
 
-            const salvarBtn = document.querySelector('#form-planejamento-inserir button[type="submit"]');
-            if (salvarBtn) salvarBtn.disabled = true;
+            const statusSalaInfo = salaInfo.statusNormalizado || normalizarStatus(salaInfo.statusGeral || salaInfo.status);
+            if (statusBloqueiaAgendamento(statusSalaInfo) && statusSalaInfo !== 'ocupado') {
+                const statusLabel = formatarStatusLabel(statusSalaInfo);
+                mostrarPlanejamentoInserirAlerta(`Não é possível utilizar a sala ${sala}. Ela está marcada como ${statusLabel.toLowerCase()}.`);
+                return;
+            }
 
             const payload = {
                 sala,
@@ -4206,26 +4658,89 @@
                 dataFim: data
             };
 
-            google.script.run
-                .withSuccessHandler(result => {
-                    if (salvarBtn) salvarBtn.disabled = false;
-                    if (result.success) {
-                        alert('Agendamento inserido com sucesso!');
-                        mostrarPlanejamentoInserirAlerta('');
-                        const modal = document.getElementById('planejamento-inserir-modal');
-                        if (modal) modal.style.display = 'none';
-                        const form = document.getElementById('form-planejamento-inserir');
-                        if (form) form.reset();
-                        carregarDados();
-                    } else {
-                        mostrarPlanejamentoInserirAlerta(result.message || 'Não foi possível salvar o agendamento.');
+            const executarSalvarAgendamento = () => {
+                google.script.run
+                    .withSuccessHandler(result => {
+                        if (salvarBtn) salvarBtn.disabled = false;
+                        if (result.success) {
+                            alert('Agendamento inserido com sucesso!');
+                            mostrarPlanejamentoInserirAlerta('');
+                            const modal = document.getElementById('planejamento-inserir-modal');
+                            if (modal) modal.style.display = 'none';
+                            const form = document.getElementById('form-planejamento-inserir');
+                            if (form) form.reset();
+                            carregarDados();
+                        } else {
+                            mostrarPlanejamentoInserirAlerta(result.message || 'Não foi possível salvar o agendamento.');
+                        }
+                    })
+                    .withFailureHandler(error => {
+                        if (salvarBtn) salvarBtn.disabled = false;
+                        mostrarPlanejamentoInserirAlerta('Erro ao salvar agendamento: ' + error.toString());
+                    })
+                    .salvarAgendamento(payload);
+            };
+
+            const conflito = verificarConflitoHorario(sala, data, horaInicio, horaFim, turno);
+            if (conflito) {
+                const salasLivres = obterSalasLivresParaHorario(data, horaInicio, horaFim, turno, conflito.id);
+                if (!salasLivres.length) {
+                    mostrarPlanejamentoInserirAlerta('A sala informada está ocupada e não há outras salas livres para movimentar o profissional atual.');
+                    return;
+                }
+
+                const listaTexto = salasLivres.map(salaLivre => `Sala ${salaLivre.numero}`).join(', ');
+                const confirmarMover = confirm(`A sala ${sala} já está ocupada por ${conflito.profissional} (${conflito.horaInicio} - ${conflito.horaFim}).\nSalas livres disponíveis: ${listaTexto}.\nDeseja mover ${conflito.profissional} para uma sala livre e continuar?`);
+                if (!confirmarMover) {
+                    mostrarPlanejamentoInserirAlerta('Operação cancelada. Escolha outra sala ou confirme o movimento.');
+                    return;
+                }
+
+                let salaDestinoProfissional = salasLivres[0];
+                if (salasLivres.length > 1) {
+                    const escolha = prompt('Informe o número da sala para onde deseja mover o profissional atual:', salasLivres[0].numero);
+                    if (!escolha) {
+                        mostrarPlanejamentoInserirAlerta('Movimentação cancelada. Escolha uma sala válida para continuar.');
+                        return;
                     }
-                })
-                .withFailureHandler(error => {
-                    if (salvarBtn) salvarBtn.disabled = false;
-                    mostrarPlanejamentoInserirAlerta('Erro ao salvar agendamento: ' + error.toString());
-                })
-                .salvarAgendamento(payload);
+                    const encontrada = salasLivres.find(salaLivre => String(salaLivre.numero) === String(escolha).trim());
+                    if (!encontrada) {
+                        mostrarPlanejamentoInserirAlerta('Sala escolhida não está na lista de disponíveis. Operação cancelada.');
+                        return;
+                    }
+                    salaDestinoProfissional = encontrada;
+                }
+
+                if (salvarBtn) salvarBtn.disabled = true;
+                mostrarPlanejamentoInserirAlerta(`Movendo ${conflito.profissional} para a sala ${salaDestinoProfissional.numero}...`);
+
+                const payloadMovimento = { sala: salaDestinoProfissional.numero };
+                if (salaDestinoProfissional.ilha) {
+                    payloadMovimento.ilha = salaDestinoProfissional.ilha;
+                }
+
+                google.script.run
+                    .withSuccessHandler(result => {
+                        if (!result.success) {
+                            if (salvarBtn) salvarBtn.disabled = false;
+                            mostrarPlanejamentoInserirAlerta(result.message || 'Não foi possível mover o agendamento existente.');
+                            return;
+                        }
+
+                        mostrarPlanejamentoInserirAlerta('Profissional movido com sucesso. Salvando novo agendamento...');
+                        executarSalvarAgendamento();
+                    })
+                    .withFailureHandler(error => {
+                        if (salvarBtn) salvarBtn.disabled = false;
+                        mostrarPlanejamentoInserirAlerta('Erro ao mover agendamento existente: ' + error.toString());
+                    })
+                    .atualizarAgendamento(conflito.id, payloadMovimento);
+
+                return;
+            }
+
+            if (salvarBtn) salvarBtn.disabled = true;
+            executarSalvarAgendamento();
         }
 
         function mostrarPlanejamentoMensagem(texto, sucesso = false, alerta = false) {
@@ -4239,6 +4754,33 @@
             } else {
                 feedback.style.color = 'var(--text-secondary)';
             }
+        }
+
+        function obterSalasLivresParaHorario(dataIso, horaInicio, horaFim, turno, ignorarId = null) {
+            if (!dataIso || !horaInicio || !horaFim) {
+                return [];
+            }
+
+            const turnoNormalizado = normalizarTurno(turno) || 'todos';
+            const salasLivres = estado.salas.filter(sala => {
+                const statusSala = sala.statusNormalizado || normalizarStatus(sala.statusGeral || sala.status);
+                if (statusBloqueiaAgendamento(statusSala)) {
+                    return false;
+                }
+
+                const conflito = verificarConflitoHorario(
+                    sala.numero,
+                    dataIso,
+                    horaInicio,
+                    horaFim,
+                    turnoNormalizado,
+                    ignorarId
+                );
+
+                return !conflito;
+            });
+
+            return salasLivres.sort((a, b) => ordenarAlphaNumerico(a.numero, b.numero));
         }
 
         function aplicarPlanejamentoLinha(id) {
@@ -4277,6 +4819,14 @@
             if (!salaInfo) {
                 if (btnLinha) btnLinha.disabled = false;
                 mostrarPlanejamentoMensagem('Sala destino não encontrada no cadastro. Verifique a numeração informada.', false, true);
+                return;
+            }
+
+            const statusSalaDestino = salaInfo.statusNormalizado || normalizarStatus(salaInfo.statusGeral || salaInfo.status);
+            if (statusBloqueiaAgendamento(statusSalaDestino) && statusSalaDestino !== 'ocupado') {
+                if (btnLinha) btnLinha.disabled = false;
+                const statusLabel = formatarStatusLabel(statusSalaDestino);
+                mostrarPlanejamentoMensagem(`A sala ${salaDestino} está marcada como ${statusLabel.toLowerCase()} e não pode ser utilizada.`, false, true);
                 return;
             }
 
@@ -5618,8 +6168,117 @@
             return `${dia}/${mes}`;
         }
 
+        function inicializarDashboardDiasEspecificos() {
+            const periodoSelect = document.getElementById('dashboard-periodo');
+            const container = document.getElementById('dashboard-dia-especifico-container');
+            const picker = document.getElementById('dashboard-dia-picker');
+            const input = document.getElementById('dashboard-dia-input');
+            const adicionarBtn = document.getElementById('dashboard-dia-adicionar');
+            const chips = document.getElementById('dashboard-dia-chips');
+            const radios = document.querySelectorAll('input[name="dashboard-dia-modo"]');
+
+            if (!periodoSelect || !container || !picker || !chips) {
+                return;
+            }
+
+            const formatarDia = iso => {
+                if (!iso) return '';
+                const partes = iso.split('-');
+                if (partes.length !== 3) return iso;
+                return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            };
+
+            const atualizarChips = () => {
+                chips.innerHTML = '';
+                const dias = Array.isArray(estado.dashboardDiasEspecificos)
+                    ? [...estado.dashboardDiasEspecificos]
+                    : [];
+                if (!dias.length) {
+                    const vazio = document.createElement('span');
+                    vazio.className = 'dashboard-day-empty';
+                    vazio.textContent = 'Nenhum dia selecionado.';
+                    chips.appendChild(vazio);
+                    return;
+                }
+
+                dias.sort();
+                dias.forEach(dia => {
+                    const chip = document.createElement('div');
+                    chip.className = 'dashboard-day-chip';
+                    const texto = document.createElement('span');
+                    texto.textContent = formatarDia(dia);
+                    const remover = document.createElement('button');
+                    remover.type = 'button';
+                    remover.innerHTML = '&times;';
+                    remover.setAttribute('aria-label', `Remover dia ${formatarDia(dia)}`);
+                    remover.addEventListener('click', () => {
+                        estado.dashboardDiasEspecificos = estado.dashboardDiasEspecificos.filter(item => item !== dia);
+                        atualizarChips();
+                    });
+                    chip.appendChild(texto);
+                    chip.appendChild(remover);
+                    chips.appendChild(chip);
+                });
+            };
+
+            const atualizarVisibilidade = () => {
+                const isDia = periodoSelect.value === 'dia';
+                container.classList.toggle('active', isDia);
+                const modoSelecionado = document.querySelector('input[name="dashboard-dia-modo"]:checked');
+                const modoMulti = isDia && modoSelecionado && modoSelecionado.value === 'multi';
+                picker.classList.toggle('active', modoMulti);
+            };
+
+            if (periodoSelect.dataset.dashboardDiasListeners !== 'true') {
+                periodoSelect.addEventListener('change', atualizarVisibilidade);
+                periodoSelect.dataset.dashboardDiasListeners = 'true';
+            }
+
+            radios.forEach(radio => {
+                if (radio.dataset.dashboardDiasListeners !== 'true') {
+                    radio.addEventListener('change', atualizarVisibilidade);
+                    radio.dataset.dashboardDiasListeners = 'true';
+                }
+            });
+
+            const adicionarDia = () => {
+                if (!input || !input.value) {
+                    alert('Selecione um dia para adicionar.');
+                    return;
+                }
+                if (!Array.isArray(estado.dashboardDiasEspecificos)) {
+                    estado.dashboardDiasEspecificos = [];
+                }
+                if (!estado.dashboardDiasEspecificos.includes(input.value)) {
+                    estado.dashboardDiasEspecificos.push(input.value);
+                    estado.dashboardDiasEspecificos.sort();
+                    atualizarChips();
+                }
+                input.value = '';
+            };
+
+            if (adicionarBtn && adicionarBtn.dataset.dashboardDiasListeners !== 'true') {
+                adicionarBtn.addEventListener('click', adicionarDia);
+                adicionarBtn.dataset.dashboardDiasListeners = 'true';
+            }
+
+            if (input && input.dataset.dashboardDiasListeners !== 'true') {
+                input.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        adicionarDia();
+                    }
+                });
+                input.dataset.dashboardDiasListeners = 'true';
+            }
+
+            atualizarVisibilidade();
+            atualizarChips();
+        }
+
         function carregarDashboard() {
-            const periodo = document.getElementById('dashboard-periodo').value;
+            const periodoSelect = document.getElementById('dashboard-periodo');
+            const periodo = periodoSelect ? periodoSelect.value : 'dia';
             const filtrosDashboard = {
                 turnos: [],
                 ilhas: Array.isArray(estado.filtros.ilha) ? estado.filtros.ilha : [],
@@ -5628,8 +6287,26 @@
                     : [],
                 status: Array.isArray(estado.filtros.status)
                     ? estado.filtros.status.map(normalizarStatus)
-                    : []
+                    : [],
+                diasEspecificos: []
             };
+
+            if (periodo === 'dia') {
+                const modoSelecionado = document.querySelector('input[name="dashboard-dia-modo"]:checked');
+                if (modoSelecionado && modoSelecionado.value === 'multi') {
+                    if (!estado.dashboardDiasEspecificos || estado.dashboardDiasEspecificos.length === 0) {
+                        alert('Selecione pelo menos um dia específico para gerar o dashboard.');
+                        return;
+                    }
+                    filtrosDashboard.diasEspecificos = [...estado.dashboardDiasEspecificos];
+                } else {
+                    const dataAtualIso = estado.dataAtual instanceof Date
+                        ? estado.dataAtual.toISOString().split('T')[0]
+                        : new Date().toISOString().split('T')[0];
+                    filtrosDashboard.diasEspecificos = [dataAtualIso];
+                }
+            }
+
             google.script.run
                 .withSuccessHandler(renderCharts)
                 .withFailureHandler(error => console.error('Erro no dashboard:', error))
