@@ -670,41 +670,24 @@
 
       .monitor-scroll {
           width: 100%;
-          overflow-x: auto;
-          padding-bottom: 6px;
-      }
-
-      .monitor-scroll::-webkit-scrollbar {
-          height: 8px;
-      }
-
-      .monitor-scroll::-webkit-scrollbar-thumb {
-          background: rgba(148, 163, 254, 0.4);
-          border-radius: 999px;
-      }
-
-      .monitor-scroll::-webkit-scrollbar-track {
-          background: rgba(15, 23, 42, 0.35);
       }
 
       #monitor-content {
           display: grid;
-          grid-auto-flow: column;
-          grid-auto-columns: minmax(340px, 1fr);
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
           gap: 18px;
-          width: max-content;
-          min-width: 100%;
+          width: 100%;
       }
 
       @media (max-width: 1400px) {
           #monitor-content {
-              grid-auto-columns: minmax(300px, 1fr);
+              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
           }
       }
 
       @media (max-width: 1100px) {
           #monitor-content {
-              grid-auto-columns: minmax(260px, 1fr);
+              grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
           }
       }
 
@@ -1522,11 +1505,7 @@
           }
 
           #monitor-content {
-              grid-auto-flow: row;
-              grid-auto-columns: unset;
               grid-template-columns: minmax(0, 1fr);
-              width: 100%;
-              min-width: unset;
           }
 
           .bloco {
