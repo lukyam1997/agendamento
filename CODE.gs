@@ -23,7 +23,9 @@ const BASE_COLUMNS = {
   OBSERVACOES: 11,
   HORA1: 12,
   HORA2: 13,
-  DATA_CRIACAO: 14
+  DATA_CRIACAO: 14,
+  HORA_CHEGADA_REAL: 15,
+  HORA_SAIDA_REAL: 16
 };
 
 // Colunas na aba CADASTRO
@@ -529,7 +531,9 @@ function getAgendamentos(data) {
         categoria: String(row[BASE_COLUMNS.CATEGORIA - 1] || '').trim(),
         ilha: String(row[BASE_COLUMNS.ILHA - 1] || '').trim(),
         status: String(row[BASE_COLUMNS.STATUS - 1] || 'ocupado').trim(),
-        observacoes: String(row[BASE_COLUMNS.OBSERVACOES - 1] || '').trim()
+        observacoes: String(row[BASE_COLUMNS.OBSERVACOES - 1] || '').trim(),
+        horaChegadaReal: formatarHora(row[BASE_COLUMNS.HORA_CHEGADA_REAL - 1]),
+        horaSaidaReal: formatarHora(row[BASE_COLUMNS.HORA_SAIDA_REAL - 1])
       };
     });
     
@@ -721,7 +725,9 @@ function salvarAgendamento(agendamento) {
           agendamento.observacoes || '',
           agendamento.horaInicio,
           agendamento.horaFim,
-          new Date()
+          new Date(),
+          '',
+          ''
         ];
         
         // Adicionar nova linha
@@ -787,7 +793,9 @@ function salvarAgendamento(agendamento) {
         agendamento.observacoes || '',
         agendamento.horaInicio,
         agendamento.horaFim,
-        new Date()
+        new Date(),
+        '',
+        ''
       ];
       
       // Adicionar nova linha
@@ -1971,6 +1979,65 @@ function atualizarAgendamento(id, novosDados) {
   } catch (error) {
     console.error('Erro ao atualizar agendamento:', error);
     return { success: false, message: 'Erro interno ao atualizar agendamento: ' + error.toString() };
+  }
+}
+
+function registrarFrequenciaAgendamento(id, dadosFrequencia) {
+  try {
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
+    if (!sheet) {
+      return { success: false, message: 'Aba BASE não encontrada' };
+    }
+
+    const dataRange = sheet.getDataRange();
+    const values = dataRange.getValues();
+
+    const targetId = String(id).trim();
+    let rowIndex = -1;
+    for (let i = 1; i < values.length; i++) {
+      const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
+      if (currentId === targetId) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+
+    if (rowIndex < 0) {
+      return { success: false, message: 'Agendamento não encontrado' };
+    }
+
+    const faltou = dadosFrequencia && dadosFrequencia.faltou;
+    let horaChegada = '';
+    let horaSaida = '';
+
+    if (faltou) {
+      horaChegada = 'FALTOU';
+      horaSaida = 'FALTOU';
+    } else {
+      horaChegada = dadosFrequencia && typeof dadosFrequencia.horaChegadaReal === 'string'
+        ? dadosFrequencia.horaChegadaReal.trim()
+        : '';
+      horaSaida = dadosFrequencia && typeof dadosFrequencia.horaSaidaReal === 'string'
+        ? dadosFrequencia.horaSaidaReal.trim()
+        : '';
+    }
+
+    sheet.getRange(rowIndex, BASE_COLUMNS.HORA_CHEGADA_REAL).setValue(horaChegada);
+    sheet.getRange(rowIndex, BASE_COLUMNS.HORA_SAIDA_REAL).setValue(horaSaida);
+
+    limparCache();
+
+    return {
+      success: true,
+      message: faltou ? 'Profissional marcado como faltou.' : 'Frequência registrada com sucesso.',
+      id: targetId,
+      horaChegadaReal: horaChegada,
+      horaSaidaReal: horaSaida
+    };
+  } catch (error) {
+    console.error('Erro ao registrar frequência:', error);
+    return { success: false, message: 'Erro interno ao registrar frequência: ' + error.toString() };
   }
 }
 

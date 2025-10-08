@@ -697,9 +697,34 @@
       }
 
       .planejamento-acoes {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          align-items: flex-start;
+      }
+
+      .planejamento-acoes-botoes {
           display: inline-flex;
           gap: 8px;
           flex-wrap: wrap;
+      }
+
+      .planejamento-frequencia-info {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+      }
+
+      .planejamento-frequencia-info.registrado {
+          color: var(--success);
+      }
+
+      .planejamento-frequencia-info.faltou {
+          color: var(--danger);
+          font-weight: 600;
+      }
+
+      .planejamento-frequencia-info.pendente {
+          color: var(--text-muted);
       }
 
       .planejamento-row-ok {
@@ -1561,6 +1586,12 @@
           overflow-y: auto;
       }
 
+      .modal-subtitle {
+          margin: 0 0 16px;
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+      }
+
       .close-modal {
           border: none;
           background: transparent;
@@ -1627,6 +1658,7 @@
 
       .alert-error { background: rgba(245, 101, 101, 0.18); color: var(--danger); }
       .alert-success { background: rgba(72, 187, 120, 0.18); color: var(--success); }
+      .alert-warning { background: rgba(251, 191, 36, 0.18); color: var(--warning); }
 
       .sala-info {
           display: grid;
@@ -2781,6 +2813,46 @@
                         </button>
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-save"></i> Salvar e inserir
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="planejamento-frequencia-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-check"></i> Registrar frequência</h2>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-subtitle" id="planejamento-frequencia-resumo"></p>
+                <div class="alert alert-warning" id="planejamento-frequencia-status" style="display: none;">
+                    <i class="fas fa-info-circle"></i> <span id="planejamento-frequencia-status-texto"></span>
+                </div>
+                <div class="alert alert-error" id="planejamento-frequencia-alert" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i> <span id="planejamento-frequencia-message"></span>
+                </div>
+                <form class="form-cadastro" id="form-planejamento-frequencia">
+                    <input type="hidden" id="planejamento-frequencia-id">
+                    <div class="form-group">
+                        <label for="planejamento-frequencia-chegada"><i class="fas fa-right-to-bracket"></i> Hora de chegada real</label>
+                        <input type="time" id="planejamento-frequencia-chegada">
+                    </div>
+                    <div class="form-group">
+                        <label for="planejamento-frequencia-saida"><i class="fas fa-right-from-bracket"></i> Hora de saída real</label>
+                        <input type="time" id="planejamento-frequencia-saida">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="planejamento-frequencia-cancelar">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="planejamento-frequencia-salvar">
+                            <i class="fas fa-save"></i> Salvar frequência
+                        </button>
+                        <button type="button" class="btn btn-danger" id="planejamento-frequencia-faltou">
+                            <i class="fas fa-user-xmark"></i> Marcar como faltou
                         </button>
                     </div>
                 </form>
@@ -4015,9 +4087,13 @@
             // Modal de detalhes da sala
             document.querySelectorAll('.close-modal').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    document.querySelectorAll('.modal').forEach(modal => {
-                        modal.style.display = 'none';
-                    });
+                    if (btn.closest('#planejamento-frequencia-modal')) {
+                        fecharModalPlanejamentoFrequencia();
+                    } else {
+                        document.querySelectorAll('.modal').forEach(modal => {
+                            modal.style.display = 'none';
+                        });
+                    }
                 });
             });
 
@@ -4053,6 +4129,23 @@
                     mostrarPlanejamentoInserirAlerta('');
                     document.getElementById('planejamento-inserir-modal').style.display = 'none';
                 });
+            }
+
+            const planejamentoFrequenciaCancelar = document.getElementById('planejamento-frequencia-cancelar');
+            if (planejamentoFrequenciaCancelar) {
+                planejamentoFrequenciaCancelar.addEventListener('click', () => {
+                    fecharModalPlanejamentoFrequencia();
+                });
+            }
+
+            const planejamentoFrequenciaForm = document.getElementById('form-planejamento-frequencia');
+            if (planejamentoFrequenciaForm) {
+                planejamentoFrequenciaForm.addEventListener('submit', salvarPlanejamentoFrequencia);
+            }
+
+            const planejamentoFrequenciaFaltou = document.getElementById('planejamento-frequencia-faltou');
+            if (planejamentoFrequenciaFaltou) {
+                planejamentoFrequenciaFaltou.addEventListener('click', marcarPlanejamentoFrequenciaFaltou);
             }
 
             // Formulário de cadastro
@@ -4107,7 +4200,11 @@
             window.addEventListener('click', function(e) {
                 document.querySelectorAll('.modal').forEach(modal => {
                     if (e.target === modal) {
-                        modal.style.display = 'none';
+                        if (modal.id === 'planejamento-frequencia-modal') {
+                            fecharModalPlanejamentoFrequencia();
+                        } else {
+                            modal.style.display = 'none';
+                        }
                     }
                 });
             });
@@ -4538,6 +4635,9 @@
                     horaFim: ag.horaFim || '',
                     salaAtual: ag.sala != null ? String(ag.sala) : '—',
                     salaPlanejada: anterior.salaPlanejada || '',
+                    horaChegadaReal: ag.horaChegadaReal || '',
+                    horaSaidaReal: ag.horaSaidaReal || '',
+                    faltou: valorFrequenciaEhFaltou(ag.horaChegadaReal) || valorFrequenciaEhFaltou(ag.horaSaidaReal),
                     resultado: null,
                     mensagem: ''
                 };
@@ -4687,6 +4787,15 @@
                 const tdAcao = document.createElement('td');
                 const containerAcoes = document.createElement('div');
                 containerAcoes.className = 'planejamento-acoes';
+                const containerBotoes = document.createElement('div');
+                containerBotoes.className = 'planejamento-acoes-botoes';
+
+                const botaoFrequencia = document.createElement('button');
+                botaoFrequencia.type = 'button';
+                botaoFrequencia.className = 'btn btn-secondary';
+                botaoFrequencia.dataset.planejamentoFrequenciaId = item.id;
+                botaoFrequencia.innerHTML = '<i class="fas fa-user-check"></i> Frequência';
+                botaoFrequencia.addEventListener('click', () => abrirPlanejamentoFrequencia(item.id));
 
                 botaoAcao = document.createElement('button');
                 botaoAcao.type = 'button';
@@ -4702,8 +4811,16 @@
                 botaoExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
                 botaoExcluir.addEventListener('click', () => excluirPlanejamentoLinha(item.id));
 
-                containerAcoes.appendChild(botaoAcao);
-                containerAcoes.appendChild(botaoExcluir);
+                containerBotoes.appendChild(botaoFrequencia);
+                containerBotoes.appendChild(botaoAcao);
+                containerBotoes.appendChild(botaoExcluir);
+
+                const frequenciaInfo = document.createElement('span');
+                frequenciaInfo.className = 'planejamento-frequencia-info';
+                atualizarInfoFrequenciaElemento(frequenciaInfo, item);
+
+                containerAcoes.appendChild(containerBotoes);
+                containerAcoes.appendChild(frequenciaInfo);
                 tdAcao.appendChild(containerAcoes);
 
                 tr.appendChild(tdProfissional);
@@ -4998,6 +5115,284 @@
                 : sucesso
                     ? 'var(--success)'
                     : 'var(--text-secondary)';
+        }
+
+        function valorFrequenciaEhFaltou(valor) {
+            return normalizarTexto(valor) === 'faltou';
+        }
+
+        function obterDescricaoFrequencia(linha) {
+            if (!linha) {
+                return { texto: 'Frequência não registrada', classe: 'pendente' };
+            }
+
+            const chegada = (linha.horaChegadaReal || '').trim();
+            const saida = (linha.horaSaidaReal || '').trim();
+
+            if (valorFrequenciaEhFaltou(chegada) || valorFrequenciaEhFaltou(saida)) {
+                return { texto: 'Marcado como faltou', classe: 'faltou' };
+            }
+
+            if (!chegada && !saida) {
+                return { texto: 'Frequência não registrada', classe: 'pendente' };
+            }
+
+            const partes = [];
+            if (chegada) partes.push(`Cheg.: ${chegada}`);
+            if (saida) partes.push(`Saída: ${saida}`);
+            return { texto: partes.join(' · '), classe: 'registrado' };
+        }
+
+        function atualizarInfoFrequenciaElemento(elemento, linha) {
+            if (!elemento) return;
+            const info = obterDescricaoFrequencia(linha);
+            elemento.textContent = info.texto;
+            elemento.classList.remove('faltou', 'registrado', 'pendente');
+            if (info.classe) {
+                elemento.classList.add(info.classe);
+            }
+        }
+
+        function mostrarPlanejamentoFrequenciaAlerta(mensagem) {
+            const alerta = document.getElementById('planejamento-frequencia-alert');
+            const texto = document.getElementById('planejamento-frequencia-message');
+            if (!alerta || !texto) return;
+
+            if (mensagem) {
+                texto.textContent = mensagem;
+                alerta.style.display = 'block';
+                alerta.classList.add('show');
+            } else {
+                texto.textContent = '';
+                alerta.style.display = 'none';
+                alerta.classList.remove('show');
+            }
+        }
+
+        function atualizarPlanejamentoFrequenciaStatus(linha) {
+            const status = document.getElementById('planejamento-frequencia-status');
+            const texto = document.getElementById('planejamento-frequencia-status-texto');
+            if (!status || !texto) return;
+
+            status.classList.remove('alert-success', 'alert-warning', 'alert-error', 'show');
+            status.style.display = 'none';
+            texto.textContent = '';
+
+            if (!linha) {
+                return;
+            }
+
+            if (valorFrequenciaEhFaltou(linha.horaChegadaReal) || valorFrequenciaEhFaltou(linha.horaSaidaReal)) {
+                texto.textContent = 'Profissional marcado como faltou.';
+                status.classList.add('alert-warning', 'show');
+                status.style.display = 'block';
+            } else if (linha.horaChegadaReal || linha.horaSaidaReal) {
+                const descricao = obterDescricaoFrequencia(linha);
+                texto.textContent = `Último registro: ${descricao.texto}`;
+                status.classList.add('alert-success', 'show');
+                status.style.display = 'block';
+            }
+        }
+
+        function atualizarPlanejamentoFrequenciaEstado(id, horaChegada, horaSaida) {
+            const idStr = String(id);
+            const linha = estado.planejamentoLinhas.find(item => item.id === idStr);
+            const agendamento = estado.agendamentos.find(item => String(item.id) === idStr);
+
+            const chegadaNormalizada = horaChegada || '';
+            const saidaNormalizada = horaSaida || '';
+
+            if (linha) {
+                linha.horaChegadaReal = chegadaNormalizada;
+                linha.horaSaidaReal = saidaNormalizada;
+                linha.faltou = valorFrequenciaEhFaltou(chegadaNormalizada) || valorFrequenciaEhFaltou(saidaNormalizada);
+            }
+
+            if (agendamento) {
+                agendamento.horaChegadaReal = chegadaNormalizada;
+                agendamento.horaSaidaReal = saidaNormalizada;
+            }
+        }
+
+        function atualizarPlanejamentoFrequenciaVisual(id) {
+            const botao = document.querySelector(`button[data-planejamento-frequencia-id="${id}"]`);
+            if (!botao) return;
+            const container = botao.closest('.planejamento-acoes');
+            if (!container) return;
+            const info = container.querySelector('.planejamento-frequencia-info');
+            const linha = estado.planejamentoLinhas.find(item => item.id === String(id));
+            if (info) {
+                atualizarInfoFrequenciaElemento(info, linha);
+            }
+        }
+
+        function abrirPlanejamentoFrequencia(id) {
+            const modal = document.getElementById('planejamento-frequencia-modal');
+            if (!modal) return;
+
+            const linha = estado.planejamentoLinhas.find(item => item.id === String(id));
+            if (!linha) {
+                mostrarPlanejamentoMensagem('Não foi possível localizar o agendamento selecionado para frequência.', false, true);
+                return;
+            }
+
+            mostrarPlanejamentoFrequenciaAlerta('');
+
+            const resumo = document.getElementById('planejamento-frequencia-resumo');
+            if (resumo) {
+                const partes = [];
+                if (linha.profissional && linha.profissional !== '—') partes.push(linha.profissional);
+                if (linha.especialidade && linha.especialidade !== '—') partes.push(linha.especialidade);
+                const turnoLabel = formatarTurnoLabel(linha.turno);
+                if (turnoLabel) partes.push(turnoLabel);
+                const dataLabel = linha.dataInicio ? linha.dataInicio.split('-').reverse().join('/') : '';
+                if (dataLabel) partes.push(`Dia ${dataLabel}`);
+                const salaLabel = linha.salaAtual && linha.salaAtual !== '—' ? `Sala atual ${linha.salaAtual}` : 'Sem sala definida';
+                partes.push(salaLabel);
+                resumo.textContent = partes.join(' • ');
+            }
+
+            const idInput = document.getElementById('planejamento-frequencia-id');
+            if (idInput) idInput.value = linha.id;
+
+            const chegadaInput = document.getElementById('planejamento-frequencia-chegada');
+            const saidaInput = document.getElementById('planejamento-frequencia-saida');
+
+            const chegadaValor = valorFrequenciaEhFaltou(linha.horaChegadaReal) ? '' : (linha.horaChegadaReal || '');
+            const saidaValor = valorFrequenciaEhFaltou(linha.horaSaidaReal) ? '' : (linha.horaSaidaReal || '');
+
+            if (chegadaInput) chegadaInput.value = chegadaValor;
+            if (saidaInput) saidaInput.value = saidaValor;
+
+            atualizarPlanejamentoFrequenciaStatus(linha);
+            setPlanejamentoFrequenciaBusy(false);
+
+            modal.style.display = 'flex';
+            if (chegadaInput) {
+                setTimeout(() => chegadaInput.focus(), 100);
+            }
+        }
+
+        function fecharModalPlanejamentoFrequencia() {
+            const modal = document.getElementById('planejamento-frequencia-modal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            const form = document.getElementById('form-planejamento-frequencia');
+            if (form) {
+                form.reset();
+            }
+            const idInput = document.getElementById('planejamento-frequencia-id');
+            if (idInput) idInput.value = '';
+            mostrarPlanejamentoFrequenciaAlerta('');
+            atualizarPlanejamentoFrequenciaStatus(null);
+            setPlanejamentoFrequenciaBusy(false);
+        }
+
+        function setPlanejamentoFrequenciaBusy(isBusy) {
+            ['planejamento-frequencia-salvar', 'planejamento-frequencia-cancelar', 'planejamento-frequencia-faltou'].forEach(btnId => {
+                const botao = document.getElementById(btnId);
+                if (!botao) return;
+                botao.disabled = !!isBusy;
+                const requerProcessamento = btnId !== 'planejamento-frequencia-cancelar';
+                if (requerProcessamento) {
+                    if (isBusy) {
+                        botao.dataset.keepBusy = 'true';
+                        botao.classList.add('is-processing');
+                    } else {
+                        delete botao.dataset.keepBusy;
+                        botao.classList.remove('is-processing');
+                    }
+                } else if (!isBusy) {
+                    delete botao.dataset.keepBusy;
+                    botao.classList.remove('is-processing');
+                }
+            });
+        }
+
+        function salvarPlanejamentoFrequencia(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('planejamento-frequencia-id').value;
+            const chegada = document.getElementById('planejamento-frequencia-chegada').value;
+            const saida = document.getElementById('planejamento-frequencia-saida').value;
+
+            if (!id) {
+                mostrarPlanejamentoFrequenciaAlerta('Não foi possível identificar o agendamento selecionado.');
+                return;
+            }
+
+            if (chegada && saida && chegada > saida) {
+                mostrarPlanejamentoFrequenciaAlerta('A hora de saída deve ser maior que a hora de chegada.');
+                return;
+            }
+
+            mostrarPlanejamentoFrequenciaAlerta('');
+            setPlanejamentoFrequenciaBusy(true);
+            mostrarPlanejamentoMensagem('Registrando frequência...', false);
+
+            google.script.run
+                .withSuccessHandler(result => {
+                    setPlanejamentoFrequenciaBusy(false);
+                    if (result && result.success) {
+                        mostrarPlanejamentoMensagem(result.message || 'Frequência registrada com sucesso.', true);
+                        fecharModalPlanejamentoFrequencia();
+                        atualizarPlanejamentoFrequenciaEstado(result.id || id, result.horaChegadaReal, result.horaSaidaReal);
+                        atualizarPlanejamentoFrequenciaVisual(result.id || id);
+                    } else {
+                        const mensagem = (result && result.message) || 'Não foi possível registrar a frequência.';
+                        mostrarPlanejamentoFrequenciaAlerta(mensagem);
+                        mostrarPlanejamentoMensagem(mensagem, false, true);
+                    }
+                })
+                .withFailureHandler(error => {
+                    setPlanejamentoFrequenciaBusy(false);
+                    const mensagem = 'Erro ao registrar frequência: ' + error.toString();
+                    mostrarPlanejamentoFrequenciaAlerta(mensagem);
+                    mostrarPlanejamentoMensagem(mensagem, false, true);
+                })
+                .registrarFrequenciaAgendamento(id, {
+                    horaChegadaReal: chegada || '',
+                    horaSaidaReal: saida || ''
+                });
+        }
+
+        function marcarPlanejamentoFrequenciaFaltou() {
+            const id = document.getElementById('planejamento-frequencia-id').value;
+            if (!id) {
+                mostrarPlanejamentoFrequenciaAlerta('Não foi possível identificar o agendamento selecionado.');
+                return;
+            }
+
+            const confirmar = confirm('Deseja marcar este profissional como faltou?');
+            if (!confirmar) {
+                return;
+            }
+
+            mostrarPlanejamentoFrequenciaAlerta('');
+            setPlanejamentoFrequenciaBusy(true);
+            mostrarPlanejamentoMensagem('Marcando frequência como falta...', false);
+
+            google.script.run
+                .withSuccessHandler(result => {
+                    setPlanejamentoFrequenciaBusy(false);
+                    if (result && result.success) {
+                        mostrarPlanejamentoMensagem(result.message || 'Profissional marcado como faltou.', true);
+                        fecharModalPlanejamentoFrequencia();
+                        atualizarPlanejamentoFrequenciaEstado(result.id || id, result.horaChegadaReal, result.horaSaidaReal);
+                        atualizarPlanejamentoFrequenciaVisual(result.id || id);
+                    } else {
+                        const mensagem = (result && result.message) || 'Não foi possível marcar o profissional como faltou.';
+                        mostrarPlanejamentoFrequenciaAlerta(mensagem);
+                        mostrarPlanejamentoMensagem(mensagem, false, true);
+                    }
+                })
+                .withFailureHandler(error => {
+                    setPlanejamentoFrequenciaBusy(false);
+                    const mensagem = 'Erro ao marcar falta: ' + error.toString();
+                    mostrarPlanejamentoFrequenciaAlerta(mensagem);
+                    mostrarPlanejamentoMensagem(mensagem, false, true);
+                })
+                .registrarFrequenciaAgendamento(id, { faltou: true });
         }
 
         function obterSalasLivresParaHorario(dataIso, horaInicio, horaFim, turno, ignorarId = null) {
