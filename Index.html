@@ -3416,12 +3416,25 @@
             dataElement.addEventListener('click', () => {
                 if (!datePicker) return;
                 datePicker.value = estado.dataAtual.toISOString().split('T')[0];
-                if (datePicker.showPicker) {
-                    datePicker.showPicker();
-                } else {
+
+                const abrirCalendario = () => {
                     datePicker.focus();
                     datePicker.click();
+                };
+
+                if (datePicker.showPicker) {
+                    try {
+                        datePicker.showPicker();
+                        return;
+                    } catch (error) {
+                        if (!(error instanceof DOMException && error.name === 'SecurityError')) {
+                            throw error;
+                        }
+                        console.warn('showPicker indisponível neste contexto, usando fallback.', error);
+                    }
                 }
+
+                abrirCalendario();
             });
 
             dataElement.addEventListener('keydown', event => {
