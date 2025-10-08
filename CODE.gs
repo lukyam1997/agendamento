@@ -51,8 +51,8 @@ const USUARIOS_COLUMNS = {
   ROLE: 5
 };
 
-// Cache para melhor performance (cache por 5 minutos)
-const CACHE_DURATION = 300;
+// Cache para melhor performance (cache por 30 segundos)
+const CACHE_DURATION = 30;
 const CACHE_KEYS_PROPERTY = 'CACHE_KEYS_LIST';
 const CACHE_KEYS_MAX = 200;
 
