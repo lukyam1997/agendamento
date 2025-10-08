@@ -239,8 +239,20 @@
           border: 1px solid transparent;
       }
 
+      .btn-success {
+          background: var(--success);
+          color: #052e16;
+      }
+
+      .btn-danger {
+          background: var(--danger);
+          color: #fff;
+      }
+
       .btn-secondary:hover,
-      .btn-primary:hover {
+      .btn-primary:hover,
+      .btn-success:hover,
+      .btn-danger:hover {
           transform: translateY(-1px);
           box-shadow: 0 8px 18px rgba(7, 12, 26, 0.35);
       }
@@ -1347,6 +1359,23 @@
           box-shadow: 0 8px 16px rgba(90, 102, 255, 0.35);
       }
 
+      .btn-excluir {
+          border: none;
+          border-radius: var(--radius-sm);
+          background: var(--danger);
+          color: #fff;
+          padding: 8px 14px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: var(--transition-fast);
+      }
+
+      .btn-excluir:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 16px rgba(248, 113, 113, 0.35);
+      }
+
       .bloqueio-multiplo {
           background: var(--surface-elevated);
           border: 1px solid var(--border-soft);
@@ -1796,6 +1825,9 @@
                                         <option value="todos">Todos</option>
                                     </select>
                                 </label>
+                                <button class="btn btn-success admin-only" id="planejamento-adicionar" type="button">
+                                    <i class="fas fa-user-plus"></i> Adicionar profissional
+                                </button>
                                 <button class="btn btn-secondary" id="planejamento-testar" type="button">
                                     <i class="fas fa-vial"></i> Testar atribuições
                                 </button>
@@ -2132,6 +2164,84 @@
                         </button>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Salvar Agendamento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Inserção no Planejamento -->
+    <div class="modal" id="planejamento-inserir-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-plus"></i> Inserir profissional no planejamento</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-error" id="planejamento-inserir-alert" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i> <span id="planejamento-inserir-message"></span>
+                </div>
+                <form class="form-cadastro" id="form-planejamento-inserir">
+                    <div class="form-group">
+                        <label for="planejamento-inserir-data"><i class="fas fa-calendar-day"></i> Data</label>
+                        <input type="date" id="planejamento-inserir-data" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="planejamento-inserir-turno"><i class="fas fa-clock"></i> Turno</label>
+                        <select id="planejamento-inserir-turno" required>
+                            <option value="manha">Manhã (7h-13h)</option>
+                            <option value="tarde">Tarde (13h-19h)</option>
+                            <option value="noite">Noite (19h-7h)</option>
+                            <option value="todos">Integral</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planejamento-inserir-hora-inicio"><i class="fas fa-hourglass-start"></i> Hora início</label>
+                        <input type="time" id="planejamento-inserir-hora-inicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="planejamento-inserir-hora-fim"><i class="fas fa-hourglass-end"></i> Hora fim</label>
+                        <input type="time" id="planejamento-inserir-hora-fim" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="planejamento-inserir-sala"><i class="fas fa-door-closed"></i> Sala</label>
+                        <select id="planejamento-inserir-sala" required>
+                            <option value="">Selecione uma sala</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planejamento-inserir-ilha"><i class="fas fa-map-pin"></i> Ilha</label>
+                        <select id="planejamento-inserir-ilha" required>
+                            <option value="">Selecione uma ilha</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planejamento-inserir-especialidade"><i class="fas fa-stethoscope"></i> Especialidade</label>
+                        <select id="planejamento-inserir-especialidade" required>
+                            <option value="">Selecione uma especialidade</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planejamento-inserir-categoria"><i class="fas fa-tag"></i> Categoria</label>
+                        <select id="planejamento-inserir-categoria" required>
+                            <option value="">Selecione uma categoria</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-full">
+                        <label for="planejamento-inserir-profissional"><i class="fas fa-user-md"></i> Profissional</label>
+                        <input type="text" id="planejamento-inserir-profissional" required>
+                    </div>
+                    <div class="form-group form-full">
+                        <label for="planejamento-inserir-observacoes"><i class="fas fa-sticky-note"></i> Observações</label>
+                        <textarea id="planejamento-inserir-observacoes" rows="3" placeholder="Observações opcionais"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="planejamento-inserir-cancelar">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Salvar e inserir
                         </button>
                     </div>
                 </form>
@@ -2833,6 +2943,39 @@
                 ilhaSelect.appendChild(option);
             });
 
+            const planejamentoEspecialidade = document.getElementById('planejamento-inserir-especialidade');
+            if (planejamentoEspecialidade) {
+                planejamentoEspecialidade.innerHTML = '<option value="">Selecione uma especialidade</option>';
+                estado.dadosMestres.especialidades.forEach(esp => {
+                    const option = document.createElement('option');
+                    option.value = esp;
+                    option.textContent = esp;
+                    planejamentoEspecialidade.appendChild(option);
+                });
+            }
+
+            const planejamentoCategoria = document.getElementById('planejamento-inserir-categoria');
+            if (planejamentoCategoria) {
+                planejamentoCategoria.innerHTML = '<option value="">Selecione uma categoria</option>';
+                estado.dadosMestres.categorias.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    planejamentoCategoria.appendChild(option);
+                });
+            }
+
+            const planejamentoIlha = document.getElementById('planejamento-inserir-ilha');
+            if (planejamentoIlha) {
+                planejamentoIlha.innerHTML = '<option value="">Selecione uma ilha</option>';
+                estado.dadosMestres.ilhas.forEach(ilha => {
+                    const option = document.createElement('option');
+                    option.value = ilha;
+                    option.textContent = `Ilha ${ilha}`;
+                    planejamentoIlha.appendChild(option);
+                });
+            }
+
             const editarEspecialidade = document.getElementById('editar-especialidade');
             const editarCategoria = document.getElementById('editar-categoria');
             if (editarEspecialidade) {
@@ -2946,6 +3089,13 @@
                 abrirModalBloqueio();
             });
 
+            const planejamentoAdicionarBtn = document.getElementById('planejamento-adicionar');
+            if (planejamentoAdicionarBtn) {
+                planejamentoAdicionarBtn.addEventListener('click', function() {
+                    abrirModalPlanejamentoInserir();
+                });
+            }
+
             // Botões cancelar
             document.getElementById('btn-cancelar').addEventListener('click', function() {
                 document.getElementById('cadastro-modal').style.display = 'none';
@@ -2955,17 +3105,47 @@
                 document.getElementById('bloqueio-modal').style.display = 'none';
             });
 
+            const planejamentoCancelarBtn = document.getElementById('planejamento-inserir-cancelar');
+            if (planejamentoCancelarBtn) {
+                planejamentoCancelarBtn.addEventListener('click', function() {
+                    mostrarPlanejamentoInserirAlerta('');
+                    document.getElementById('planejamento-inserir-modal').style.display = 'none';
+                });
+            }
+
             // Formulário de cadastro
             document.getElementById('form-cadastro').addEventListener('submit', function(e) {
                 e.preventDefault();
                 salvarAgendamento();
             });
 
+            const planejamentoForm = document.getElementById('form-planejamento-inserir');
+            if (planejamentoForm) {
+                planejamentoForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    salvarPlanejamentoManual();
+                });
+            }
+
             // Formulário de bloqueio
             document.getElementById('form-bloqueio').addEventListener('submit', function(e) {
                 e.preventDefault();
                 salvarStatusSalas();
             });
+
+            const planejamentoTurnoInserir = document.getElementById('planejamento-inserir-turno');
+            if (planejamentoTurnoInserir) {
+                planejamentoTurnoInserir.addEventListener('change', function() {
+                    atualizarHorariosPlanejamentoInserir();
+                });
+            }
+
+            const planejamentoSalaInserir = document.getElementById('planejamento-inserir-sala');
+            if (planejamentoSalaInserir) {
+                planejamentoSalaInserir.addEventListener('change', function() {
+                    sincronizarIlhaPlanejamentoInserir();
+                });
+            }
 
             // Validação de conflito em tempo real
             document.getElementById('cadastro-sala').addEventListener('change', function() {
@@ -3556,6 +3736,189 @@
                 feedback.textContent = 'Execute "Testar atribuições" para validar o planejamento.';
                 feedback.style.color = 'var(--text-secondary)';
             }
+        }
+
+        function abrirModalPlanejamentoInserir() {
+            const modal = document.getElementById('planejamento-inserir-modal');
+            if (!modal) return;
+
+            mostrarPlanejamentoInserirAlerta('');
+
+            const dataInput = document.getElementById('planejamento-inserir-data');
+            const turnoSelect = document.getElementById('planejamento-inserir-turno');
+            const horaInicioInput = document.getElementById('planejamento-inserir-hora-inicio');
+            const horaFimInput = document.getElementById('planejamento-inserir-hora-fim');
+            const salaSelect = document.getElementById('planejamento-inserir-sala');
+            const ilhaSelect = document.getElementById('planejamento-inserir-ilha');
+            const profissionalInput = document.getElementById('planejamento-inserir-profissional');
+            const observacoesInput = document.getElementById('planejamento-inserir-observacoes');
+
+            if (dataInput) {
+                const dataAtual = estado.dataAtual ? estado.dataAtual.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                dataInput.value = dataAtual;
+            }
+
+            if (turnoSelect) {
+                let turnoPadraoEstado = estado.planejamentoTurno || estado.turnoAtual || 'manha';
+                if (!turnoPadraoEstado) turnoPadraoEstado = 'manha';
+                turnoSelect.value = turnoPadraoEstado;
+            }
+
+            if (salaSelect) {
+                salaSelect.innerHTML = '<option value="">Selecione uma sala</option>';
+                estado.salas.forEach(sala => {
+                    const statusSala = sala.statusNormalizado || normalizarStatus(sala.statusGeral || sala.status);
+                    if (!statusBloqueiaAgendamento(statusSala)) {
+                        const option = document.createElement('option');
+                        option.value = sala.numero;
+                        option.textContent = `Sala ${sala.numero}`;
+                        salaSelect.appendChild(option);
+                    }
+                });
+                salaSelect.value = '';
+            }
+
+            if (ilhaSelect) {
+                ilhaSelect.value = '';
+            }
+
+            if (profissionalInput) profissionalInput.value = '';
+            if (observacoesInput) observacoesInput.value = '';
+
+            atualizarHorariosPlanejamentoInserir();
+            sincronizarIlhaPlanejamentoInserir();
+
+            modal.style.display = 'flex';
+
+            if (profissionalInput) {
+                setTimeout(() => profissionalInput.focus(), 100);
+            }
+        }
+
+        function mostrarPlanejamentoInserirAlerta(mensagem) {
+            const alerta = document.getElementById('planejamento-inserir-alert');
+            const texto = document.getElementById('planejamento-inserir-message');
+            if (!alerta || !texto) return;
+
+            if (mensagem) {
+                texto.textContent = mensagem;
+                alerta.style.display = 'block';
+            } else {
+                texto.textContent = '';
+                alerta.style.display = 'none';
+            }
+        }
+
+        function atualizarHorariosPlanejamentoInserir() {
+            const turnoSelect = document.getElementById('planejamento-inserir-turno');
+            const horaInicioInput = document.getElementById('planejamento-inserir-hora-inicio');
+            const horaFimInput = document.getElementById('planejamento-inserir-hora-fim');
+            if (!turnoSelect || !horaInicioInput || !horaFimInput) return;
+
+            const turno = turnoSelect.value || 'manha';
+            const horariosPadrao = {
+                manha: { inicio: '07:00', fim: '13:00' },
+                tarde: { inicio: '13:00', fim: '19:00' },
+                noite: { inicio: '19:00', fim: '07:00' },
+                todos: { inicio: '07:00', fim: '19:00' }
+            };
+
+            const valores = horariosPadrao[turno] || horariosPadrao.manha;
+            horaInicioInput.value = valores.inicio;
+            horaFimInput.value = valores.fim;
+        }
+
+        function sincronizarIlhaPlanejamentoInserir() {
+            const salaSelect = document.getElementById('planejamento-inserir-sala');
+            const ilhaSelect = document.getElementById('planejamento-inserir-ilha');
+            if (!salaSelect || !ilhaSelect) return;
+
+            const salaSelecionada = salaSelect.value;
+            if (!salaSelecionada) {
+                return;
+            }
+
+            const salaInfo = estado.salas.find(s => String(s.numero) === String(salaSelecionada));
+            if (salaInfo && salaInfo.ilha) {
+                ilhaSelect.value = salaInfo.ilha;
+            }
+        }
+
+        function salvarPlanejamentoManual() {
+            mostrarPlanejamentoInserirAlerta('');
+
+            const dataInputEl = document.getElementById('planejamento-inserir-data');
+            const turnoSelectEl = document.getElementById('planejamento-inserir-turno');
+            const horaInicioEl = document.getElementById('planejamento-inserir-hora-inicio');
+            const horaFimEl = document.getElementById('planejamento-inserir-hora-fim');
+            const salaSelectEl = document.getElementById('planejamento-inserir-sala');
+            const ilhaSelectEl = document.getElementById('planejamento-inserir-ilha');
+            const especialidadeSelectEl = document.getElementById('planejamento-inserir-especialidade');
+            const categoriaSelectEl = document.getElementById('planejamento-inserir-categoria');
+            const profissionalInputEl = document.getElementById('planejamento-inserir-profissional');
+            const observacoesInputEl = document.getElementById('planejamento-inserir-observacoes');
+
+            const data = dataInputEl ? dataInputEl.value : '';
+            const turno = turnoSelectEl ? turnoSelectEl.value : '';
+            const horaInicio = horaInicioEl ? horaInicioEl.value : '';
+            const horaFim = horaFimEl ? horaFimEl.value : '';
+            const sala = salaSelectEl ? salaSelectEl.value : '';
+            const ilha = ilhaSelectEl ? ilhaSelectEl.value : '';
+            const especialidade = especialidadeSelectEl ? especialidadeSelectEl.value : '';
+            const categoria = categoriaSelectEl ? categoriaSelectEl.value : '';
+            const profissional = profissionalInputEl ? profissionalInputEl.value.trim() : '';
+            const observacoes = observacoesInputEl ? observacoesInputEl.value : '';
+
+            if (!data || !turno || !horaInicio || !horaFim || !sala || !ilha || !especialidade || !categoria || !profissional) {
+                mostrarPlanejamentoInserirAlerta('Preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            const conflito = verificarConflitoHorario(sala, data, horaInicio, horaFim, turno);
+            if (conflito) {
+                mostrarPlanejamentoInserirAlerta(`Conflito de horário: ${conflito.profissional} das ${conflito.horaInicio} às ${conflito.horaFim}`);
+                return;
+            }
+
+            const salvarBtn = document.querySelector('#form-planejamento-inserir button[type="submit"]');
+            if (salvarBtn) salvarBtn.disabled = true;
+
+            const payload = {
+                sala,
+                turno,
+                horaInicio,
+                horaFim,
+                especialidade,
+                profissional,
+                categoria,
+                ilha,
+                observacoes,
+                status: 'ocupado',
+                datas: null,
+                dataInicio: data,
+                dataFim: data
+            };
+
+            google.script.run
+                .withSuccessHandler(result => {
+                    if (salvarBtn) salvarBtn.disabled = false;
+                    if (result.success) {
+                        alert('Agendamento inserido com sucesso!');
+                        mostrarPlanejamentoInserirAlerta('');
+                        const modal = document.getElementById('planejamento-inserir-modal');
+                        if (modal) modal.style.display = 'none';
+                        const form = document.getElementById('form-planejamento-inserir');
+                        if (form) form.reset();
+                        carregarDados();
+                    } else {
+                        mostrarPlanejamentoInserirAlerta(result.message || 'Não foi possível salvar o agendamento.');
+                    }
+                })
+                .withFailureHandler(error => {
+                    if (salvarBtn) salvarBtn.disabled = false;
+                    mostrarPlanejamentoInserirAlerta('Erro ao salvar agendamento: ' + error.toString());
+                })
+                .salvarAgendamento(payload);
         }
 
         function mostrarPlanejamentoMensagem(texto, sucesso = false, alerta = false) {
@@ -4321,6 +4684,9 @@
                             <button class="btn-mover" data-agendamento-id="${ag.id}">
                                 <i class="fas fa-exchange-alt"></i> Mover Sala
                             </button>
+                            <button class="btn-excluir" data-agendamento-id="${ag.id}">
+                                <i class="fas fa-trash-alt"></i> Excluir
+                            </button>
                         </div>
                     `;
                     agendamentosList.appendChild(agendamentoItem);
@@ -4343,6 +4709,13 @@
                         event.stopPropagation();
                         const agId = this.getAttribute('data-agendamento-id');
                         abrirModalEditar(agId);
+                    });
+                });
+                document.querySelectorAll('.btn-excluir').forEach(btn => {
+                    btn.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        const agId = this.getAttribute('data-agendamento-id');
+                        solicitarExclusaoAgendamento(agId);
                     });
                 });
             }
@@ -4463,6 +4836,46 @@
             .atualizarAgendamento(estado.agendamentoMoverId, {sala: salaDestino, ilha: ilhaDestino});
     }
 }
+
+        function solicitarExclusaoAgendamento(agendamentoId) {
+            if (!agendamentoId) return;
+
+            const primeiraConfirmacao = confirm('Tem certeza que deseja excluir este agendamento?');
+            if (!primeiraConfirmacao) {
+                return;
+            }
+
+            const segundaConfirmacao = prompt('Para confirmar a exclusão definitiva, digite EXCLUIR');
+            if (!segundaConfirmacao || segundaConfirmacao.trim().toUpperCase() !== 'EXCLUIR') {
+                alert('Exclusão cancelada. Digite EXCLUIR para confirmar.');
+                return;
+            }
+
+            const btn = document.querySelector(`.btn-excluir[data-agendamento-id="${agendamentoId}"]`);
+            if (btn) {
+                btn.disabled = true;
+            }
+
+            excluirAgendamento(agendamentoId, btn);
+        }
+
+        function excluirAgendamento(agendamentoId, botaoReferencia = null) {
+            google.script.run
+                .withSuccessHandler(result => {
+                    if (result.success) {
+                        alert('Agendamento removido com sucesso!');
+                        fecharModalsAndReload();
+                    } else {
+                        if (botaoReferencia) botaoReferencia.disabled = false;
+                        alert(result.message || 'Não foi possível remover o agendamento.');
+                    }
+                })
+                .withFailureHandler(error => {
+                    if (botaoReferencia) botaoReferencia.disabled = false;
+                    alert('Erro ao remover agendamento: ' + error.toString());
+                })
+                .removerAgendamento(agendamentoId);
+        }
 
         function preencherOpcoesEditar() {
             const editarEspecialidade = document.getElementById('editar-especialidade');
