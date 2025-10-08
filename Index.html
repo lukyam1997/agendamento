@@ -37,6 +37,24 @@
           --transition-base: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
+      body.light-theme {
+          --bg-body: #f8fafc;
+          --bg-gradient: linear-gradient(135deg, #e2e8f0, #f8fafc 55%, #eef2ff);
+          --surface-base: #ffffff;
+          --surface-elevated: #f1f5f9;
+          --surface-subtle: #e2e8f0;
+          --border-soft: rgba(15, 23, 42, 0.08);
+          --border-strong: rgba(15, 23, 42, 0.12);
+          --text-primary: #0f172a;
+          --text-secondary: #1e293b;
+          --text-muted: #475569;
+          --primary: #4f46e5;
+          --primary-soft: rgba(79, 70, 229, 0.15);
+          --primary-strong: #4338ca;
+          --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.12);
+          --shadow-strong: 0 22px 45px rgba(15, 23, 42, 0.18);
+      }
+
       *, *::before, *::after {
           box-sizing: border-box;
       }
@@ -87,6 +105,43 @@
       button:active::after {
           transform: translate(-50%, -50%) scale(12);
           opacity: 0.55;
+      }
+
+      button.is-processing {
+          pointer-events: none;
+          opacity: 0.7;
+      }
+
+      button.is-processing::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.12);
+      }
+
+      body.light-theme button.is-processing::before {
+          background: rgba(148, 163, 184, 0.2);
+      }
+
+      button.is-processing > .button-spinner,
+      button.is-processing .button-spinner {
+          display: inline-flex;
+      }
+
+      .button-spinner {
+          display: none;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          border: 2px solid rgba(255, 255, 255, 0.4);
+          border-top-color: rgba(255, 255, 255, 0.9);
+          animation: spin 0.7s linear infinite;
+          margin-left: 6px;
+      }
+
+      body.light-theme .button-spinner {
+          border: 2px solid rgba(71, 85, 105, 0.25);
+          border-top-color: rgba(71, 85, 105, 0.9);
       }
 
       button:focus-visible {
@@ -159,6 +214,44 @@
           gap: 16px;
           justify-content: flex-end;
           align-items: stretch;
+      }
+
+      .theme-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          background: var(--surface-elevated);
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-soft);
+          padding: 10px 16px;
+          font-weight: 600;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: var(--transition-fast);
+          position: relative;
+      }
+
+      .theme-toggle:hover,
+      .theme-toggle:focus-visible {
+          border-color: var(--primary);
+          color: var(--text-primary);
+      }
+
+      .theme-toggle i {
+          font-size: 1.1rem;
+      }
+
+      .theme-toggle span {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+      }
+
+      .theme-toggle input {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          cursor: pointer;
       }
 
       .date-controls {
@@ -603,12 +696,26 @@
           color: #bfdbfe;
       }
 
+      .planejamento-acoes {
+          display: inline-flex;
+          gap: 8px;
+          flex-wrap: wrap;
+      }
+
       .planejamento-row-ok {
           background: rgba(74, 222, 128, 0.12);
       }
 
       .planejamento-row-erro {
           background: rgba(248, 113, 113, 0.12);
+      }
+
+      body.light-theme .planejamento-row-ok {
+          background: rgba(16, 185, 129, 0.18);
+      }
+
+      body.light-theme .planejamento-row-erro {
+          background: rgba(248, 113, 113, 0.22);
       }
 
       .planejamento-feedback {
@@ -1977,9 +2084,15 @@
                 </div>
             </div>
             <div class="controls">
+                <label class="theme-toggle" id="theme-toggle" tabindex="0">
+                    <i class="fas fa-moon"></i>
+                    <span>Modo escuro</span>
+                    <input type="checkbox" aria-label="Alternar tema claro e escuro">
+                </label>
                 <div class="date-controls">
                     <button id="prev-date" type="button"><i class="fas fa-chevron-left"></i></button>
                     <div id="current-date">Carregando...</div>
+                    <input type="date" id="current-date-picker" class="sr-only-input" aria-label="Selecionar data específica">
                     <button id="next-date" type="button"><i class="fas fa-chevron-right"></i></button>
                 </div>
                 <div class="turno-selector" role="group" aria-label="Seleção de turno">
@@ -2002,7 +2115,7 @@
 
         <div class="main-content">
             <aside class="sidebar" data-drawer="filters" id="filters-panel">
-                <button class="drawer-close" type="button" data-drawer-close="filters" aria-label="Fechar filtros">
+                <button class="drawer-close" type="button" data-drawer-close="filters" aria-label="Fechar filtros" data-skip-busy="true">
                     <i class="fas fa-times"></i>
                 </button>
                 <h2><i class="fas fa-sliders-h"></i> Filtros e Controles</h2>
@@ -2473,7 +2586,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-door-open"></i> Detalhes da Sala <span id="modal-sala-numero"></span></h2>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="sala-info">
@@ -2504,7 +2617,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-calendar-plus"></i> Novo Agendamento</h2>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-error" id="alert-conflito">
@@ -2602,7 +2715,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-user-plus"></i> Inserir profissional no planejamento</h2>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-error" id="planejamento-inserir-alert" style="display: none;">
@@ -2680,7 +2793,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-lock"></i> Gerenciar Status das Salas</h2>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="bloqueio-multiplo">
@@ -2720,7 +2833,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-key"></i> Recuperar Senha</h2>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-success" id="forgot-alert" style="display: none;">
@@ -2746,7 +2859,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-user-plus"></i> Cadastrar Usuário</h2>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-error" id="usuario-alert" style="display: none;">
@@ -2794,7 +2907,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-exchange-alt"></i> Mover Profissional para Outra Sala</h2>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-error" id="mover-alert" style="display: none;">
@@ -2824,7 +2937,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-user-edit"></i> Editar Informações do Agendamento</h2>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-error" id="editar-alert" style="display: none;">
@@ -2890,7 +3003,6 @@
         </div>
     </div>
 
-    <input type="date" id="date-picker" class="sr-only-input" aria-hidden="true">
     <div class="drawer-backdrop" id="drawer-backdrop" aria-hidden="true"></div>
 
     <script>
@@ -2931,7 +3043,8 @@
             planejamentoLinhas: [],
             agendamentoEditarId: null,
             dashboardDiasEspecificos: [],
-            dashboardIntervaloDias: { inicio: '', fim: '' }
+            dashboardIntervaloDias: { inicio: '', fim: '' },
+            temaAtual: 'dark'
         };
 
         // Utilidades de normalização
@@ -3018,9 +3131,99 @@
             return mapa[normalizado] || (status ? status : '-');
         }
 
+        function obterTemaPreferido() {
+            const salvo = localStorage.getItem('themePreference');
+            if (salvo === 'light' || salvo === 'dark') {
+                return salvo;
+            }
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                return 'light';
+            }
+            return 'dark';
+        }
+
+        function aplicarTema(tema) {
+            const normalizado = tema === 'light' ? 'light' : 'dark';
+            estado.temaAtual = normalizado;
+            document.body.classList.toggle('light-theme', normalizado === 'light');
+
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) {
+                const icone = toggle.querySelector('i');
+                const label = toggle.querySelector('span');
+                const input = toggle.querySelector('input[type="checkbox"]');
+                if (icone) {
+                    icone.className = normalizado === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+                }
+                if (label) {
+                    label.textContent = normalizado === 'light' ? 'Modo claro' : 'Modo escuro';
+                }
+                if (input) {
+                    input.checked = normalizado === 'light';
+                }
+            }
+
+            localStorage.setItem('themePreference', normalizado);
+        }
+
+        function inicializarTema() {
+            const preferido = obterTemaPreferido();
+            aplicarTema(preferido);
+
+            const toggle = document.getElementById('theme-toggle');
+            if (!toggle) return;
+
+            const input = toggle.querySelector('input[type="checkbox"]');
+            if (input) {
+                input.checked = preferido === 'light';
+                input.addEventListener('change', () => {
+                    aplicarTema(input.checked ? 'light' : 'dark');
+                });
+            }
+
+            toggle.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    if (input) {
+                        input.checked = !input.checked;
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            });
+        }
+
+        function inicializarAnimacaoBotoes() {
+            document.addEventListener('click', event => {
+                const button = event.target.closest('button');
+                if (!button || button.dataset.skipBusy === 'true') {
+                    return;
+                }
+                if (button.classList.contains('is-processing')) {
+                    return;
+                }
+
+                button.classList.add('is-processing');
+
+                const deveMostrarSpinner = button.classList.contains('btn') || button.classList.contains('icon-button');
+                if (deveMostrarSpinner && !button.querySelector('.button-spinner')) {
+                    const spinner = document.createElement('span');
+                    spinner.className = 'button-spinner';
+                    spinner.setAttribute('aria-hidden', 'true');
+                    button.appendChild(spinner);
+                }
+
+                setTimeout(() => {
+                    if (button.dataset.keepBusy === 'true') return;
+                    button.classList.remove('is-processing');
+                }, 650);
+            }, true);
+        }
+
         // Inicialização da aplicação
         document.addEventListener('DOMContentLoaded', function() {
+            inicializarTema();
             configurarLogin();
+            inicializarAnimacaoBotoes();
             inicializarData();
             configurarEventListeners();
             setupResponsiveShell();
@@ -3176,21 +3379,69 @@
 
         function inicializarData() {
             const dataElement = document.getElementById('current-date');
-            dataElement.textContent = formatarData(estado.dataAtual);
-            dataElement.setAttribute('title', 'Clique para escolher uma data');
+            const datePicker = document.getElementById('current-date-picker');
+            if (!dataElement) return;
 
-            // Configurar botões de navegação de data
-            document.getElementById('prev-date').addEventListener('click', function() {
-                estado.dataAtual.setDate(estado.dataAtual.getDate() - 1);
+            const atualizarVisualData = () => {
                 dataElement.textContent = formatarData(estado.dataAtual);
-                carregarDados();
+                if (datePicker) {
+                    const iso = estado.dataAtual.toISOString().split('T')[0];
+                    datePicker.value = iso;
+                }
+            };
+
+            atualizarVisualData();
+            dataElement.setAttribute('title', 'Clique para escolher uma data');
+            dataElement.setAttribute('tabindex', '0');
+
+            const prevBtn = document.getElementById('prev-date');
+            const nextBtn = document.getElementById('next-date');
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', function() {
+                    estado.dataAtual.setDate(estado.dataAtual.getDate() - 1);
+                    atualizarVisualData();
+                    carregarDados();
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', function() {
+                    estado.dataAtual.setDate(estado.dataAtual.getDate() + 1);
+                    atualizarVisualData();
+                    carregarDados();
+                });
+            }
+
+            dataElement.addEventListener('click', () => {
+                if (!datePicker) return;
+                datePicker.value = estado.dataAtual.toISOString().split('T')[0];
+                if (datePicker.showPicker) {
+                    datePicker.showPicker();
+                } else {
+                    datePicker.focus();
+                    datePicker.click();
+                }
             });
-            
-            document.getElementById('next-date').addEventListener('click', function() {
-                estado.dataAtual.setDate(estado.dataAtual.getDate() + 1);
-                dataElement.textContent = formatarData(estado.dataAtual);
-                carregarDados();
+
+            dataElement.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    dataElement.click();
+                }
             });
+
+            if (datePicker) {
+                datePicker.addEventListener('change', () => {
+                    if (!datePicker.value) return;
+                    const novaData = new Date(`${datePicker.value}T00:00:00`);
+                    if (!isNaN(novaData.getTime())) {
+                        estado.dataAtual = novaData;
+                        atualizarVisualData();
+                        carregarDados();
+                    }
+                });
+            }
         }
 
         function formatarData(data) {
@@ -3853,33 +4104,6 @@
                 document.getElementById('dias-selecao').style.display = this.checked ? 'block' : 'none';
             });
 
-            // Calendario para seleção de data
-            const currentDateDiv = document.getElementById('current-date');
-            const datePicker = document.getElementById('date-picker');
-            currentDateDiv.setAttribute('tabindex', '0');
-            currentDateDiv.addEventListener('click', () => {
-                datePicker.value = estado.dataAtual.toISOString().split('T')[0];
-                if (datePicker.showPicker) {
-                    datePicker.showPicker();
-                } else {
-                    datePicker.focus();
-                    datePicker.click();
-                }
-            });
-            currentDateDiv.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    currentDateDiv.click();
-                }
-            });
-            datePicker.addEventListener('change', () => {
-                if (datePicker.value) {
-                    estado.dataAtual = new Date(datePicker.value);
-                    currentDateDiv.textContent = formatarData(estado.dataAtual);
-                    carregarDados();
-                }
-            });
-
             // Atualizar botão
             document.getElementById('btn-atualizar').addEventListener('click', carregarDados);
 
@@ -4448,13 +4672,26 @@
                 tdStatus.appendChild(statusSpan);
 
                 const tdAcao = document.createElement('td');
+                const containerAcoes = document.createElement('div');
+                containerAcoes.className = 'planejamento-acoes';
+
                 botaoAcao = document.createElement('button');
                 botaoAcao.type = 'button';
                 botaoAcao.className = 'btn btn-primary';
                 botaoAcao.dataset.planejamentoId = item.id;
                 botaoAcao.innerHTML = '<i class="fas fa-check"></i> Substituir';
                 botaoAcao.addEventListener('click', () => aplicarPlanejamentoLinha(item.id));
-                tdAcao.appendChild(botaoAcao);
+
+                const botaoExcluir = document.createElement('button');
+                botaoExcluir.type = 'button';
+                botaoExcluir.className = 'btn btn-danger';
+                botaoExcluir.dataset.planejamentoId = item.id;
+                botaoExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+                botaoExcluir.addEventListener('click', () => excluirPlanejamentoLinha(item.id));
+
+                containerAcoes.appendChild(botaoAcao);
+                containerAcoes.appendChild(botaoExcluir);
+                tdAcao.appendChild(containerAcoes);
 
                 tr.appendChild(tdProfissional);
                 tr.appendChild(tdEspecialidade);
@@ -4743,13 +4980,11 @@
             const feedback = document.getElementById('planejamento-feedback');
             if (!feedback) return;
             feedback.textContent = texto;
-            if (alerta) {
-                feedback.style.color = '#fecaca';
-            } else if (sucesso) {
-                feedback.style.color = '#bbf7d0';
-            } else {
-                feedback.style.color = 'var(--text-secondary)';
-            }
+            feedback.style.color = alerta
+                ? 'var(--danger)'
+                : sucesso
+                    ? 'var(--success)'
+                    : 'var(--text-secondary)';
         }
 
         function obterSalasLivresParaHorario(dataIso, horaInicio, horaFim, turno, ignorarId = null) {
@@ -4889,6 +5124,52 @@
                     mostrarPlanejamentoMensagem('Erro ao substituir: ' + error.toString(), false, true);
                 })
                 .atualizarAgendamento(linha.id, payload);
+        }
+
+        function excluirPlanejamentoLinha(id) {
+            const linha = estado.planejamentoLinhas.find(item => item.id === String(id));
+            if (!linha) {
+                mostrarPlanejamentoMensagem('Agendamento não encontrado para exclusão.', false, true);
+                return;
+            }
+
+            const confirmar = confirm(`Deseja excluir o agendamento de ${linha.profissional} e liberar a sala ${linha.salaAtual || linha.salaPlanejada || ''}?`);
+            if (!confirmar) {
+                return;
+            }
+
+            const botaoExcluir = document.querySelector(`button.btn-danger[data-planejamento-id="${linha.id}"]`);
+            if (botaoExcluir) {
+                botaoExcluir.dataset.keepBusy = 'true';
+                botaoExcluir.disabled = true;
+            }
+
+            mostrarPlanejamentoMensagem('Removendo agendamento e liberando sala...', false);
+
+            google.script.run
+                .withSuccessHandler(result => {
+                    if (botaoExcluir) {
+                        botaoExcluir.disabled = false;
+                        delete botaoExcluir.dataset.keepBusy;
+                        botaoExcluir.classList.remove('is-processing');
+                    }
+
+                    if (result.success) {
+                        mostrarPlanejamentoMensagem('Agendamento removido com sucesso. Atualizando dados...', true);
+                        carregarDados();
+                    } else {
+                        mostrarPlanejamentoMensagem(result.message || 'Não foi possível remover o agendamento.', false, true);
+                    }
+                })
+                .withFailureHandler(error => {
+                    if (botaoExcluir) {
+                        botaoExcluir.disabled = false;
+                        delete botaoExcluir.dataset.keepBusy;
+                        botaoExcluir.classList.remove('is-processing');
+                    }
+                    mostrarPlanejamentoMensagem('Erro ao excluir agendamento: ' + error.toString(), false, true);
+                })
+                .removerAgendamento(linha.id);
         }
 
         function aplicarPlanejamentoTudo() {
