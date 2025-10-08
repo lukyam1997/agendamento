@@ -100,15 +100,29 @@ function formatarPeriodo(inicio, fim) {
 }
 
 function parseDashboardFiltros(filtrosJson) {
-  const vazio = { turnos: [], ilhas: [], especialidades: [], status: [] };
+  const vazio = { turnos: [], ilhas: [], especialidades: [], status: [], diasEspecificos: [] };
   if (!filtrosJson) return vazio;
   try {
     const bruto = JSON.parse(filtrosJson) || {};
+    const diasValidos = (bruto.diasEspecificos || [])
+      .map(valor => {
+        if (!valor) return null;
+        if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor.trim())) {
+          return valor.trim();
+        }
+        const data = new Date(valor);
+        if (!isNaN(data.getTime())) {
+          return Utilities.formatDate(data, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        }
+        return null;
+      })
+      .filter(Boolean);
     return {
       turnos: (bruto.turnos || []).map(normalizarTurnoServidor).filter(Boolean),
       ilhas: (bruto.ilhas || []).map(String).filter(Boolean),
       especialidades: (bruto.especialidades || []).map(normalizarTextoServidor).filter(Boolean),
-      status: (bruto.status || []).map(normalizarStatusServidor).filter(Boolean)
+      status: (bruto.status || []).map(normalizarStatusServidor).filter(Boolean),
+      diasEspecificos: diasValidos
     };
   } catch (error) {
     console.warn('Não foi possível interpretar filtros do dashboard:', error);
@@ -1180,7 +1194,20 @@ function forgotPassword(matricula) {
 function getDadosAgregados(periodo, filtrosJson) {
   try {
     const filtros = parseDashboardFiltros(filtrosJson);
-    const { inicio, fim } = obterIntervaloPeriodo(periodo);
+    const diasEspecificos = Array.isArray(filtros.diasEspecificos) ? filtros.diasEspecificos : [];
+    const diasEspecificosSet = new Set(diasEspecificos);
+    let { inicio, fim } = obterIntervaloPeriodo(periodo);
+    if (diasEspecificos.length) {
+      const ordenadas = [...diasEspecificos].sort();
+      const primeira = ordenadas[0];
+      const ultima = ordenadas[ordenadas.length - 1];
+      if (primeira) {
+        inicio = new Date(`${primeira}T00:00:00`);
+      }
+      if (ultima) {
+        fim = new Date(`${ultima}T23:59:59`);
+      }
+    }
 
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     if (!spreadsheet) {
@@ -1193,26 +1220,55 @@ function getDadosAgregados(periodo, filtrosJson) {
     }
 
     const values = sheet.getDataRange().getValues();
-    const totalSalas = (() => {
+    const salasDados = (() => {
       try {
         const salas = getSalas();
-        return Array.isArray(salas) && salas.length ? salas.length : TOTAL_SALAS_ESTIMADO;
+        return Array.isArray(salas) ? salas : [];
       } catch (err) {
-        console.warn('Falha ao calcular total de salas, usando estimativa:', err);
-        return TOTAL_SALAS_ESTIMADO;
+        console.warn('Falha ao carregar salas, usando lista vazia:', err);
+        return [];
       }
     })();
 
+    const salasUtilizaveis = new Set();
+    const salasIndisponiveisBase = new Set();
+
+    salasDados.forEach(sala => {
+      if (!sala) return;
+      const numero = String(sala.numero || '').trim();
+      if (!numero) return;
+      const statusNormalizado = normalizarStatusServidor(sala.status || sala.statusGeral || sala.statusNormalizado);
+      if (['bloqueado', 'manutencao'].includes(statusNormalizado)) {
+        salasIndisponiveisBase.add(numero);
+      } else {
+        salasUtilizaveis.add(numero);
+      }
+    });
+
+    const totalSalasDisponiveis = salasUtilizaveis.size
+      ? salasUtilizaveis.size
+      : Math.max((salasDados.length || 0) - salasIndisponiveisBase.size, 0) || TOTAL_SALAS_ESTIMADO;
+    const totalSalasConsideradas = totalSalasDisponiveis;
+
+    const periodoTexto = diasEspecificos.length
+      ? `Dias: ${diasEspecificos
+          .map(dia => {
+            const data = new Date(`${dia}T00:00:00`);
+            return isNaN(data.getTime()) ? dia : formatarDataCurta(data);
+          })
+          .join(', ')}`
+      : formatarPeriodo(inicio, fim);
+
     const resumoBase = {
       totalAgendamentos: 0,
-      periodoTexto: formatarPeriodo(inicio, fim),
+      periodoTexto,
       diasAnalisados: 0,
       turnosAtivos: 0,
       ocupacaoMedia: 0,
       ocupacaoPico: 0,
       salasAtivas: 0,
       especialidadesAtivas: 0,
-      totalSalasConsideradas: totalSalas,
+      totalSalasConsideradas,
       taxaAproveitamento: 0
     };
 
@@ -1223,7 +1279,7 @@ function getDadosAgregados(periodo, filtrosJson) {
         ocupacaoIlha: {},
         evolucao: {},
         especialidades: {},
-        ocupacaoGeral: { uso: 0, ocupadas: 0, livres: totalSalas, indisponiveis: 0, taxaAproveitamento: 0 },
+        ocupacaoGeral: { uso: 0, ocupadas: 0, livres: totalSalasConsideradas, indisponiveis: salasIndisponiveisBase.size, taxaAproveitamento: 0 },
         statusDistribuicao: {}
       };
     }
@@ -1282,6 +1338,10 @@ function getDadosAgregados(periodo, filtrosJson) {
         const cursor = new Date(vigenciaInicio);
         while (cursor.getTime() <= vigenciaFim) {
           const diaIso = Utilities.formatDate(cursor, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+          if (diasEspecificosSet.size && !diasEspecificosSet.has(diaIso)) {
+            cursor.setDate(cursor.getDate() + 1);
+            continue;
+          }
 
           totalEventos++;
           if (sala) salasAtivasSet.add(sala);
@@ -1359,27 +1419,44 @@ function getDadosAgregados(periodo, filtrosJson) {
       evolucao[diaIso] = infoDia.totalEventos;
 
       let usoDia = 0;
-      let indisponiveisDia = 0;
-      infoDia.statusPorSala.forEach(statusSet => {
-        if (statusSet.has('bloqueado') || statusSet.has('manutencao')) {
-          indisponiveisDia++;
-        } else if (statusSet.has('ocupado') || statusSet.has('reservado')) {
+      let indisponiveisExtrasDia = 0;
+      const contabilizadas = new Set();
+
+      salasUtilizaveis.forEach(numeroSala => {
+        contabilizadas.add(numeroSala);
+        const statusSet = infoDia.statusPorSala.get(numeroSala);
+        if (statusSet && (statusSet.has('bloqueado') || statusSet.has('manutencao'))) {
+          indisponiveisExtrasDia++;
+          return;
+        }
+        if (statusSet && (statusSet.has('ocupado') || statusSet.has('reservado'))) {
           usoDia++;
-        } else if (statusSet.size > 0) {
+        }
+      });
+
+      infoDia.statusPorSala.forEach((statusSet, chaveSala) => {
+        if (!chaveSala || chaveSala === '__sem_sala__' || contabilizadas.has(chaveSala)) return;
+        if (salasIndisponiveisBase.has(chaveSala) && (!statusSet || statusSet.size === 0)) {
+          return;
+        }
+        if (statusSet.has('bloqueado') || statusSet.has('manutencao')) {
+          indisponiveisExtrasDia++;
+        } else if (statusSet.has('ocupado') || statusSet.has('reservado') || statusSet.size > 0) {
           usoDia++;
         }
       });
 
       totalUsoSalas += usoDia;
+      const indisponiveisDia = salasIndisponiveisBase.size + indisponiveisExtrasDia;
       totalIndisponiveis += indisponiveisDia;
-      const livresDia = Math.max(totalSalas - usoDia - indisponiveisDia, 0);
+      const disponiveisDia = Math.max(totalSalasDisponiveis - indisponiveisExtrasDia, 0);
+      const livresDia = Math.max(disponiveisDia - usoDia, 0);
       totalSalasLivres += livresDia;
 
-      if (totalSalas > 0) {
-        const taxaDia = Math.min(100, Math.round((usoDia / totalSalas) * 100));
+      if (totalSalasDisponiveis > 0) {
+        const taxaDia = Math.min(100, Math.round((usoDia / totalSalasDisponiveis) * 100));
         somaOcupacaoPercentual += taxaDia;
         if (taxaDia > picoOcupacao) picoOcupacao = taxaDia;
-        const disponiveisDia = usoDia + livresDia;
         const taxaAproveitamentoDia = disponiveisDia > 0
           ? Math.min(100, Math.round((usoDia / disponiveisDia) * 100))
           : 0;
@@ -1388,14 +1465,16 @@ function getDadosAgregados(periodo, filtrosJson) {
     });
 
     const diasAnalisados = diasOrdenados.length;
-    const ocupacaoMedia = diasAnalisados > 0 && totalSalas > 0
+    const ocupacaoMedia = diasAnalisados > 0 && totalSalasDisponiveis > 0
       ? Math.round(somaOcupacaoPercentual / diasAnalisados)
       : 0;
     const usoMedio = diasAnalisados > 0 ? Math.round(totalUsoSalas / diasAnalisados) : 0;
-    const indisponiveisMedio = diasAnalisados > 0 ? Math.round(totalIndisponiveis / diasAnalisados) : 0;
+    const indisponiveisMedio = diasAnalisados > 0
+      ? Math.round(totalIndisponiveis / diasAnalisados)
+      : salasIndisponiveisBase.size;
     const livresMedio = diasAnalisados > 0
       ? Math.max(Math.round(totalSalasLivres / diasAnalisados), 0)
-      : Math.max(totalSalas - usoMedio - indisponiveisMedio, 0);
+      : Math.max(totalSalasDisponiveis - usoMedio, 0);
     const disponiveisMedio = usoMedio + livresMedio;
     const taxaAproveitamento = disponiveisMedio > 0
       ? Math.round((usoMedio / disponiveisMedio) * 100)
