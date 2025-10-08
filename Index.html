@@ -1903,9 +1903,6 @@
                                 <button class="btn btn-success admin-only" id="planejamento-adicionar" type="button">
                                     <i class="fas fa-user-plus"></i> Adicionar profissional
                                 </button>
-                                <button class="btn btn-secondary" id="planejamento-testar" type="button">
-                                    <i class="fas fa-vial"></i> Testar atribuições
-                                </button>
                                 <button class="btn btn-primary" id="planejamento-aplicar" type="button">
                                     <i class="fas fa-check-double"></i> Substituir tudo
                                 </button>
@@ -2615,7 +2612,7 @@
             filtros: {
                 especialidade: [],
                 categoria: [],
-                status: [],
+                status: ['livre', 'ocupado'],
                 ilha: []
             },
             userRole: null,
@@ -2912,15 +2909,12 @@
                         statusNormalizado: normalizarStatus(ag.status)
                     }));
                     console.log('Estado atualizado - Salas:', estado.salas.length, 'Agendamentos:', estado.agendamentos.length);
-                    atualizarMonitor();
-                    atualizarIndicadores();
+                    aplicarFiltros();
                     atualizarPlanejamento();
                     preencherRelatorioFiltros();
-                    setTimeout(() => {
-                        esconderLoading();
-                        console.log('Loading escondido - Verificando se monitor está visível');
-                        isLoading = false;  // Libera para próximas chamadas
-                    }, 1000);
+                    esconderLoading();
+                    console.log('Loading escondido - Verificando se monitor está visível');
+                    isLoading = false;  // Libera para próximas chamadas
                 })
                 .withFailureHandler(function(error) {
                     console.error('Erro ao carregar dados:', error);
@@ -3006,7 +3000,9 @@
                 <label><input type="checkbox" value="reservado"> Reservado</label>
             `;
 
-            const statusPadrao = ['livre', 'ocupado'];
+            const statusPadrao = Array.isArray(estado.filtros.status) && estado.filtros.status.length > 0
+                ? estado.filtros.status
+                : ['livre', 'ocupado'];
             statusPadrao.forEach(valor => {
                 const input = statusOptions.querySelector(`input[value="${valor}"]`);
                 if (input) input.checked = true;
@@ -3014,7 +3010,9 @@
             estado.filtros.status = [...statusPadrao];
             const statusBtn = document.querySelector('#filter-status-multi .multiselect-btn');
             if (statusBtn) {
-                statusBtn.textContent = `${statusPadrao.length} selecionados`;
+                statusBtn.textContent = statusPadrao.length === 0
+                    ? 'Todos os status'
+                    : `${statusPadrao.length} selecionados`;
             }
         }
 
@@ -3499,11 +3497,6 @@
                 });
             }
 
-            const planejamentoTestarBtn = document.getElementById('planejamento-testar');
-            if (planejamentoTestarBtn) {
-                planejamentoTestarBtn.addEventListener('click', testarPlanejamento);
-            }
-
             const planejamentoAplicarBtn = document.getElementById('planejamento-aplicar');
             if (planejamentoAplicarBtn) {
                 planejamentoAplicarBtn.addEventListener('click', aplicarPlanejamentoTudo);
@@ -3890,6 +3883,65 @@
             renderPlanejamento();
         }
 
+        function avaliarPlanejamentoLinha(linha) {
+            if (!linha) {
+                return { status: 'pendente', mensagem: 'Informe a sala desejada' };
+            }
+
+            const salaPlanejadaBruta = (linha.salaPlanejada || '').trim();
+            const salaAtualBruta = (linha.salaAtual || '').trim();
+            const salaAtualNormalizada = salaAtualBruta === '—' ? '' : salaAtualBruta;
+
+            if (!salaPlanejadaBruta) {
+                linha.resultado = 'pendente';
+                linha.mensagem = 'Informe a sala desejada';
+                return { status: linha.resultado, mensagem: linha.mensagem };
+            }
+
+            if (
+                salaAtualNormalizada &&
+                salaPlanejadaBruta.localeCompare(salaAtualNormalizada, undefined, { sensitivity: 'base' }) === 0
+            ) {
+                linha.resultado = 'ok';
+                linha.mensagem = 'Sala atual já corresponde ao planejamento';
+                return { status: linha.resultado, mensagem: linha.mensagem };
+            }
+
+            linha.resultado = 'erro';
+            linha.mensagem = salaAtualNormalizada
+                ? `Agendado na sala ${salaAtualNormalizada}`
+                : 'Sem sala registrada';
+            return { status: linha.resultado, mensagem: linha.mensagem };
+        }
+
+        function atualizarVisualPlanejamento(linha, tr, statusSpan, botaoAcao) {
+            const { status, mensagem } = avaliarPlanejamentoLinha(linha);
+
+            if (tr) {
+                tr.classList.remove('planejamento-row-ok', 'planejamento-row-erro');
+                if (status === 'ok') tr.classList.add('planejamento-row-ok');
+                if (status === 'erro') tr.classList.add('planejamento-row-erro');
+            }
+
+            if (statusSpan) {
+                statusSpan.className = 'planejamento-status';
+                if (status === 'ok') {
+                    statusSpan.classList.add('ok');
+                    statusSpan.textContent = mensagem || 'Sala conferida';
+                } else if (status === 'erro') {
+                    statusSpan.classList.add('alerta');
+                    statusSpan.textContent = mensagem || 'Sala divergente';
+                } else {
+                    statusSpan.classList.add('pendente');
+                    statusSpan.textContent = mensagem || 'Informe a sala desejada';
+                }
+            }
+
+            if (botaoAcao) {
+                botaoAcao.disabled = status !== 'erro';
+            }
+        }
+
         function renderPlanejamento() {
             const tbody = document.getElementById('planejamento-tbody');
             const feedback = document.getElementById('planejamento-feedback');
@@ -3910,7 +3962,7 @@
                 tr.appendChild(td);
                 tbody.appendChild(tr);
                 if (feedback) {
-                    feedback.textContent = 'Informe as salas desejadas para validar o planejamento.';
+                    feedback.textContent = 'Informe as salas desejadas e utilize as ações para aplicar as alterações.';
                     feedback.style.color = 'var(--text-secondary)';
                 }
                 return;
@@ -3918,8 +3970,8 @@
 
             estado.planejamentoLinhas.forEach(item => {
                 const tr = document.createElement('tr');
-                if (item.resultado === 'ok') tr.classList.add('planejamento-row-ok');
-                if (item.resultado === 'erro') tr.classList.add('planejamento-row-erro');
+                let statusSpan;
+                let botaoAcao;
 
                 const tdProfissional = document.createElement('td');
                 tdProfissional.textContent = item.profissional;
@@ -3939,46 +3991,28 @@
                 input.placeholder = 'Sala desejada';
                 input.value = item.salaPlanejada || '';
                 input.dataset.id = item.id;
-                input.addEventListener('input', event => {
+                input.addEventListener('input', () => {
                     const linha = estado.planejamentoLinhas.find(l => l.id === item.id);
                     if (linha) {
-                        linha.salaPlanejada = event.target.value.trim();
-                        linha.resultado = null;
-                        linha.mensagem = '';
+                        linha.salaPlanejada = input.value;
+                        atualizarVisualPlanejamento(linha, tr, statusSpan, botaoAcao);
                     }
-                    renderPlanejamento();
                 });
                 tdPlanejada.appendChild(input);
 
                 const tdStatus = document.createElement('td');
-                const statusSpan = document.createElement('span');
+                statusSpan = document.createElement('span');
                 statusSpan.className = 'planejamento-status';
-                let textoStatus = 'Aguardando teste';
-                if (item.resultado === 'ok') {
-                    statusSpan.classList.add('ok');
-                    textoStatus = item.mensagem || 'Tudo certo';
-                } else if (item.resultado === 'erro') {
-                    statusSpan.classList.add('alerta');
-                    textoStatus = item.mensagem || 'Divergente do agendamento';
-                } else if (item.resultado === 'pendente') {
-                    statusSpan.classList.add('pendente');
-                    textoStatus = item.mensagem || 'Informe a sala desejada';
-                } else {
-                    statusSpan.classList.add('pendente');
-                    if (item.mensagem) textoStatus = item.mensagem;
-                }
-                statusSpan.textContent = textoStatus;
                 tdStatus.appendChild(statusSpan);
 
                 const tdAcao = document.createElement('td');
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'btn btn-primary';
-                btn.dataset.planejamentoId = item.id;
-                btn.innerHTML = '<i class="fas fa-check"></i> Substituir';
-                btn.disabled = item.resultado !== 'erro';
-                btn.addEventListener('click', () => aplicarPlanejamentoLinha(item.id));
-                tdAcao.appendChild(btn);
+                botaoAcao = document.createElement('button');
+                botaoAcao.type = 'button';
+                botaoAcao.className = 'btn btn-primary';
+                botaoAcao.dataset.planejamentoId = item.id;
+                botaoAcao.innerHTML = '<i class="fas fa-check"></i> Substituir';
+                botaoAcao.addEventListener('click', () => aplicarPlanejamentoLinha(item.id));
+                tdAcao.appendChild(botaoAcao);
 
                 tr.appendChild(tdProfissional);
                 tr.appendChild(tdEspecialidade);
@@ -3989,12 +4023,25 @@
                 tr.appendChild(tdAcao);
 
                 tbody.appendChild(tr);
+
+                atualizarVisualPlanejamento(item, tr, statusSpan, botaoAcao);
             });
 
-            const possuiNaoTestado = estado.planejamentoLinhas.some(item => item.resultado === null);
-            if (feedback && possuiNaoTestado) {
-                feedback.textContent = 'Execute "Testar atribuições" para validar o planejamento.';
-                feedback.style.color = 'var(--text-secondary)';
+            if (feedback) {
+                const divergentes = estado.planejamentoLinhas.filter(item => item.resultado === 'erro');
+                if (divergentes.length > 0) {
+                    feedback.textContent = `${divergentes.length} divergência${divergentes.length === 1 ? '' : 's'} pronta${divergentes.length === 1 ? '' : 's'} para substituição.`;
+                    feedback.style.color = 'var(--danger)';
+                } else {
+                    const pendentes = estado.planejamentoLinhas.filter(item => item.resultado === 'pendente');
+                    if (pendentes.length > 0) {
+                        feedback.textContent = `${pendentes.length} registro${pendentes.length === 1 ? '' : 's'} aguardando definição de sala.`;
+                        feedback.style.color = 'var(--warning)';
+                    } else {
+                        feedback.textContent = 'Todas as salas planejadas conferem com o agendamento atual.';
+                        feedback.style.color = 'var(--success)';
+                    }
+                }
             }
         }
 
@@ -4194,224 +4241,6 @@
             }
         }
 
-        function abrirTelaTestePlanejamento(resumoTexto, totais) {
-            const janelaTeste = window.open('', '_blank');
-            if (!janelaTeste || janelaTeste.closed || typeof janelaTeste.closed === 'undefined') {
-                mostrarPlanejamentoMensagem('Não foi possível abrir a nova aba. Verifique o bloqueio de pop-ups.', false, true);
-                return;
-            }
-
-            const linhas = Array.isArray(estado.planejamentoLinhas) ? estado.planejamentoLinhas : [];
-            const statusLabel = {
-                ok: 'Correto',
-                erro: 'Divergente',
-                pendente: 'Pendente',
-                null: 'Não testado'
-            };
-
-            const linhasTabela = linhas.map(item => {
-                const turno = formatarTurnoLabel(item.turno || '');
-                const salaPlanejada = item.salaPlanejada || '-';
-                const salaAtual = item.salaAtual || '-';
-                const resultado = item.resultado ?? null;
-                const mensagem = item.mensagem || '-';
-                const classe = resultado ? `status-${resultado}` : 'status-indefinido';
-                const label = statusLabel[resultado] || statusLabel.null;
-
-                return `
-                    <tr class="${classe}">
-                        <td>${item.profissional || '-'}</td>
-                        <td>${item.especialidade || '-'}</td>
-                        <td>${turno}</td>
-                        <td>${salaAtual}</td>
-                        <td>${salaPlanejada}</td>
-                        <td>${label}</td>
-                        <td>${mensagem}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            const html = `
-                <!DOCTYPE html>
-                <html lang="pt-BR">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Resultado do Teste de Planejamento</title>
-                    <style>
-                        body {
-                            margin: 0;
-                            font-family: 'Inter', 'Segoe UI', sans-serif;
-                            background: #0f172a;
-                            color: #f8fafc;
-                            padding: 24px;
-                        }
-                        h1 {
-                            margin-top: 0;
-                            font-size: 1.5rem;
-                        }
-                        .resumo {
-                            margin: 12px 0 24px;
-                            color: #dbe8ff;
-                            font-weight: 500;
-                        }
-                        .totais {
-                            display: flex;
-                            flex-wrap: wrap;
-                            gap: 12px;
-                            margin-bottom: 18px;
-                        }
-                        .total-card {
-                            background: rgba(148, 163, 254, 0.12);
-                            border: 1px solid rgba(148, 163, 254, 0.25);
-                            border-radius: 10px;
-                            padding: 12px 16px;
-                            min-width: 140px;
-                        }
-                        .total-card span {
-                            display: block;
-                            font-size: 0.85rem;
-                            color: #cbd5f5;
-                        }
-                        .total-card strong {
-                            font-size: 1.15rem;
-                            color: #fff;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            background: rgba(15, 23, 42, 0.65);
-                            border-radius: 12px;
-                            overflow: hidden;
-                            box-shadow: 0 18px 35px rgba(7, 12, 26, 0.35);
-                        }
-                        th, td {
-                            padding: 12px 16px;
-                            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-                            text-align: left;
-                            font-size: 0.92rem;
-                        }
-                        th {
-                            background: rgba(30, 41, 82, 0.85);
-                            position: sticky;
-                            top: 0;
-                            z-index: 1;
-                        }
-                        tbody tr:last-child td {
-                            border-bottom: none;
-                        }
-                        .status-ok td:nth-child(6) {
-                            color: #4ade80;
-                            font-weight: 600;
-                        }
-                        .status-erro td:nth-child(6) {
-                            color: #f87171;
-                            font-weight: 600;
-                        }
-                        .status-pendente td:nth-child(6) {
-                            color: #fbbf24;
-                            font-weight: 600;
-                        }
-                        .status-indefinido td:nth-child(6) {
-                            color: #94a3b8;
-                        }
-                        @media (max-width: 900px) {
-                            table {
-                                display: block;
-                                overflow-x: auto;
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h1>Resultado do Teste de Planejamento</h1>
-                    <div class="resumo">${resumoTexto}</div>
-                    <div class="totais">
-                        <div class="total-card">
-                            <span>Corretos</span>
-                            <strong>${totais.corretos}</strong>
-                        </div>
-                        <div class="total-card">
-                            <span>Divergentes</span>
-                            <strong>${totais.divergentes}</strong>
-                        </div>
-                        <div class="total-card">
-                            <span>Pendentes</span>
-                            <strong>${totais.pendentes}</strong>
-                        </div>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Profissional</th>
-                                <th>Especialidade</th>
-                                <th>Turno</th>
-                                <th>Sala atual</th>
-                                <th>Sala planejada</th>
-                                <th>Status</th>
-                                <th>Mensagem</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${linhasTabela || '<tr><td colspan="7">Nenhum dado disponível para exibir.</td></tr>'}
-                        </tbody>
-                    </table>
-                </body>
-                </html>
-            `;
-
-            janelaTeste.document.open();
-            janelaTeste.document.write(html);
-            janelaTeste.document.close();
-        }
-
-        function testarPlanejamento() {
-            if (!Array.isArray(estado.planejamentoLinhas) || estado.planejamentoLinhas.length === 0) {
-                mostrarPlanejamentoMensagem('Nenhum agendamento para validar neste turno.', false, true);
-                return;
-            }
-
-            let corretos = 0;
-            let divergentes = 0;
-            let pendentes = 0;
-
-            estado.planejamentoLinhas.forEach(item => {
-                const planejada = (item.salaPlanejada || '').trim();
-                const atual = (item.salaAtual || '').trim();
-
-                if (!planejada) {
-                    item.resultado = 'pendente';
-                    item.mensagem = 'Informe a sala desejada';
-                    pendentes++;
-                    return;
-                }
-
-                if (planejada.toLowerCase() === atual.toLowerCase()) {
-                    item.resultado = 'ok';
-                    item.mensagem = 'Sala conferida com sucesso';
-                    corretos++;
-                } else {
-                    item.resultado = 'erro';
-                    item.mensagem = atual ? `Agendado na sala ${atual}` : 'Sem sala registrada';
-                    divergentes++;
-                }
-            });
-
-            renderPlanejamento();
-
-            const partes = [];
-            if (corretos > 0) partes.push(`${corretos} corret${corretos === 1 ? 'o' : 'os'}`);
-            if (divergentes > 0) partes.push(`${divergentes} divergênc${divergentes === 1 ? 'ia' : 'ias'}`);
-            if (pendentes > 0) partes.push(`${pendentes} pendente${pendentes === 1 ? '' : 's'}`);
-
-            const texto = partes.length > 0
-                ? `Resultado do teste: ${partes.join(' • ')}`
-                : 'Nenhuma sala planejada informada.';
-
-            mostrarPlanejamentoMensagem(texto, divergentes === 0 && pendentes === 0, divergentes > 0 || pendentes > 0);
-            abrirTelaTestePlanejamento(texto, { corretos, divergentes, pendentes });
-        }
-
         function aplicarPlanejamentoLinha(id) {
             const linha = estado.planejamentoLinhas.find(item => item.id === String(id));
             if (!linha) {
@@ -4419,8 +4248,20 @@
                 return;
             }
 
-            if (linha.resultado !== 'erro') {
-                mostrarPlanejamentoMensagem('É necessário testar as atribuições antes de substituir.', false, true);
+            const btnLinha = document.querySelector(`button[data-planejamento-id="${linha.id}"]`);
+            const trLinha = btnLinha ? btnLinha.closest('tr') : null;
+            const statusSpan = trLinha ? trLinha.querySelector('.planejamento-status') : null;
+
+            const avaliacao = avaliarPlanejamentoLinha(linha);
+            atualizarVisualPlanejamento(linha, trLinha, statusSpan, btnLinha);
+
+            if (avaliacao.status === 'pendente') {
+                mostrarPlanejamentoMensagem('Informe a sala desejada para continuar.', false, true);
+                return;
+            }
+
+            if (avaliacao.status === 'ok') {
+                mostrarPlanejamentoMensagem('A sala informada já está correta para este profissional.', true);
                 return;
             }
 
@@ -4430,7 +4271,6 @@
                 return;
             }
 
-            const btnLinha = document.querySelector(`button[data-planejamento-id="${linha.id}"]`);
             if (btnLinha) btnLinha.disabled = true;
 
             const salaInfo = estado.salas.find(s => String(s.numero).toLowerCase() === salaDestino.toLowerCase());
@@ -4506,9 +4346,12 @@
         }
 
         function aplicarPlanejamentoTudo() {
+            estado.planejamentoLinhas.forEach(item => avaliarPlanejamentoLinha(item));
+            renderPlanejamento();
+
             const divergentes = estado.planejamentoLinhas.filter(item => item.resultado === 'erro');
             if (divergentes.length === 0) {
-                mostrarPlanejamentoMensagem('Nenhuma divergência para substituir. Execute o teste primeiro.', false, true);
+                mostrarPlanejamentoMensagem('Nenhuma divergência para substituir. Ajuste as salas desejadas.', false, true);
                 return;
             }
 
