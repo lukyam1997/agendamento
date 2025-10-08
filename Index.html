@@ -59,6 +59,41 @@
           color: inherit;
       }
 
+      button {
+          position: relative;
+          overflow: hidden;
+      }
+
+      button::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 14px;
+          height: 14px;
+          pointer-events: none;
+          background: radial-gradient(circle, rgba(122, 141, 255, 0.4) 0%, rgba(122, 141, 255, 0) 70%);
+          transform: translate(-50%, -50%) scale(0);
+          opacity: 0;
+          transition: transform 0.35s ease, opacity 0.35s ease;
+      }
+
+      button:active {
+          transform: scale(0.97);
+          box-shadow: 0 14px 28px rgba(90, 115, 255, 0.32);
+          filter: brightness(1.05);
+      }
+
+      button:active::after {
+          transform: translate(-50%, -50%) scale(12);
+          opacity: 0.55;
+      }
+
+      button:focus-visible {
+          outline: 2px solid var(--primary);
+          outline-offset: 2px;
+      }
+
       .sr-only-input {
           position: absolute;
           width: 1px;
@@ -1003,6 +1038,43 @@
           display: block;
       }
 
+      .report-filters {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 16px;
+          margin-top: 16px;
+      }
+
+      .report-filter-field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+      }
+
+      .report-filter-field label {
+          font-weight: 600;
+          color: var(--text-secondary);
+      }
+
+      .report-filter-field select,
+      .report-filter-field input {
+          background: var(--surface-elevated);
+          border: 1px solid var(--border-soft);
+          border-radius: var(--radius-sm);
+          color: var(--text-primary);
+          padding: 10px 12px;
+          font-family: var(--font-family);
+          min-height: 44px;
+      }
+
+      .report-filter-field select[multiple] {
+          height: 124px;
+      }
+
+      .report-filter-field input::placeholder {
+          color: var(--text-muted);
+      }
+
       .dashboard-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1040,6 +1112,9 @@
       @media (max-width: 768px) {
           .chart-container {
               height: 280px;
+          }
+          .report-filters {
+              grid-template-columns: 1fr;
           }
       }
 
@@ -1889,6 +1964,10 @@
                             <span class="resumo-valor" id="dashboard-resumo-ocupacao-pico">0%</span>
                         </div>
                         <div class="resumo-card">
+                            <span class="resumo-label">Aproveitamento de salas</span>
+                            <span class="resumo-valor" id="dashboard-resumo-aproveitamento">0%</span>
+                        </div>
+                        <div class="resumo-card">
                             <span class="resumo-label">Salas ativas</span>
                             <span class="resumo-valor" id="dashboard-resumo-salas">0</span>
                         </div>
@@ -1940,6 +2019,40 @@
                         <input type="date" id="relatorio-data-fim">
                         <button class="btn btn-primary" id="btn-gerar-relatorio">Gerar</button>
                     </div>
+                    <div class="report-filters">
+                        <div class="report-filter-field">
+                            <label for="relatorio-filtro-turno">Turnos</label>
+                            <select id="relatorio-filtro-turno" multiple></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="relatorio-filtro-status">Status</label>
+                            <select id="relatorio-filtro-status" multiple></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="relatorio-filtro-ilha">Ilhas</label>
+                            <select id="relatorio-filtro-ilha" multiple></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="relatorio-filtro-sala">Salas</label>
+                            <select id="relatorio-filtro-sala" multiple></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="relatorio-filtro-especialidade">Especialidades</label>
+                            <select id="relatorio-filtro-especialidade" multiple></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="relatorio-filtro-categoria">Categorias</label>
+                            <select id="relatorio-filtro-categoria" multiple></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="relatorio-filtro-profissional">Profissionais</label>
+                            <select id="relatorio-filtro-profissional" multiple></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="relatorio-filtro-busca">Busca rápida</label>
+                            <input type="text" id="relatorio-filtro-busca" placeholder="Digite termos para filtrar">
+                        </div>
+                    </div>
                     <div class="resumo-grid" id="relatorio-resumo">
                         <div class="resumo-card">
                             <span class="resumo-label">Período analisado</span>
@@ -1960,6 +2073,10 @@
                         <div class="resumo-card">
                             <span class="resumo-label">Pico de ocupação</span>
                             <span class="resumo-valor" id="relatorio-resumo-ocupacao-pico">0%</span>
+                        </div>
+                        <div class="resumo-card">
+                            <span class="resumo-label">Aproveitamento de salas</span>
+                            <span class="resumo-valor" id="relatorio-resumo-aproveitamento">0%</span>
                         </div>
                         <div class="resumo-card">
                             <span class="resumo-label">Salas ativas</span>
@@ -1987,7 +2104,8 @@
                                 <tr>
                                     <th>Data</th>
                                     <th>Salas Ocupadas</th>
-                                    <th>Taxa (%)</th>
+                                    <th>Ocupação (%)</th>
+                                    <th>Aproveitamento (%)</th>
                                     <th>Especialidades</th>
                                 </tr>
                             </thead>
@@ -2007,6 +2125,7 @@
                                     <th>Turno</th>
                                     <th>Horário</th>
                                     <th>Especialidade</th>
+                                    <th>Categoria</th>
                                     <th>Profissional</th>
                                     <th>Status</th>
                                 </tr>
@@ -2536,6 +2655,19 @@
             return status;
         }
 
+        const ordenarAlphaNumerico = (a, b) => {
+            const valorA = String(a ?? '').trim();
+            const valorB = String(b ?? '').trim();
+            const numA = parseFloat(valorA);
+            const numB = parseFloat(valorB);
+            const ehNumA = valorA !== '' && !Number.isNaN(numA);
+            const ehNumB = valorB !== '' && !Number.isNaN(numB);
+            if (ehNumA && ehNumB) {
+                return numA - numB;
+            }
+            return valorA.localeCompare(valorB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+        };
+
         function statusBloqueiaAgendamento(status) {
             const normalizado = normalizarStatus(status);
             return ['ocupado', 'reservado', 'bloqueado', 'manutencao'].includes(normalizado);
@@ -2783,6 +2915,7 @@
                     atualizarMonitor();
                     atualizarIndicadores();
                     atualizarPlanejamento();
+                    preencherRelatorioFiltros();
                     setTimeout(() => {
                         esconderLoading();
                         console.log('Loading escondido - Verificando se monitor está visível');
@@ -2815,6 +2948,7 @@
                     preencherFiltros();
                     setupMultiselectListeners();
                     preencherFormularios();
+                    preencherRelatorioFiltros();
                 })
                 .withFailureHandler(function(error) {
                     console.error('Erro ao carregar dados mestres:', error);
@@ -2882,6 +3016,124 @@
             if (statusBtn) {
                 statusBtn.textContent = `${statusPadrao.length} selecionados`;
             }
+        }
+
+        function preencherRelatorioFiltros() {
+            const atualizarSelect = (select, valores) => {
+                if (!select) return;
+                const selecionados = new Set(Array.from(select.selectedOptions || []).map(opt => opt.value));
+                select.innerHTML = '';
+                valores.forEach(({ value, label }) => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = label;
+                    if (selecionados.has(value)) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            };
+
+            atualizarSelect(document.getElementById('relatorio-filtro-turno'), [
+                { value: 'manha', label: 'Manhã' },
+                { value: 'tarde', label: 'Tarde' },
+                { value: 'noite', label: 'Noite' },
+                { value: 'todos', label: 'Todos os turnos' }
+            ]);
+
+            const statusSet = new Set(['ocupado', 'reservado', 'bloqueado', 'livre', 'manutencao', 'cancelado']);
+            estado.agendamentos.forEach(ag => {
+                if (ag.statusNormalizado) {
+                    statusSet.add(ag.statusNormalizado);
+                }
+            });
+            const statusValores = Array.from(statusSet)
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
+                .map(status => ({ value: status, label: formatarStatusLabel(status) }));
+            atualizarSelect(document.getElementById('relatorio-filtro-status'), statusValores);
+
+            const ilhasSet = new Set();
+            (estado.dadosMestres.ilhas || []).forEach(ilha => {
+                if (ilha !== undefined && ilha !== null && `${ilha}`.trim()) {
+                    ilhasSet.add(String(ilha).trim());
+                }
+            });
+            estado.salas.forEach(sala => {
+                if (sala.ilha !== undefined && sala.ilha !== null && `${sala.ilha}`.trim()) {
+                    ilhasSet.add(String(sala.ilha).trim());
+                }
+            });
+            const ilhasLista = Array.from(ilhasSet)
+                .filter(Boolean)
+                .sort(ordenarAlphaNumerico)
+                .map(ilha => ({ value: ilha, label: `Ilha ${ilha}` }));
+            atualizarSelect(document.getElementById('relatorio-filtro-ilha'), ilhasLista);
+
+            const salasSet = new Set();
+            estado.salas.forEach(sala => {
+                if (sala.numero !== undefined && sala.numero !== null && `${sala.numero}`.trim()) {
+                    salasSet.add(String(sala.numero).trim());
+                }
+            });
+            const salasLista = Array.from(salasSet)
+                .filter(Boolean)
+                .sort(ordenarAlphaNumerico)
+                .map(numero => ({ value: numero, label: `Sala ${numero}` }));
+            atualizarSelect(document.getElementById('relatorio-filtro-sala'), salasLista);
+
+            const especialidadeMap = new Map();
+            (estado.dadosMestres.especialidades || []).forEach(esp => {
+                const chave = normalizarTexto(esp);
+                if (chave) {
+                    especialidadeMap.set(chave, esp);
+                }
+            });
+            estado.agendamentos.forEach(ag => {
+                const esp = ag.especialidade;
+                const chave = normalizarTexto(esp);
+                if (chave && !especialidadeMap.has(chave)) {
+                    especialidadeMap.set(chave, esp);
+                }
+            });
+            const especialidadesLista = Array.from(especialidadeMap.values())
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
+                .map(esp => ({ value: esp, label: esp }));
+            atualizarSelect(document.getElementById('relatorio-filtro-especialidade'), especialidadesLista);
+
+            const categoriaMap = new Map();
+            (estado.dadosMestres.categorias || []).forEach(cat => {
+                const chave = normalizarTexto(cat);
+                if (chave) {
+                    categoriaMap.set(chave, cat);
+                }
+            });
+            estado.agendamentos.forEach(ag => {
+                const cat = ag.categoria;
+                const chave = normalizarTexto(cat);
+                if (chave && !categoriaMap.has(chave)) {
+                    categoriaMap.set(chave, cat);
+                }
+            });
+            const categoriasLista = Array.from(categoriaMap.values())
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
+                .map(cat => ({ value: cat, label: cat }));
+            atualizarSelect(document.getElementById('relatorio-filtro-categoria'), categoriasLista);
+
+            const profissionaisSet = new Set();
+            estado.agendamentos.forEach(ag => {
+                const profissional = (ag.profissional || '').trim();
+                if (profissional) {
+                    profissionaisSet.add(profissional);
+                }
+            });
+            const profissionaisLista = Array.from(profissionaisSet)
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }))
+                .map(nome => ({ value: nome, label: nome }));
+            atualizarSelect(document.getElementById('relatorio-filtro-profissional'), profissionaisLista);
         }
 
         function setupMultiselectListeners() {
@@ -5507,6 +5759,7 @@
             definirTexto('dias', dados.diasAnalisados ?? 0);
             definirTexto('ocupacao-media', dados.ocupacaoMedia ?? 0, '%');
             definirTexto('ocupacao-pico', dados.ocupacaoPico ?? 0, '%');
+            definirTexto('aproveitamento', dados.taxaAproveitamento ?? 0, '%');
             definirTexto('salas', dados.salasAtivas ?? 0);
             definirTexto('salas-consideradas', dados.totalSalasConsideradas ?? 0);
             definirTexto('especialidades', dados.especialidadesAtivas ?? 0);
@@ -5786,15 +6039,56 @@
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('relatorio-data-inicio').value = hoje;
             document.getElementById('relatorio-data-fim').value = hoje;
+            preencherRelatorioFiltros();
+
+            const filtrosContainer = document.querySelector('.report-filters');
+            if (filtrosContainer && !filtrosContainer.dataset.listenersAttached) {
+                filtrosContainer.querySelectorAll('select').forEach(select => {
+                    select.addEventListener('change', () => {
+                        const inicio = document.getElementById('relatorio-data-inicio').value;
+                        const fim = document.getElementById('relatorio-data-fim').value;
+                        if (inicio && fim) {
+                            gerarRelatorio();
+                        }
+                    });
+                });
+                const buscaInput = document.getElementById('relatorio-filtro-busca');
+                if (buscaInput) {
+                    buscaInput.addEventListener('keydown', event => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            gerarRelatorio();
+                        }
+                    });
+                }
+                filtrosContainer.dataset.listenersAttached = 'true';
+            }
+        }
+
+        function obterValoresMultiplo(id) {
+            const select = document.getElementById(id);
+            if (!select) return [];
+            return Array.from(select.selectedOptions || []).map(opt => opt.value);
         }
 
         function gerarRelatorio() {
             const inicio = document.getElementById('relatorio-data-inicio').value;
             const fim = document.getElementById('relatorio-data-fim').value;
+            const limparLista = lista => lista.map(item => String(item || '').trim()).filter(Boolean);
+            const filtros = {
+                turnos: limparLista(obterValoresMultiplo('relatorio-filtro-turno')),
+                status: limparLista(obterValoresMultiplo('relatorio-filtro-status')),
+                ilhas: limparLista(obterValoresMultiplo('relatorio-filtro-ilha')),
+                salas: limparLista(obterValoresMultiplo('relatorio-filtro-sala')),
+                especialidades: limparLista(obterValoresMultiplo('relatorio-filtro-especialidade')),
+                categorias: limparLista(obterValoresMultiplo('relatorio-filtro-categoria')),
+                profissionais: limparLista(obterValoresMultiplo('relatorio-filtro-profissional')),
+                busca: (document.getElementById('relatorio-filtro-busca').value || '').trim()
+            };
             google.script.run
                 .withSuccessHandler(renderRelatorioTable)
                 .withFailureHandler(error => console.error('Erro no relatório:', error))
-                .getRelatorioPeriodo(inicio, fim);
+                .getRelatorioPeriodo(inicio, fim, JSON.stringify(filtros));
         }
 
         function renderRelatorioTable(resultado) {
@@ -5812,7 +6106,7 @@
             if (linhasDiario.length === 0) {
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.colSpan = 4;
+                td.colSpan = 5;
                 td.textContent = 'Nenhum dado encontrado para o período selecionado.';
                 tr.appendChild(td);
                 tbodyResumo.appendChild(tr);
@@ -5832,6 +6126,10 @@
                     const taxaNumero = Number(item.taxaMedia);
                     tdTaxa.textContent = Number.isFinite(taxaNumero) ? `${taxaNumero}%` : '0%';
 
+                    const tdAproveitamento = document.createElement('td');
+                    const aproveitamentoNumero = Number(item.taxaAproveitamento);
+                    tdAproveitamento.textContent = Number.isFinite(aproveitamentoNumero) ? `${aproveitamentoNumero}%` : '0%';
+
                     const tdEspecialidades = document.createElement('td');
                     tdEspecialidades.textContent = Array.isArray(item.especialidades) && item.especialidades.length
                         ? item.especialidades.join(', ')
@@ -5840,6 +6138,7 @@
                     tr.appendChild(tdData);
                     tr.appendChild(tdSalas);
                     tr.appendChild(tdTaxa);
+                    tr.appendChild(tdAproveitamento);
                     tr.appendChild(tdEspecialidades);
                     tbodyResumo.appendChild(tr);
                 });
@@ -5852,7 +6151,7 @@
             if (linhasDetalhe.length === 0) {
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.colSpan = 8;
+                td.colSpan = 9;
                 td.textContent = 'Nenhum agendamento encontrado para o período selecionado.';
                 tr.appendChild(td);
                 tbodyDetalhado.appendChild(tr);
@@ -5887,6 +6186,9 @@
                     const tdEspecialidade = document.createElement('td');
                     tdEspecialidade.textContent = item.especialidade || 'Não informado';
 
+                    const tdCategoria = document.createElement('td');
+                    tdCategoria.textContent = item.categoria || 'Não informado';
+
                     const tdProfissional = document.createElement('td');
                     tdProfissional.textContent = item.profissional || '-';
 
@@ -5899,6 +6201,7 @@
                     tr.appendChild(tdTurno);
                     tr.appendChild(tdHorario);
                     tr.appendChild(tdEspecialidade);
+                    tr.appendChild(tdCategoria);
                     tr.appendChild(tdProfissional);
                     tr.appendChild(tdStatus);
                     tbodyDetalhado.appendChild(tr);

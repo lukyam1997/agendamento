@@ -119,20 +119,56 @@ function parseDashboardFiltros(filtrosJson) {
 function parseRelatorioFiltros(filtrosJson) {
   const vazio = {
     turno: null,
+    turnos: [],
     ilha: null,
+    ilhas: [],
     especialidade: null,
+    especialidades: [],
     status: null,
-    sala: null
+    statusLista: [],
+    sala: null,
+    salas: [],
+    categorias: [],
+    profissionais: [],
+    busca: null
   };
   if (!filtrosJson) return vazio;
   try {
     const bruto = JSON.parse(filtrosJson) || {};
+    const normalizarArray = (valor, normalizador) => {
+      if (valor === undefined || valor === null) return [];
+      const array = Array.isArray(valor) ? valor : [valor];
+      return array
+        .map(item => {
+          const conteudo = normalizador ? normalizador(item) : String(item || '').trim();
+          return conteudo;
+        })
+        .filter(Boolean);
+    };
+
+    const turnos = normalizarArray(bruto.turnos || bruto.turno, normalizarTurnoServidor);
+    const ilhas = normalizarArray(bruto.ilhas || bruto.ilha, valor => String(valor || '').trim());
+    const especialidades = normalizarArray(bruto.especialidades || bruto.especialidade, normalizarTextoServidor);
+    const statusLista = normalizarArray(bruto.status || bruto.statusLista, normalizarStatusServidor);
+    const salas = normalizarArray(bruto.salas || bruto.sala, valor => String(valor || '').trim());
+    const categorias = normalizarArray(bruto.categorias || bruto.categoria, normalizarTextoServidor);
+    const profissionais = normalizarArray(bruto.profissionais || bruto.profissional, normalizarTextoServidor);
+    const busca = bruto.busca ? normalizarTextoServidor(bruto.busca) : null;
+
     return {
-      turno: bruto.turno ? normalizarTurnoServidor(bruto.turno) : null,
-      ilha: bruto.ilha ? String(bruto.ilha).trim() : null,
-      especialidade: bruto.especialidade ? normalizarTextoServidor(bruto.especialidade) : null,
-      status: bruto.status ? normalizarStatusServidor(bruto.status) : null,
-      sala: bruto.sala ? String(bruto.sala).trim() : null
+      turno: turnos.length ? turnos[0] : null,
+      turnos,
+      ilha: ilhas.length ? ilhas[0] : null,
+      ilhas,
+      especialidade: especialidades.length ? especialidades[0] : null,
+      especialidades,
+      status: statusLista.length ? statusLista[0] : null,
+      statusLista,
+      sala: salas.length ? salas[0] : null,
+      salas,
+      categorias,
+      profissionais,
+      busca
     };
   } catch (error) {
     console.warn('Não foi possível interpretar filtros do relatório:', error);
@@ -1176,7 +1212,8 @@ function getDadosAgregados(periodo, filtrosJson) {
       ocupacaoPico: 0,
       salasAtivas: 0,
       especialidadesAtivas: 0,
-      totalSalasConsideradas: totalSalas
+      totalSalasConsideradas: totalSalas,
+      taxaAproveitamento: 0
     };
 
     if (!values || values.length <= 1) {
@@ -1186,7 +1223,7 @@ function getDadosAgregados(periodo, filtrosJson) {
         ocupacaoIlha: {},
         evolucao: {},
         especialidades: {},
-        ocupacaoGeral: { uso: 0, ocupadas: 0, livres: totalSalas, indisponiveis: 0 },
+        ocupacaoGeral: { uso: 0, ocupadas: 0, livres: totalSalas, indisponiveis: 0, taxaAproveitamento: 0 },
         statusDistribuicao: {}
       };
     }
@@ -1315,6 +1352,8 @@ function getDadosAgregados(periodo, filtrosJson) {
     let picoOcupacao = 0;
     let totalUsoSalas = 0;
     let totalIndisponiveis = 0;
+    let somaAproveitamentoPercentual = 0;
+    let totalSalasLivres = 0;
 
     diasOrdenados.forEach(([diaIso, infoDia]) => {
       evolucao[diaIso] = infoDia.totalEventos;
@@ -1333,11 +1372,18 @@ function getDadosAgregados(periodo, filtrosJson) {
 
       totalUsoSalas += usoDia;
       totalIndisponiveis += indisponiveisDia;
+      const livresDia = Math.max(totalSalas - usoDia - indisponiveisDia, 0);
+      totalSalasLivres += livresDia;
 
       if (totalSalas > 0) {
         const taxaDia = Math.min(100, Math.round((usoDia / totalSalas) * 100));
         somaOcupacaoPercentual += taxaDia;
         if (taxaDia > picoOcupacao) picoOcupacao = taxaDia;
+        const disponiveisDia = usoDia + livresDia;
+        const taxaAproveitamentoDia = disponiveisDia > 0
+          ? Math.min(100, Math.round((usoDia / disponiveisDia) * 100))
+          : 0;
+        somaAproveitamentoPercentual += taxaAproveitamentoDia;
       }
     });
 
@@ -1347,7 +1393,16 @@ function getDadosAgregados(periodo, filtrosJson) {
       : 0;
     const usoMedio = diasAnalisados > 0 ? Math.round(totalUsoSalas / diasAnalisados) : 0;
     const indisponiveisMedio = diasAnalisados > 0 ? Math.round(totalIndisponiveis / diasAnalisados) : 0;
-    const livresMedio = Math.max(totalSalas - usoMedio - indisponiveisMedio, 0);
+    const livresMedio = diasAnalisados > 0
+      ? Math.max(Math.round(totalSalasLivres / diasAnalisados), 0)
+      : Math.max(totalSalas - usoMedio - indisponiveisMedio, 0);
+    const disponiveisMedio = usoMedio + livresMedio;
+    const taxaAproveitamento = disponiveisMedio > 0
+      ? Math.round((usoMedio / disponiveisMedio) * 100)
+      : 0;
+    const aproveitamentoMedio = diasAnalisados > 0
+      ? Math.round(somaAproveitamentoPercentual / diasAnalisados)
+      : taxaAproveitamento;
 
     const especialidades = {};
     especialidadesMap.forEach(({ label, total }) => {
@@ -1364,7 +1419,8 @@ function getDadosAgregados(periodo, filtrosJson) {
         ocupacaoMedia,
         ocupacaoPico: picoOcupacao,
         salasAtivas: salasAtivasSet.size,
-        especialidadesAtivas: especialidadesSet.size
+        especialidadesAtivas: especialidadesSet.size,
+        taxaAproveitamento: aproveitamentoMedio
       },
       ocupacaoTurno,
       ocupacaoIlha,
@@ -1374,7 +1430,8 @@ function getDadosAgregados(periodo, filtrosJson) {
         uso: usoMedio,
         ocupadas: usoMedio,
         livres: livresMedio,
-        indisponiveis: indisponiveisMedio
+        indisponiveis: indisponiveisMedio,
+        taxaAproveitamento
       },
       statusDistribuicao
     };
@@ -1423,7 +1480,11 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
     const inicioData = new Date(`${inicio}T00:00:00`);
     const fimData = new Date(`${fim}T23:59:59`);
     if (isNaN(inicioData.getTime()) || isNaN(fimData.getTime())) {
-      return { resumo: { periodoTexto: 'Período inválido', totalAgendamentos: 0 }, diario: [], detalhado: [] };
+      return {
+        resumo: { periodoTexto: 'Período inválido', totalAgendamentos: 0, taxaAproveitamento: 0 },
+        diario: [],
+        detalhado: []
+      };
     }
 
     if (inicioData.getTime() > fimData.getTime()) {
@@ -1447,7 +1508,8 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
           ocupacaoPico: 0,
           salasAtivas: 0,
           especialidadesAtivas: 0,
-          totalSalasConsideradas: TOTAL_SALAS_ESTIMADO
+          totalSalasConsideradas: TOTAL_SALAS_ESTIMADO,
+          taxaAproveitamento: 0
         },
         diario: [],
         detalhado: []
@@ -1466,7 +1528,8 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
           ocupacaoPico: 0,
           salasAtivas: 0,
           especialidadesAtivas: 0,
-          totalSalasConsideradas: TOTAL_SALAS_ESTIMADO
+          totalSalasConsideradas: TOTAL_SALAS_ESTIMADO,
+          taxaAproveitamento: 0
         },
         diario: [],
         detalhado: []
@@ -1485,7 +1548,8 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
           ocupacaoPico: 0,
           salasAtivas: 0,
           especialidadesAtivas: 0,
-          totalSalasConsideradas: TOTAL_SALAS_ESTIMADO
+          totalSalasConsideradas: TOTAL_SALAS_ESTIMADO,
+          taxaAproveitamento: 0
         },
         diario: [],
         detalhado: []
@@ -1510,6 +1574,26 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
     const turnosSet = new Set();
     const especialidadesSet = new Set();
     let totalEventos = 0;
+    const turnosFiltro = Array.isArray(filtros.turnos) && filtros.turnos.length
+      ? filtros.turnos
+      : filtros.turno ? [filtros.turno] : [];
+    const ilhasFiltro = Array.isArray(filtros.ilhas) && filtros.ilhas.length
+      ? filtros.ilhas
+      : filtros.ilha ? [filtros.ilha] : [];
+    const especialidadesFiltro = Array.isArray(filtros.especialidades) && filtros.especialidades.length
+      ? filtros.especialidades
+      : filtros.especialidade ? [filtros.especialidade] : [];
+    const statusFiltro = Array.isArray(filtros.statusLista) && filtros.statusLista.length
+      ? filtros.statusLista
+      : filtros.status ? [filtros.status] : [];
+    const salasFiltro = Array.isArray(filtros.salas) && filtros.salas.length
+      ? filtros.salas
+      : filtros.sala ? [filtros.sala] : [];
+    const categoriasFiltro = Array.isArray(filtros.categorias) ? filtros.categorias : [];
+    const profissionaisFiltro = Array.isArray(filtros.profissionais) ? filtros.profissionais : [];
+    const buscaFiltro = filtros.busca || null;
+    let somaAproveitamentoPercentual = 0;
+    let totalSalasLivres = 0;
 
     const inicioMillis = inicioPeriodo.getTime();
     const fimMillis = fimPeriodo.getTime();
@@ -1537,17 +1621,44 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
         const turnoNormalizado = normalizarTurnoServidor(turnoOriginal);
         const especialidadeOriginal = String(row[BASE_COLUMNS.ESPECIALIDADE - 1] || '').trim();
         const especialidadeNormalizada = normalizarTextoServidor(especialidadeOriginal);
+        const categoriaOriginal = String(row[BASE_COLUMNS.CATEGORIA - 1] || '').trim();
+        const categoriaNormalizada = normalizarTextoServidor(categoriaOriginal);
         const statusOriginal = String(row[BASE_COLUMNS.STATUS - 1] || 'ocupado');
         const statusNormalizado = normalizarStatusServidor(statusOriginal);
         const profissional = String(row[BASE_COLUMNS.PROFISSIONAL - 1] || '').trim();
+        const profissionalNormalizado = normalizarTextoServidor(profissional);
+        const observacoes = String(row[BASE_COLUMNS.OBSERVACOES - 1] || '').trim();
         const horaInicio = formatarHora(row[BASE_COLUMNS.HORA1 - 1]);
         const horaFim = formatarHora(row[BASE_COLUMNS.HORA2 - 1]);
 
-        if (filtros.turno && filtros.turno !== 'todos' && turnoNormalizado !== filtros.turno) return;
-        if (filtros.ilha && filtros.ilha !== ilha) return;
-        if (filtros.especialidade && filtros.especialidade !== especialidadeNormalizada) return;
-        if (filtros.status && filtros.status !== statusNormalizado) return;
-        if (filtros.sala && filtros.sala !== sala) return;
+        const possuiFiltroTurno = turnosFiltro.length > 0 && !turnosFiltro.includes('todos');
+        if (possuiFiltroTurno) {
+          const turnosEvento = turnoNormalizado === 'todos'
+            ? ['manha', 'tarde', 'noite']
+            : (turnoNormalizado ? [turnoNormalizado] : []);
+          const atendeTurno = turnosEvento.some(turno => turnosFiltro.includes(turno));
+          if (!atendeTurno) return;
+        }
+        if (salasFiltro.length && (!sala || !salasFiltro.includes(sala))) return;
+        if (ilhasFiltro.length && (!ilha || !ilhasFiltro.includes(ilha))) return;
+        if (especialidadesFiltro.length && (!especialidadeNormalizada || !especialidadesFiltro.includes(especialidadeNormalizada))) return;
+        if (categoriasFiltro.length && (!categoriaNormalizada || !categoriasFiltro.includes(categoriaNormalizada))) return;
+        if (statusFiltro.length && (!statusNormalizado || !statusFiltro.includes(statusNormalizado))) return;
+        if (profissionaisFiltro.length) {
+          if (!profissionaisFiltro.some(prof => profissionalNormalizado.includes(prof))) return;
+        }
+        if (buscaFiltro) {
+          const camposBusca = [
+            sala,
+            ilha,
+            especialidadeOriginal,
+            categoriaOriginal,
+            profissional,
+            statusOriginal,
+            observacoes
+          ].map(normalizarTextoServidor);
+          if (!camposBusca.some(campo => campo.includes(buscaFiltro))) return;
+        }
 
         const cursor = new Date(vigenciaInicio);
         while (cursor.getTime() <= vigenciaFim) {
@@ -1590,6 +1701,7 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
             horaInicio,
             horaFim,
             especialidade: rotuloEspecialidade,
+            categoria: categoriaOriginal || 'Não informado',
             profissional,
             status: statusNormalizado
           });
@@ -1626,18 +1738,37 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
       const taxa = totalSalas > 0 ? Math.min(100, Math.round((usoDia / totalSalas) * 100)) : 0;
       somaOcupacaoPercentual += taxa;
       if (taxa > picoOcupacao) picoOcupacao = taxa;
+      const livresDia = Math.max(totalSalas - usoDia - indisponiveisDia, 0);
+      const disponiveisDia = usoDia + livresDia;
+      const taxaAproveitamentoDia = disponiveisDia > 0
+        ? Math.min(100, Math.round((usoDia / disponiveisDia) * 100))
+        : 0;
+      somaAproveitamentoPercentual += taxaAproveitamentoDia;
+      totalSalasLivres += livresDia;
 
       const dataParaFormatar = new Date(`${diaIso}T12:00:00`);
       return {
         data: formatarDataCurta(dataParaFormatar),
         salasOcupadas: usoDia,
         taxaMedia: taxa,
+        taxaAproveitamento: taxaAproveitamentoDia,
         especialidades: Array.from(infoDia.especialidades)
       };
     });
 
     const diasAnalisados = diasOrdenados.length;
     const ocupacaoMedia = diasAnalisados > 0 ? Math.round(somaOcupacaoPercentual / diasAnalisados) : 0;
+    const livresMedio = diasAnalisados > 0
+      ? Math.max(Math.round(totalSalasLivres / diasAnalisados), 0)
+      : 0;
+    const usoMedio = diasAnalisados > 0 ? Math.round(totalUsoSalas / diasAnalisados) : 0;
+    const disponiveisMedio = usoMedio + livresMedio;
+    const taxaAproveitamentoResumo = disponiveisMedio > 0
+      ? Math.round((usoMedio / disponiveisMedio) * 100)
+      : 0;
+    const aproveitamentoMedio = diasAnalisados > 0
+      ? Math.round(somaAproveitamentoPercentual / diasAnalisados)
+      : taxaAproveitamentoResumo;
 
     detalhes.sort((a, b) => {
       if (a.dataIso === b.dataIso) {
@@ -1657,6 +1788,7 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
       horaInicio: item.horaInicio,
       horaFim: item.horaFim,
       especialidade: item.especialidade,
+      categoria: item.categoria,
       profissional: item.profissional,
       status: item.status
     }));
@@ -1671,14 +1803,19 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
         ocupacaoPico: picoOcupacao,
         salasAtivas: salasAtivasSet.size,
         especialidadesAtivas: especialidadesSet.size,
-        totalSalasConsideradas: totalSalas
+        totalSalasConsideradas: totalSalas,
+        taxaAproveitamento: aproveitamentoMedio
       },
       diario,
       detalhado
     };
   } catch (error) {
     console.error('Erro em getRelatorioPeriodo:', error);
-    return { resumo: { totalAgendamentos: 0, periodoTexto: 'Erro ao gerar relatório' }, diario: [], detalhado: [] };
+    return {
+      resumo: { totalAgendamentos: 0, periodoTexto: 'Erro ao gerar relatório', taxaAproveitamento: 0 },
+      diario: [],
+      detalhado: []
+    };
   }
 }
 
