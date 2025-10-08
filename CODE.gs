@@ -100,35 +100,47 @@ function formatarPeriodo(inicio, fim) {
 }
 
 function parseDashboardFiltros(filtrosJson) {
-  const vazio = { turnos: [], ilhas: [], especialidades: [], status: [], diasEspecificos: [] };
+  const vazio = { turnos: [], ilhas: [], especialidades: [], status: [], diasEspecificos: [], intervaloDias: null };
   if (!filtrosJson) return vazio;
   try {
     const bruto = JSON.parse(filtrosJson) || {};
+    const normalizarIso = valor => {
+      if (!valor) return null;
+      if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor.trim())) {
+        return valor.trim();
+      }
+      const data = new Date(valor);
+      if (!isNaN(data.getTime())) {
+        return Utilities.formatDate(data, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+      }
+      return null;
+    };
     const diasValidos = (bruto.diasEspecificos || [])
-      .map(valor => {
-        if (!valor) return null;
-        if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor.trim())) {
-          return valor.trim();
-        }
-        const data = new Date(valor);
-        if (!isNaN(data.getTime())) {
-          return Utilities.formatDate(data, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-        }
-        return null;
-      })
+      .map(normalizarIso)
       .filter(Boolean);
+    let intervaloDias = null;
+    if (bruto.intervaloDias && typeof bruto.intervaloDias === 'object') {
+      const inicio = normalizarIso(bruto.intervaloDias.inicio);
+      const fim = normalizarIso(bruto.intervaloDias.fim);
+      if (inicio && fim) {
+        intervaloDias = inicio <= fim ? { inicio, fim } : { inicio: fim, fim: inicio };
+      }
+    }
     return {
       turnos: (bruto.turnos || []).map(normalizarTurnoServidor).filter(Boolean),
       ilhas: (bruto.ilhas || []).map(String).filter(Boolean),
       especialidades: (bruto.especialidades || []).map(normalizarTextoServidor).filter(Boolean),
       status: (bruto.status || []).map(normalizarStatusServidor).filter(Boolean),
-      diasEspecificos: diasValidos
+      diasEspecificos: diasValidos,
+      intervaloDias
     };
   } catch (error) {
     console.warn('Não foi possível interpretar filtros do dashboard:', error);
     return vazio;
   }
 }
+
+
 
 function parseRelatorioFiltros(filtrosJson) {
   const vazio = {
@@ -1195,9 +1207,22 @@ function getDadosAgregados(periodo, filtrosJson) {
   try {
     const filtros = parseDashboardFiltros(filtrosJson);
     const diasEspecificos = Array.isArray(filtros.diasEspecificos) ? filtros.diasEspecificos : [];
-    const diasEspecificosSet = new Set(diasEspecificos);
+    const intervaloDias = filtros.intervaloDias && filtros.intervaloDias.inicio && filtros.intervaloDias.fim
+      ? { inicio: filtros.intervaloDias.inicio, fim: filtros.intervaloDias.fim }
+      : null;
+    const diasEspecificosSet = !intervaloDias && diasEspecificos.length ? new Set(diasEspecificos) : null;
     let { inicio, fim } = obterIntervaloPeriodo(periodo);
-    if (diasEspecificos.length) {
+    if (intervaloDias) {
+      const ordenadas = [intervaloDias.inicio, intervaloDias.fim].filter(Boolean).sort();
+      const primeira = ordenadas[0];
+      const ultima = ordenadas[ordenadas.length - 1];
+      if (primeira) {
+        inicio = new Date(`${primeira}T00:00:00`);
+      }
+      if (ultima) {
+        fim = new Date(`${ultima}T23:59:59`);
+      }
+    } else if (diasEspecificos.length) {
       const ordenadas = [...diasEspecificos].sort();
       const primeira = ordenadas[0];
       const ultima = ordenadas[ordenadas.length - 1];
@@ -1248,16 +1273,18 @@ function getDadosAgregados(periodo, filtrosJson) {
     const totalSalasDisponiveis = salasUtilizaveis.size
       ? salasUtilizaveis.size
       : Math.max((salasDados.length || 0) - salasIndisponiveisBase.size, 0) || TOTAL_SALAS_ESTIMADO;
-    const totalSalasConsideradas = totalSalasDisponiveis;
+    const totalSalasConsideradas = totalSalasDisponiveis + salasIndisponiveisBase.size;
 
-    const periodoTexto = diasEspecificos.length
-      ? `Dias: ${diasEspecificos
-          .map(dia => {
-            const data = new Date(`${dia}T00:00:00`);
-            return isNaN(data.getTime()) ? dia : formatarDataCurta(data);
-          })
-          .join(', ')}`
-      : formatarPeriodo(inicio, fim);
+    const periodoTexto = intervaloDias
+      ? formatarPeriodo(inicio, fim)
+      : diasEspecificos.length
+        ? `Dias: ${diasEspecificos
+            .map(dia => {
+              const data = new Date(`${dia}T00:00:00`);
+              return isNaN(data.getTime()) ? dia : formatarDataCurta(data);
+            })
+            .join(', ')}`
+        : formatarPeriodo(inicio, fim);
 
     const resumoBase = {
       totalAgendamentos: 0,
@@ -1279,7 +1306,7 @@ function getDadosAgregados(periodo, filtrosJson) {
         ocupacaoIlha: {},
         evolucao: {},
         especialidades: {},
-        ocupacaoGeral: { uso: 0, ocupadas: 0, livres: totalSalasConsideradas, indisponiveis: salasIndisponiveisBase.size, taxaAproveitamento: 0 },
+        ocupacaoGeral: { uso: 0, ocupadas: 0, livres: totalSalasDisponiveis, indisponiveis: salasIndisponiveisBase.size, taxaAproveitamento: 0 },
         statusDistribuicao: {}
       };
     }
@@ -1338,7 +1365,7 @@ function getDadosAgregados(periodo, filtrosJson) {
         const cursor = new Date(vigenciaInicio);
         while (cursor.getTime() <= vigenciaFim) {
           const diaIso = Utilities.formatDate(cursor, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-          if (diasEspecificosSet.size && !diasEspecificosSet.has(diaIso)) {
+          if (diasEspecificosSet && diasEspecificosSet.size && !diasEspecificosSet.has(diaIso)) {
             cursor.setDate(cursor.getDate() + 1);
             continue;
           }
@@ -1452,20 +1479,21 @@ function getDadosAgregados(periodo, filtrosJson) {
       const disponiveisDia = Math.max(totalSalasDisponiveis - indisponiveisExtrasDia, 0);
       const livresDia = Math.max(disponiveisDia - usoDia, 0);
       totalSalasLivres += livresDia;
+      const totalConsideradoDia = usoDia + livresDia + indisponiveisDia;
 
-      if (totalSalasDisponiveis > 0) {
-        const taxaDia = Math.min(100, Math.round((usoDia / totalSalasDisponiveis) * 100));
+      if (totalConsideradoDia > 0) {
+        const taxaDia = Math.min(100, Math.round((usoDia / totalConsideradoDia) * 100));
         somaOcupacaoPercentual += taxaDia;
         if (taxaDia > picoOcupacao) picoOcupacao = taxaDia;
-        const taxaAproveitamentoDia = disponiveisDia > 0
-          ? Math.min(100, Math.round((usoDia / disponiveisDia) * 100))
-          : 0;
-        somaAproveitamentoPercentual += taxaAproveitamentoDia;
       }
+      const taxaAproveitamentoDia = disponiveisDia > 0
+        ? Math.min(100, Math.round((usoDia / disponiveisDia) * 100))
+        : 0;
+      somaAproveitamentoPercentual += taxaAproveitamentoDia;
     });
 
     const diasAnalisados = diasOrdenados.length;
-    const ocupacaoMedia = diasAnalisados > 0 && totalSalasDisponiveis > 0
+    const ocupacaoMedia = diasAnalisados > 0
       ? Math.round(somaOcupacaoPercentual / diasAnalisados)
       : 0;
     const usoMedio = diasAnalisados > 0 ? Math.round(totalUsoSalas / diasAnalisados) : 0;
