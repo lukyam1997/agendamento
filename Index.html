@@ -670,24 +670,40 @@
 
       .monitor-scroll {
           width: 100%;
+          overflow-x: auto;
+          padding-bottom: 8px;
+      }
+
+      .monitor-scroll::-webkit-scrollbar {
+          height: 8px;
+      }
+
+      .monitor-scroll::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 254, 0.35);
+          border-radius: 999px;
       }
 
       #monitor-content {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          display: flex;
+          flex-wrap: wrap;
           gap: 18px;
           width: 100%;
+          justify-content: flex-start;
+      }
+
+      #monitor-content > .bloco {
+          flex: 0 0 320px;
       }
 
       @media (max-width: 1400px) {
-          #monitor-content {
-              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          #monitor-content > .bloco {
+              flex-basis: 300px;
           }
       }
 
       @media (max-width: 1100px) {
-          #monitor-content {
-              grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+          #monitor-content > .bloco {
+              flex-basis: 260px;
           }
       }
 
@@ -1505,11 +1521,11 @@
           }
 
           #monitor-content {
-              grid-template-columns: minmax(0, 1fr);
+              flex-direction: column;
           }
 
-          .bloco {
-              min-width: 100%;
+          #monitor-content > .bloco {
+              flex: 1 1 auto;
           }
 
           .planejamento-container {
