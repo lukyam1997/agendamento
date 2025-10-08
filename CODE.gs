@@ -100,7 +100,7 @@ function formatarPeriodo(inicio, fim) {
 }
 
 function parseDashboardFiltros(filtrosJson) {
-  const vazio = { turnos: [], ilhas: [], especialidades: [], status: [], diasEspecificos: [], intervaloDias: null };
+  const vazio = { turnos: [], ilhas: [], salas: [], especialidades: [], categorias: [], profissionais: [], status: [], diasEspecificos: [], intervaloDias: null };
   if (!filtrosJson) return vazio;
   try {
     const bruto = JSON.parse(filtrosJson) || {};
@@ -129,7 +129,10 @@ function parseDashboardFiltros(filtrosJson) {
     return {
       turnos: (bruto.turnos || []).map(normalizarTurnoServidor).filter(Boolean),
       ilhas: (bruto.ilhas || []).map(String).filter(Boolean),
+      salas: (bruto.salas || []).map(valor => String(valor || '').trim()).filter(Boolean),
       especialidades: (bruto.especialidades || []).map(normalizarTextoServidor).filter(Boolean),
+      categorias: (bruto.categorias || []).map(normalizarTextoServidor).filter(Boolean),
+      profissionais: (bruto.profissionais || []).map(normalizarTextoServidor).filter(Boolean),
       status: (bruto.status || []).map(normalizarStatusServidor).filter(Boolean),
       diasEspecificos: diasValidos,
       intervaloDias
@@ -198,6 +201,35 @@ function parseRelatorioFiltros(filtrosJson) {
     };
   } catch (error) {
     console.warn('Não foi possível interpretar filtros do relatório:', error);
+    return vazio;
+  }
+}
+
+function parseSalaMesFiltros(filtrosJson) {
+  const vazio = { turnos: [], status: [], especialidades: [], categorias: [], profissionais: [] };
+  if (!filtrosJson) return vazio;
+  try {
+    const bruto = JSON.parse(filtrosJson) || {};
+    const normalizarArray = (valor, normalizador) => {
+      if (valor === undefined || valor === null) return [];
+      const arr = Array.isArray(valor) ? valor : [valor];
+      return arr
+        .map(item => {
+          const conteudo = normalizador ? normalizador(item) : String(item || '').trim();
+          return conteudo;
+        })
+        .filter(Boolean);
+    };
+
+    return {
+      turnos: normalizarArray(bruto.turnos, normalizarTurnoServidor),
+      status: normalizarArray(bruto.status, normalizarStatusServidor),
+      especialidades: normalizarArray(bruto.especialidades, normalizarTextoServidor),
+      categorias: normalizarArray(bruto.categorias, normalizarTextoServidor),
+      profissionais: normalizarArray(bruto.profissionais, normalizarTextoServidor)
+    };
+  } catch (error) {
+    console.warn('Não foi possível interpretar filtros de sala/mês:', error);
     return vazio;
   }
 }
@@ -1352,6 +1384,10 @@ function getDadosAgregados(periodo, filtrosJson) {
         const especialidadeNormalizada = normalizarTextoServidor(especialidadeOriginal);
         const statusOriginal = String(row[BASE_COLUMNS.STATUS - 1] || 'ocupado');
         const statusNormalizado = normalizarStatusServidor(statusOriginal);
+        const categoriaOriginal = String(row[BASE_COLUMNS.CATEGORIA - 1] || '').trim();
+        const categoriaNormalizada = normalizarTextoServidor(categoriaOriginal);
+        const profissionalOriginal = String(row[BASE_COLUMNS.PROFISSIONAL - 1] || '').trim();
+        const profissionalNormalizado = normalizarTextoServidor(profissionalOriginal);
 
         if (filtros.turnos.length) {
           if (turnoNormalizado !== 'todos' && (!turnoNormalizado || !filtros.turnos.includes(turnoNormalizado))) {
@@ -1359,7 +1395,10 @@ function getDadosAgregados(periodo, filtrosJson) {
           }
         }
         if (filtros.ilhas.length && (!ilha || !filtros.ilhas.includes(ilha))) return;
+        if (filtros.salas.length && (!sala || !filtros.salas.includes(sala))) return;
         if (filtros.especialidades.length && (!especialidadeNormalizada || !filtros.especialidades.includes(especialidadeNormalizada))) return;
+        if (filtros.categorias.length && (!categoriaNormalizada || !filtros.categorias.includes(categoriaNormalizada))) return;
+        if (filtros.profissionais.length && (!profissionalNormalizado || !filtros.profissionais.includes(profissionalNormalizado))) return;
         if (filtros.status.length && (!statusNormalizado || !filtros.status.includes(statusNormalizado))) return;
 
         const cursor = new Date(vigenciaInicio);
@@ -1551,29 +1590,105 @@ function getDadosAgregados(periodo, filtrosJson) {
 /**
  * Obtém agendamentos para sala e mês específico
  */
-function getAgendamentosSalaMes(sala, mes) {
+function getAgendamentosSalaMes(sala, mes, filtrosJson) {
   try {
-    // mes no formato YYYY-MM
-    const [ano, mesNum] = mes.split('-');
-    const primeiroDia = new Date(ano, mesNum - 1, 1);
-    const ultimoDia = new Date(ano, mesNum, 0);
+    const filtros = parseSalaMesFiltros(filtrosJson);
+    const [anoStr, mesStr] = String(mes || '').split('-');
+    const ano = Number(anoStr);
+    const mesNumero = Number(mesStr);
+    if (!ano || !mesNumero || mesNumero < 1 || mesNumero > 12) {
+      return {
+        sala: String(sala || ''),
+        periodo: { mes: mes || '', label: '' },
+        totais: {},
+        dias: [],
+        error: 'Período inválido'
+      };
+    }
 
-    const agendamentos = [];
+    const primeiroDia = new Date(ano, mesNumero - 1, 1);
+    const ultimoDia = new Date(ano, mesNumero, 0);
+    const timezone = Session.getScriptTimeZone();
+    const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+    const totais = {
+      ocupado: 0,
+      reservado: 0,
+      bloqueado: 0,
+      manutencao: 0,
+      livre: 0,
+      cancelado: 0
+    };
+
+    const dias = [];
+    const salaNormalizada = String(sala || '').trim();
+
     let currentDate = new Date(primeiroDia);
     while (currentDate <= ultimoDia) {
-      const agsDia = getAgendamentos(currentDate).filter(ag => ag.sala === sala);
-      const dataStr = Utilities.formatDate(currentDate, 'UTC', 'yyyy-MM-dd');
-      agendamentos.push({
-        data: dataStr, 
-        horarios: agsDia.map(ag => `${ag.horaInicio}-${ag.horaFim} (${ag.especialidade})`)
+      const dataIso = Utilities.formatDate(currentDate, timezone, 'yyyy-MM-dd');
+      const eventosDia = getAgendamentos(currentDate)
+        .filter(ag => String(ag.sala || '').trim() === salaNormalizada)
+        .map(ag => ({
+          id: String(ag.id || ''),
+          horaInicio: ag.horaInicio || '',
+          horaFim: ag.horaFim || '',
+          profissional: ag.profissional || '',
+          especialidade: ag.especialidade || '',
+          categoria: ag.categoria || '',
+          statusOriginal: ag.status || '',
+          status: normalizarStatusServidor(ag.status),
+          turno: normalizarTurnoServidor(ag.turno),
+          ilha: ag.ilha || '',
+          observacoes: ag.observacoes || ''
+        }))
+        .filter(evento => {
+          if (filtros.turnos.length && evento.turno !== 'todos' && !filtros.turnos.includes(evento.turno)) return false;
+          if (filtros.status.length && (!evento.status || !filtros.status.includes(evento.status))) return false;
+          const especialidadeNorm = normalizarTextoServidor(evento.especialidade);
+          if (filtros.especialidades.length && (!especialidadeNorm || !filtros.especialidades.includes(especialidadeNorm))) return false;
+          const categoriaNorm = normalizarTextoServidor(evento.categoria);
+          if (filtros.categorias.length && (!categoriaNorm || !filtros.categorias.includes(categoriaNorm))) return false;
+          const profissionalNorm = normalizarTextoServidor(evento.profissional);
+          if (filtros.profissionais.length && (!profissionalNorm || !filtros.profissionais.includes(profissionalNorm))) return false;
+          return true;
+        });
+
+      const resumoStatus = {};
+      eventosDia.forEach(evento => {
+        const statusChave = evento.status || 'ocupado';
+        resumoStatus[statusChave] = (resumoStatus[statusChave] || 0) + 1;
+        totais[statusChave] = (totais[statusChave] || 0) + 1;
+        evento.data = dataIso;
       });
+
+      dias.push({
+        data: dataIso,
+        diaSemana: diasSemana[currentDate.getDay()] || '',
+        totalEventos: eventosDia.length,
+        resumoStatus,
+        eventos: eventosDia
+      });
+
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    return agendamentos;
+    const labelPeriodo = `${mesNumero.toString().padStart(2, '0')}/${ano}`;
+
+    return {
+      sala: salaNormalizada,
+      periodo: { mes: mes || '', label: labelPeriodo },
+      totais,
+      dias
+    };
   } catch (error) {
     console.error('Erro em getAgendamentosSalaMes:', error);
-    return [];
+    return {
+      sala: String(sala || ''),
+      periodo: { mes: mes || '', label: '' },
+      totais: {},
+      dias: [],
+      error: error.toString()
+    };
   }
 }
 
