@@ -5,7 +5,8 @@ const SHEET_NAMES = {
   BASE: 'BASE',
   CADASTRO: 'CADASTRO',
   STATUS_SALAS: 'STATUS_SALAS',
-  USUARIOS: 'USUARIOS'  // Nova aba para usuários
+  USUARIOS: 'USUARIOS',  // Nova aba para usuários
+  LOGS: 'LOGS'
 };
 
 // Colunas na aba BASE
@@ -51,6 +52,15 @@ const USUARIOS_COLUMNS = {
   SETOR: 3,
   SENHA_HASH: 4,
   ROLE: 5
+};
+
+// Colunas na aba LOGS
+const LOGS_COLUMNS = {
+  TIMESTAMP: 1,
+  USUARIO: 2,
+  ACAO: 3,
+  DETALHES: 4,
+  DADOS: 5
 };
 
 // Cache para melhor performance (cache por 30 segundos)
@@ -101,6 +111,154 @@ function formatarPeriodo(inicio, fim) {
   return `${formatarDataCurta(inicio)} a ${formatarDataCurta(fim)}`;
 }
 
+function mapearRowParaAgendamento(row) {
+  if (!row) return {};
+  return {
+    id: row[BASE_COLUMNS.ID - 1],
+    ilha: row[BASE_COLUMNS.ILHA - 1],
+    sala: row[BASE_COLUMNS.SALA - 1],
+    dataInicio: row[BASE_COLUMNS.DATA1 - 1],
+    dataFim: row[BASE_COLUMNS.DATA2 - 1],
+    turno: row[BASE_COLUMNS.TURNO - 1],
+    especialidade: row[BASE_COLUMNS.ESPECIALIDADE - 1],
+    profissional: row[BASE_COLUMNS.PROFISSIONAL - 1],
+    categoria: row[BASE_COLUMNS.CATEGORIA - 1],
+    status: row[BASE_COLUMNS.STATUS - 1],
+    observacoes: row[BASE_COLUMNS.OBSERVACOES - 1],
+    horaInicio: row[BASE_COLUMNS.HORA1 - 1],
+    horaFim: row[BASE_COLUMNS.HORA2 - 1],
+    dataCriacao: row[BASE_COLUMNS.DATA_CRIACAO - 1],
+    horaChegadaReal: row[BASE_COLUMNS.HORA_CHEGADA_REAL - 1],
+    horaSaidaReal: row[BASE_COLUMNS.HORA_SAIDA_REAL - 1]
+  };
+}
+
+function obterSheetLogs() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) {
+    throw new Error('Planilha não encontrada para registrar logs');
+  }
+
+  let sheet = spreadsheet.getSheetByName(SHEET_NAMES.LOGS);
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(SHEET_NAMES.LOGS);
+    sheet.getRange(1, 1, 1, 5).setValues([[
+      'DATA', 'USUARIO', 'ACAO', 'DETALHES', 'DADOS_JSON'
+    ]]);
+  }
+  return sheet;
+}
+
+function registrarLog(acao, detalhes, dadosExtras) {
+  try {
+    const sheet = obterSheetLogs();
+    const usuario = (Session.getActiveUser() && Session.getActiveUser().getEmail()) || 'Sistema';
+    const timestamp = new Date();
+    let dadosTexto = '';
+
+    if (dadosExtras !== undefined) {
+      if (typeof dadosExtras === 'string') {
+        dadosTexto = dadosExtras;
+      } else {
+        try {
+          dadosTexto = JSON.stringify(dadosExtras);
+        } catch (jsonError) {
+          console.warn('Não foi possível serializar dados de log', jsonError);
+          dadosTexto = String(dadosExtras);
+        }
+      }
+    }
+
+    sheet.appendRow([
+      timestamp,
+      usuario || 'Sistema',
+      acao || 'OPERACAO_DESCONHECIDA',
+      detalhes || '',
+      dadosTexto
+    ]);
+  } catch (error) {
+    console.error('Erro ao registrar log:', error, acao, detalhes);
+  }
+}
+
+function agendamentoCorrespondeFiltros(agendamento, filtros) {
+  if (!agendamento || !filtros) return true;
+
+  const turnosFiltro = Array.isArray(filtros.turnos) && filtros.turnos.length
+    ? filtros.turnos
+    : filtros.turno ? [filtros.turno] : [];
+  const statusFiltro = Array.isArray(filtros.statusLista) && filtros.statusLista.length
+    ? filtros.statusLista
+    : filtros.status ? [filtros.status] : [];
+  const ilhasFiltro = Array.isArray(filtros.ilhas) ? filtros.ilhas : [];
+  const salasFiltro = Array.isArray(filtros.salas) ? filtros.salas : [];
+  const categoriasFiltro = Array.isArray(filtros.categorias) ? filtros.categorias : [];
+  const profissionaisFiltro = Array.isArray(filtros.profissionais) ? filtros.profissionais : [];
+  const especialidadesFiltro = Array.isArray(filtros.especialidades) ? filtros.especialidades : [];
+
+  const turnoAg = normalizarTurnoServidor(agendamento.turno || agendamento.turnoNormalizado);
+  if (turnosFiltro.length) {
+    if (turnoAg === 'todos') {
+      const cobreAlgum = ['manha', 'tarde', 'noite'].some(turno => turnosFiltro.includes(turno));
+      if (!cobreAlgum) return false;
+    } else if (!turnosFiltro.includes(turnoAg)) {
+      return false;
+    }
+  }
+
+  const statusAg = normalizarStatusServidor(agendamento.status || agendamento.statusNormalizado);
+  if (statusFiltro.length && !statusFiltro.includes(statusAg)) {
+    return false;
+  }
+
+  const salaAg = String(agendamento.sala || '').trim();
+  if (salasFiltro.length && (salaAg === '' || !salasFiltro.includes(salaAg))) {
+    return false;
+  }
+
+  const ilhaAg = String(agendamento.ilha || '').trim();
+  if (ilhasFiltro.length && (ilhaAg === '' || !ilhasFiltro.includes(ilhaAg))) {
+    return false;
+  }
+
+  const categoriaAg = normalizarTextoServidor(agendamento.categoria);
+  if (categoriasFiltro.length && (!categoriaAg || !categoriasFiltro.includes(categoriaAg))) {
+    return false;
+  }
+
+  const especialidadeAg = normalizarTextoServidor(agendamento.especialidade);
+  if (especialidadesFiltro.length && (!especialidadeAg || !especialidadesFiltro.includes(especialidadeAg))) {
+    return false;
+  }
+
+  if (profissionaisFiltro.length) {
+    const profissionalAg = normalizarTextoServidor(agendamento.profissional);
+    if (!profissionalAg || !profissionaisFiltro.some(valor => profissionalAg.includes(valor))) {
+      return false;
+    }
+  }
+
+  if (filtros.busca) {
+    const busca = normalizarTextoServidor(filtros.busca);
+    if (busca) {
+      const campos = [
+        salaAg,
+        ilhaAg,
+        normalizarTextoServidor(agendamento.especialidade),
+        normalizarTextoServidor(agendamento.categoria),
+        normalizarTextoServidor(agendamento.profissional),
+        normalizarTextoServidor(agendamento.observacoes),
+        statusAg
+      ];
+      if (!campos.some(campo => campo && campo.includes(busca))) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 function parseDashboardFiltros(filtrosJson) {
   const vazio = { turnos: [], ilhas: [], especialidades: [], status: [], diasEspecificos: [], intervaloDias: null };
   if (!filtrosJson) return vazio;
@@ -128,11 +286,19 @@ function parseDashboardFiltros(filtrosJson) {
         intervaloDias = inicio <= fim ? { inicio, fim } : { inicio: fim, fim: inicio };
       }
     }
+    const normalizarLista = (lista, normalizador) => (lista || []).map(item => {
+      const valor = normalizador ? normalizador(item) : String(item || '').trim();
+      return valor;
+    }).filter(Boolean);
+
     return {
-      turnos: (bruto.turnos || []).map(normalizarTurnoServidor).filter(Boolean),
-      ilhas: (bruto.ilhas || []).map(String).filter(Boolean),
-      especialidades: (bruto.especialidades || []).map(normalizarTextoServidor).filter(Boolean),
-      status: (bruto.status || []).map(normalizarStatusServidor).filter(Boolean),
+      turnos: normalizarLista(bruto.turnos, normalizarTurnoServidor),
+      ilhas: normalizarLista(bruto.ilhas, valor => String(valor || '').trim()),
+      especialidades: normalizarLista(bruto.especialidades, normalizarTextoServidor),
+      status: normalizarLista(bruto.status, normalizarStatusServidor),
+      categorias: normalizarLista(bruto.categorias, normalizarTextoServidor),
+      profissionais: normalizarLista(bruto.profissionais, normalizarTextoServidor),
+      salas: normalizarLista(bruto.salas, valor => String(valor || '').trim()),
       diasEspecificos: diasValidos,
       intervaloDias
     };
@@ -683,6 +849,7 @@ function salvarAgendamento(agendamento) {
     // Se 'datas' é array (dias específicos), loopar e salvar um por data
     if (agendamento.datas && Array.isArray(agendamento.datas)) {
       let ids = [];
+      const logsCriados = [];
       for (const dataStr of agendamento.datas) {
         const dataValida = new Date(`${dataStr}T12:00:00`);
         if (isNaN(dataValida.getTime())) {
@@ -733,8 +900,20 @@ function salvarAgendamento(agendamento) {
         // Adicionar nova linha
         sheet.appendRow(newRow);
         ids.push(nextId);
+        logsCriados.push({
+          id: nextId,
+          sala: agendamento.sala,
+          ilha: agendamento.ilha,
+          data: dataStr,
+          turno: agendamento.turno,
+          horaInicio: agendamento.horaInicio,
+          horaFim: agendamento.horaFim,
+          especialidade: agendamento.especialidade,
+          profissional: agendamento.profissional,
+          categoria: agendamento.categoria
+        });
       }
-      
+
       // Limpar cache para forçar atualização
       const cache = CacheService.getScriptCache();
       const keys = cache.getKeys();
@@ -743,8 +922,15 @@ function salvarAgendamento(agendamento) {
           cache.remove(key);
         }
       });
-      
+
       console.log('Agendamentos salvos com sucesso IDs:', ids);
+      if (logsCriados.length) {
+        registrarLog(
+          'CRIAR_AGENDAMENTO_MULTIPLO',
+          `Agendamentos criados (${logsCriados.length})`,
+          { agendamentoBase: agendamento, registros: logsCriados }
+        );
+      }
       return { success: true, message: 'Agendamentos salvos com sucesso!', ids: ids };
     } else {
       // Modo padrão (período contínuo)
@@ -800,7 +986,7 @@ function salvarAgendamento(agendamento) {
       
       // Adicionar nova linha
       sheet.appendRow(newRow);
-      
+
       // Limpar cache para forçar atualização
       const cache = CacheService.getScriptCache();
       const keys = cache.getKeys();
@@ -809,8 +995,16 @@ function salvarAgendamento(agendamento) {
           cache.remove(key);
         }
       });
-      
+
       console.log('Agendamento salvo com sucesso ID:', nextId);
+      registrarLog(
+        'CRIAR_AGENDAMENTO',
+        `Agendamento criado (ID ${nextId})`,
+        {
+          id: nextId,
+          ...agendamento
+        }
+      );
       return { success: true, message: 'Agendamento salvo com sucesso!', id: nextId };
     }
   } catch (error) {
@@ -847,23 +1041,36 @@ function atualizarStatusMultiplasSalas(salas, status, motivo) {
     const now = new Date();
     let countAtualizadas = 0;
     
+    const alteracoes = [];
+
     salas.forEach(sala => {
       try {
         let linhaExistente = -1;
-        
+        let statusAnterior = 'livre';
+        let motivoAnterior = '';
+
         // Procurar sala existente (começando da linha 2)
         for (let i = 1; i < values.length; i++) {
           if (String(values[i][STATUS_COLUMNS.SALA - 1]).trim() === sala) {
             linhaExistente = i + 1;
+            statusAnterior = String(values[i][STATUS_COLUMNS.STATUS - 1] || '').trim().toLowerCase();
+            motivoAnterior = String(values[i][STATUS_COLUMNS.MOTIVO - 1] || '').trim();
             break;
           }
         }
-        
+
         if (status === 'livre') {
           // Remover da tabela se for desbloquear
           if (linhaExistente > 0) {
             sheet.deleteRow(linhaExistente);
             countAtualizadas++;
+            alteracoes.push({
+              sala,
+              statusAnterior,
+              statusNovo: 'livre',
+              motivoAnterior,
+              motivoNovo: ''
+            });
           }
         } else {
           if (linhaExistente > 0) {
@@ -873,6 +1080,13 @@ function atualizarStatusMultiplasSalas(salas, status, motivo) {
             sheet.getRange(linhaExistente, STATUS_COLUMNS.DATA_ATUALIZACAO).setValue(now);
             sheet.getRange(linhaExistente, STATUS_COLUMNS.USUARIO).setValue(userEmail);
             countAtualizadas++;
+            alteracoes.push({
+              sala,
+              statusAnterior,
+              statusNovo: status,
+              motivoAnterior,
+              motivoNovo: motivo
+            });
           } else {
             // Adicionar nova linha
             const newRow = [
@@ -884,6 +1098,13 @@ function atualizarStatusMultiplasSalas(salas, status, motivo) {
             ];
             sheet.appendRow(newRow);
             countAtualizadas++;
+            alteracoes.push({
+              sala,
+              statusAnterior: 'livre',
+              statusNovo: status,
+              motivoAnterior: '',
+              motivoNovo: motivo
+            });
           }
         }
       } catch (e) {
@@ -899,8 +1120,15 @@ function atualizarStatusMultiplasSalas(salas, status, motivo) {
         cache.remove(key);
       }
     });
-    
+
     console.log(`Status atualizado: ${countAtualizadas} salas`);
+    if (alteracoes.length) {
+      registrarLog(
+        'ATUALIZAR_STATUS_SALAS',
+        `Status ajustado para ${status} (${alteracoes.length} sala${alteracoes.length === 1 ? '' : 's'})`,
+        { status, motivo, alteracoes }
+      );
+    }
     return { success: true, message: `Status de ${countAtualizadas} salas atualizado para ${status}` };
   } catch (error) {
     console.error('Erro ao atualizar status das salas:', error);
@@ -976,12 +1204,18 @@ function removerAgendamento(id) {
     
     for (let i = 1; i < values.length; i++) {
       if (values[i][BASE_COLUMNS.ID - 1] == id) {
+        const agendamentoAnterior = mapearRowParaAgendamento(values[i]);
         sheet.deleteRow(i + 1);
-        
+
         // Limpar cache para forçar atualização
         limparCache();
-        
+
         console.log('Agendamento removido ID:', id);
+        registrarLog(
+          'REMOVER_AGENDAMENTO',
+          `Agendamento ${id} removido`,
+          { antes: agendamentoAnterior }
+        );
         return { success: true, message: 'Agendamento removido com sucesso!' };
       }
     }
@@ -1163,6 +1397,16 @@ function cadastrarUsuario(usuario) {
     ];
 
     sheet.appendRow(newRow);
+    registrarLog(
+      'CADASTRAR_USUARIO',
+      `Novo usuário cadastrado (${usuario.matricula})`,
+      {
+        matricula: usuario.matricula,
+        nome: usuario.nome,
+        setor: usuario.setor,
+        role: usuario.role
+      }
+    );
     return { success: true };
   } catch (error) {
     console.error('Erro ao cadastrar usuário:', error);
@@ -1201,6 +1445,11 @@ function forgotPassword(matricula) {
     const body = `Usuário: ${userName}\nMatrícula: ${matricula}\nSolicitou reset de senha.`;
 
     MailApp.sendEmail(ADMIN_EMAIL, subject, body);
+    registrarLog(
+      'SOLICITAR_RESET_SENHA',
+      `Solicitação de reset para ${matricula}`,
+      { matricula, nome: userName }
+    );
     return { success: true };
   } catch (error) {
     console.error('Erro ao solicitar reset:', error);
@@ -1369,6 +1618,14 @@ function getDadosAgregados(periodo, filtrosJson) {
         if (filtros.ilhas.length && (!ilha || !filtros.ilhas.includes(ilha))) return;
         if (filtros.especialidades.length && (!especialidadeNormalizada || !filtros.especialidades.includes(especialidadeNormalizada))) return;
         if (filtros.status.length && (!statusNormalizado || !filtros.status.includes(statusNormalizado))) return;
+        if (Array.isArray(filtros.salas) && filtros.salas.length && (!sala || !filtros.salas.includes(sala))) return;
+        if (Array.isArray(filtros.categorias) && filtros.categorias.length && (!categoriaNormalizada || !filtros.categorias.includes(categoriaNormalizada))) return;
+        if (Array.isArray(filtros.profissionais) && filtros.profissionais.length) {
+          const profissionalNormalizado = normalizarTextoServidor(row[BASE_COLUMNS.PROFISSIONAL - 1] || '');
+          if (!profissionalNormalizado || !filtros.profissionais.some(valor => profissionalNormalizado.includes(valor))) {
+            return;
+          }
+        }
 
         const cursor = new Date(vigenciaInicio);
         while (cursor.getTime() <= vigenciaFim) {
@@ -1559,8 +1816,9 @@ function getDadosAgregados(periodo, filtrosJson) {
 /**
  * Obtém agendamentos para sala e mês específico
  */
-function getAgendamentosSalaMes(sala, mes) {
+function getAgendamentosSalaMes(sala, mes, filtrosJson) {
   try {
+    const filtros = parseRelatorioFiltros(filtrosJson);
     // mes no formato YYYY-MM
     const [ano, mesNum] = mes.split('-');
     const primeiroDia = new Date(ano, mesNum - 1, 1);
@@ -1569,11 +1827,24 @@ function getAgendamentosSalaMes(sala, mes) {
     const agendamentos = [];
     let currentDate = new Date(primeiroDia);
     while (currentDate <= ultimoDia) {
-      const agsDia = getAgendamentos(currentDate).filter(ag => ag.sala === sala);
+      const agsDia = getAgendamentos(currentDate).filter(ag => {
+        if (String(ag.sala) !== String(sala)) return false;
+        return agendamentoCorrespondeFiltros(ag, filtros);
+      });
       const dataStr = Utilities.formatDate(currentDate, 'UTC', 'yyyy-MM-dd');
       agendamentos.push({
-        data: dataStr, 
-        horarios: agsDia.map(ag => `${ag.horaInicio}-${ag.horaFim} (${ag.especialidade})`)
+        data: dataStr,
+        horarios: agsDia.map(ag => `${ag.horaInicio}-${ag.horaFim} (${ag.especialidade})`),
+        eventos: agsDia.map(ag => ({
+          horaInicio: ag.horaInicio,
+          horaFim: ag.horaFim,
+          especialidade: ag.especialidade,
+          categoria: ag.categoria,
+          profissional: ag.profissional,
+          status: ag.status,
+          turno: ag.turno,
+          observacoes: ag.observacoes || ''
+        }))
       });
       currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -1948,22 +2219,57 @@ function atualizarAgendamento(id, novosDados) {
     
     const targetId = String(id).trim();
     let found = false;
+    let logDetalhes = null;
     for (let i = 1; i < values.length; i++) {
       const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
       if (currentId === targetId) {
         const rowIndex = i + 1;
-        if (novosDados.sala) sheet.getRange(rowIndex, BASE_COLUMNS.SALA).setValue(novosDados.sala);
-        if (novosDados.ilha) sheet.getRange(rowIndex, BASE_COLUMNS.ILHA).setValue(novosDados.ilha);
-        if (novosDados.turno) sheet.getRange(rowIndex, BASE_COLUMNS.TURNO).setValue(novosDados.turno);
-        if (novosDados.horaInicio) sheet.getRange(rowIndex, BASE_COLUMNS.HORA1).setValue(novosDados.horaInicio);
-        if (novosDados.horaFim) sheet.getRange(rowIndex, BASE_COLUMNS.HORA2).setValue(novosDados.horaFim);
-        if (novosDados.especialidade !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.ESPECIALIDADE).setValue(novosDados.especialidade);
-        if (novosDados.profissional !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.PROFISSIONAL).setValue(novosDados.profissional);
-        if (novosDados.categoria !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.CATEGORIA).setValue(novosDados.categoria);
-        if (novosDados.status !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.STATUS).setValue(novosDados.status);
-        if (novosDados.observacoes !== undefined) sheet.getRange(rowIndex, BASE_COLUMNS.OBSERVACOES).setValue(novosDados.observacoes);
+        const linhaAnterior = mapearRowParaAgendamento(values[i]);
+        const linhaAtualizada = { ...linhaAnterior };
+
+        if (novosDados.sala) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.SALA).setValue(novosDados.sala);
+          linhaAtualizada.sala = novosDados.sala;
+        }
+        if (novosDados.ilha) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.ILHA).setValue(novosDados.ilha);
+          linhaAtualizada.ilha = novosDados.ilha;
+        }
+        if (novosDados.turno) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.TURNO).setValue(novosDados.turno);
+          linhaAtualizada.turno = novosDados.turno;
+        }
+        if (novosDados.horaInicio) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.HORA1).setValue(novosDados.horaInicio);
+          linhaAtualizada.horaInicio = novosDados.horaInicio;
+        }
+        if (novosDados.horaFim) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.HORA2).setValue(novosDados.horaFim);
+          linhaAtualizada.horaFim = novosDados.horaFim;
+        }
+        if (novosDados.especialidade !== undefined) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.ESPECIALIDADE).setValue(novosDados.especialidade);
+          linhaAtualizada.especialidade = novosDados.especialidade;
+        }
+        if (novosDados.profissional !== undefined) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.PROFISSIONAL).setValue(novosDados.profissional);
+          linhaAtualizada.profissional = novosDados.profissional;
+        }
+        if (novosDados.categoria !== undefined) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.CATEGORIA).setValue(novosDados.categoria);
+          linhaAtualizada.categoria = novosDados.categoria;
+        }
+        if (novosDados.status !== undefined) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.STATUS).setValue(novosDados.status);
+          linhaAtualizada.status = novosDados.status;
+        }
+        if (novosDados.observacoes !== undefined) {
+          sheet.getRange(rowIndex, BASE_COLUMNS.OBSERVACOES).setValue(novosDados.observacoes);
+          linhaAtualizada.observacoes = novosDados.observacoes;
+        }
 
         found = true;
+        logDetalhes = { antes: linhaAnterior, depois: linhaAtualizada, atualizacoes: novosDados };
         break;
       }
     }
@@ -1974,7 +2280,15 @@ function atualizarAgendamento(id, novosDados) {
     
     // Limpar todos os caches para garantir atualização
     limparCache();
-    
+
+    if (logDetalhes) {
+      registrarLog(
+        'ATUALIZAR_AGENDAMENTO',
+        `Agendamento ${id} atualizado`,
+        logDetalhes
+      );
+    }
+
     return { success: true, message: 'Agendamento atualizado com sucesso' };
   } catch (error) {
     console.error('Erro ao atualizar agendamento:', error);
@@ -2007,6 +2321,8 @@ function registrarFrequenciaAgendamento(id, dadosFrequencia) {
       return { success: false, message: 'Agendamento não encontrado' };
     }
 
+    const linhaAnterior = mapearRowParaAgendamento(values[rowIndex - 1]);
+
     const faltou = dadosFrequencia && dadosFrequencia.faltou;
     let horaChegada = '';
     let horaSaida = '';
@@ -2027,6 +2343,16 @@ function registrarFrequenciaAgendamento(id, dadosFrequencia) {
     sheet.getRange(rowIndex, BASE_COLUMNS.HORA_SAIDA_REAL).setValue(horaSaida);
 
     limparCache();
+
+    registrarLog(
+      'REGISTRAR_FREQUENCIA',
+      `Frequência registrada para agendamento ${targetId}`,
+      {
+        antes: linhaAnterior,
+        depois: { ...linhaAnterior, horaChegadaReal: horaChegada, horaSaidaReal: horaSaida },
+        faltou: !!faltou
+      }
+    );
 
     return {
       success: true,
@@ -2072,7 +2398,9 @@ function trocarAgendamentos(id1, id2) {
     }
     
     console.log('Trocando IDs:', id1, id2);
-    
+    const linha1Antes = mapearRowParaAgendamento(values[pos1 - 1]);
+    const linha2Antes = mapearRowParaAgendamento(values[pos2 - 1]);
+
     // Trocar salas e ilhas
     const sala1 = sheet.getRange(pos1, BASE_COLUMNS.SALA).getValue();
     const ilha1 = sheet.getRange(pos1, BASE_COLUMNS.ILHA).getValue();
@@ -2086,15 +2414,67 @@ function trocarAgendamentos(id1, id2) {
     sheet.getRange(pos1, BASE_COLUMNS.ILHA).setValue(ilha2);
     sheet.getRange(pos2, BASE_COLUMNS.SALA).setValue(sala1);
     sheet.getRange(pos2, BASE_COLUMNS.ILHA).setValue(ilha1);
-    
+
     console.log('Troca aplicada nas linhas:', pos1, pos2);
-    
+
     // Limpar todos os caches para garantir atualização
     limparCache();
-    
+
+    registrarLog(
+      'TROCAR_AGENDAMENTOS',
+      `Salas trocadas entre agendamentos ${id1} e ${id2}`,
+      {
+        agendamento1: {
+          antes: linha1Antes,
+          depois: { ...linha1Antes, sala: sala2, ilha: ilha2 }
+        },
+        agendamento2: {
+          antes: linha2Antes,
+          depois: { ...linha2Antes, sala: sala1, ilha: ilha1 }
+        }
+      }
+    );
+
     return { success: true, message: 'Troca realizada com sucesso' };
   } catch (error) {
     console.error('Erro ao trocar agendamentos:', error);
     return { success: false, message: 'Erro interno ao trocar agendamentos: ' + error.toString() };
+  }
+}
+
+function getLogs(limit, filtroTexto) {
+  try {
+    const sheet = obterSheetLogs();
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      return [];
+    }
+
+    const limiteSeguros = Math.max(1, Math.min(Number(limit) || 200, 500));
+    const inicio = Math.max(2, lastRow - limiteSeguros + 1);
+    const quantidade = lastRow - inicio + 1;
+    const valores = sheet.getRange(inicio, 1, quantidade, 5).getValues();
+    const normalizar = valor => normalizarTextoServidor(valor || '');
+    const filtro = normalizar(filtroTexto);
+
+    return valores.reverse().map(row => {
+      const timestamp = row[LOGS_COLUMNS.TIMESTAMP - 1];
+      return {
+        timestamp: timestamp instanceof Date ? timestamp.toISOString() : String(timestamp || ''),
+        usuario: row[LOGS_COLUMNS.USUARIO - 1] || '',
+        acao: row[LOGS_COLUMNS.ACAO - 1] || '',
+        detalhes: row[LOGS_COLUMNS.DETALHES - 1] || '',
+        dados: row[LOGS_COLUMNS.DADOS - 1] || ''
+      };
+    }).filter(item => {
+      if (!filtro) return true;
+      const combinado = [item.usuario, item.acao, item.detalhes, item.dados]
+        .map(normalizar)
+        .join(' ');
+      return combinado.includes(filtro);
+    });
+  } catch (error) {
+    console.error('Erro ao obter logs:', error);
+    return [];
   }
 }
