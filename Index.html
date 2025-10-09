@@ -895,20 +895,9 @@
           color: var(--text-secondary);
       }
 
-      .loading.inline {
-          align-items: flex-start;
-          flex-direction: row;
-          gap: 12px;
-          padding: 12px 0;
-      }
-
       .loading i {
           font-size: 1.8rem;
           animation: spin 1s linear infinite;
-      }
-
-      .loading.inline i {
-          font-size: 1.1rem;
       }
 
       @keyframes spin {
@@ -4135,7 +4124,6 @@
         }   
 
         let isLoading = false;
-        let dadosJaCarregados = false;
 
         function carregarDados() {
             if (isLoading) {
@@ -4143,17 +4131,13 @@
                 return;
             }
             isLoading = true;
+            mostrarLoading();
 
-            const manterConteudoVisivel = dadosJaCarregados;
-            mostrarLoading(manterConteudoVisivel);
-
-            if (!dadosJaCarregados) {
-                estado.planejamentoLinhas = [];
-                try {
-                    renderPlanejamento();
-                } catch (err) {
-                    console.warn('Não foi possível atualizar visual do planejamento imediatamente:', err);
-                }
+            estado.planejamentoLinhas = [];
+            try {
+                renderPlanejamento();
+            } catch (err) {
+                console.warn('Não foi possível atualizar visual do planejamento imediatamente:', err);
             }
 
             google.script.run
@@ -4177,7 +4161,6 @@
                     registrarEventosFiltrosEspecificos();
                     esconderLoading();
                     console.log('Loading escondido - Verificando se monitor está visível');
-                    dadosJaCarregados = true;
                     isLoading = false;  // Libera para próximas chamadas
                 })
                 .withFailureHandler(function(error) {
@@ -4189,29 +4172,14 @@
                 .getDadosCompletos(estado.dataAtual.toISOString().split('T')[0]);
         }
 
-        function mostrarLoading(manterConteudoVisivel = false) {
-            const loadingEl = document.getElementById('loading-monitor');
-            const monitorEl = document.getElementById('monitor-content');
-            if (!loadingEl || !monitorEl) return;
-
-            loadingEl.style.display = 'flex';
-            if (manterConteudoVisivel) {
-                loadingEl.classList.add('inline');
-                monitorEl.style.display = 'flex';
-            } else {
-                loadingEl.classList.remove('inline');
-                monitorEl.style.display = 'none';
-            }
+        function mostrarLoading() {
+            document.getElementById('loading-monitor').style.display = 'block';
+            document.getElementById('monitor-content').style.display = 'none';
         }
 
         function esconderLoading() {
-            const loadingEl = document.getElementById('loading-monitor');
-            const monitorEl = document.getElementById('monitor-content');
-            if (!loadingEl || !monitorEl) return;
-
-            loadingEl.style.display = 'none';
-            loadingEl.classList.remove('inline');
-            monitorEl.style.display = 'flex';
+            document.getElementById('loading-monitor').style.display = 'none';
+            document.getElementById('monitor-content').style.display = 'flex';
         }
 
         function carregarDadosMestres() {
@@ -5929,66 +5897,6 @@
                     : 'var(--text-secondary)';
         }
 
-        function atualizarAgendamentoLocalmente(id, atualizacoes = {}) {
-            const idStr = String(id);
-            if (!idStr) return;
-
-            const remover = atualizacoes && atualizacoes.remover;
-            if (remover) {
-                estado.agendamentos = estado.agendamentos.filter(ag => String(ag.id) !== idStr);
-                estado.planejamentoLinhas = estado.planejamentoLinhas.filter(linha => linha.id !== idStr);
-            } else {
-                const agendamento = estado.agendamentos.find(ag => String(ag.id) === idStr);
-                if (agendamento) {
-                    Object.entries(atualizacoes).forEach(([chave, valor]) => {
-                        if (chave === 'sala') {
-                            agendamento.sala = valor;
-                        } else if (chave === 'turno') {
-                            agendamento.turno = valor;
-                            agendamento.turnoNormalizado = normalizarTurno(valor);
-                        } else if (chave === 'status') {
-                            agendamento.status = valor;
-                            agendamento.statusNormalizado = normalizarStatus(valor);
-                        } else {
-                            agendamento[chave] = valor;
-                        }
-                    });
-                }
-
-                const linhaPlanejamento = estado.planejamentoLinhas.find(linha => linha.id === idStr);
-                if (linhaPlanejamento) {
-                    if ('sala' in atualizacoes) {
-                        const salaValor = atualizacoes.sala;
-                        linhaPlanejamento.salaAtual = salaValor != null && salaValor !== ''
-                            ? String(salaValor)
-                            : '—';
-                    }
-                    if ('salaPlanejada' in atualizacoes) {
-                        linhaPlanejamento.salaPlanejada = atualizacoes.salaPlanejada || '';
-                    }
-                    if ('horaChegadaReal' in atualizacoes) {
-                        linhaPlanejamento.horaChegadaReal = atualizacoes.horaChegadaReal || '';
-                    }
-                    if ('horaSaidaReal' in atualizacoes) {
-                        linhaPlanejamento.horaSaidaReal = atualizacoes.horaSaidaReal || '';
-                    }
-                    linhaPlanejamento.resultado = null;
-                }
-            }
-
-            try {
-                atualizarPlanejamento();
-            } catch (err) {
-                console.warn('Não foi possível atualizar planejamento localmente:', err);
-            }
-
-            try {
-                aplicarFiltros();
-            } catch (err) {
-                console.warn('Não foi possível atualizar monitor localmente:', err);
-            }
-        }
-
         function valorFrequenciaEhFaltou(valor) {
             return normalizarTexto(valor) === 'faltou';
         }
@@ -6392,11 +6300,6 @@
             google.script.run
                 .withSuccessHandler(result => {
                     if (result.success) {
-                        const atualizacoesLocais = { sala: salaInfo.numero };
-                        if (salaInfo.ilha != null) {
-                            atualizacoesLocais.ilha = salaInfo.ilha;
-                        }
-                        atualizarAgendamentoLocalmente(linha.id, atualizacoesLocais);
                         mostrarPlanejamentoMensagem('Substituição realizada com sucesso. Atualizando dados...', true);
                         carregarDados();
                     } else {
@@ -6440,7 +6343,6 @@
                     }
 
                     if (result.success) {
-                        atualizarAgendamentoLocalmente(linha.id, { remover: true });
                         mostrarPlanejamentoMensagem('Agendamento removido com sucesso. Atualizando dados...', true);
                         carregarDados();
                     } else {
