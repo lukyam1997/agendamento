@@ -3947,6 +3947,71 @@
             temaAtual: 'dark'
         };
 
+        // Cache local para dados por dia visando carregamentos mais ágeis
+        const CACHE_DADOS_DIA_TTL_MS = 2 * 60 * 1000; // 2 minutos
+        const cacheDadosPorDia = new Map();
+        const prefetchDiasEmAndamento = new Set();
+
+        function obterInfoCacheDia(diaIso) {
+            const registro = cacheDadosPorDia.get(diaIso);
+            if (!registro) return null;
+            const expirado = Date.now() - registro.timestamp > CACHE_DADOS_DIA_TTL_MS;
+            return { ...registro, expirado };
+        }
+
+        function salvarCacheDia(diaIso, dados) {
+            if (!diaIso) return;
+            cacheDadosPorDia.set(diaIso, {
+                dados,
+                timestamp: Date.now()
+            });
+
+            const LIMITE_CACHE_DIAS = 10;
+            if (cacheDadosPorDia.size > LIMITE_CACHE_DIAS) {
+                const chaves = Array.from(cacheDadosPorDia.keys());
+                while (cacheDadosPorDia.size > LIMITE_CACHE_DIAS) {
+                    const chaveRemover = chaves.shift();
+                    if (chaveRemover && chaveRemover !== diaIso) {
+                        cacheDadosPorDia.delete(chaveRemover);
+                    }
+                }
+            }
+        }
+
+        function prefetchDiasAdjacentes(diaIso) {
+            const base = new Date(`${diaIso}T00:00:00`);
+            if (Number.isNaN(base.getTime()) || !google?.script?.run) return;
+
+            [-1, 1].forEach(offset => {
+                const alvo = new Date(base);
+                alvo.setDate(alvo.getDate() + offset);
+                const alvoIso = alvo.toISOString().split('T')[0];
+
+                const infoCache = obterInfoCacheDia(alvoIso);
+                if (infoCache && !infoCache.expirado) {
+                    return;
+                }
+
+                if (prefetchDiasEmAndamento.has(alvoIso)) {
+                    return;
+                }
+
+                prefetchDiasEmAndamento.add(alvoIso);
+
+                google.script.run
+                    .withSuccessHandler(function(dados) {
+                        prefetchDiasEmAndamento.delete(alvoIso);
+                        if (dados && !dados.error) {
+                            salvarCacheDia(alvoIso, dados);
+                        }
+                    })
+                    .withFailureHandler(function() {
+                        prefetchDiasEmAndamento.delete(alvoIso);
+                    })
+                    .getDadosCompletos(alvoIso);
+            });
+        }
+
         // Utilidades de normalização
         const removerAcentos = texto => String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -4381,7 +4446,66 @@
             }
         }
 
-        function carregarDados() {
+        function aplicarDadosCarregados(dados, { manterIndicadorCarregamento = false } = {}) {
+            if (!dados) return;
+
+            estado.salas = (dados.salas || []).map(sala => ({
+                ...sala,
+                statusNormalizado: normalizarStatus(sala.statusGeral || sala.status)
+            }));
+
+            estado.agendamentos = (dados.agendamentos || []).map(ag => ({
+                ...ag,
+                turnoNormalizado: normalizarTurno(ag.turno),
+                statusNormalizado: normalizarStatus(ag.status)
+            }));
+
+            console.log('Estado atualizado - Salas:', estado.salas.length, 'Agendamentos:', estado.agendamentos.length);
+
+            aplicarFiltros();
+            atualizarPlanejamento();
+            const opcoesFiltros = preencherRelatorioFiltros();
+            preencherDashboardFiltros(opcoesFiltros);
+            preencherSalaMesFiltros(opcoesFiltros);
+            registrarEventosFiltrosEspecificos();
+
+            if (manterIndicadorCarregamento) {
+                const monitor = document.getElementById('monitor-content');
+                if (monitor) {
+                    monitor.style.display = 'flex';
+                }
+            } else {
+                esconderLoading();
+            }
+        }
+
+        function carregarDados(opcoes = {}) {
+            const dataIsoAtual = estado.dataAtual.toISOString().split('T')[0];
+            const infoCache = obterInfoCacheDia(dataIsoAtual);
+            const deveForcarAtualizacao = opcoes.forcarAtualizacao === true;
+            let usandoCacheExpirado = false;
+            const tinhaDadosEmCache = Boolean(infoCache && infoCache.dados);
+
+            if (infoCache && !deveForcarAtualizacao) {
+                if (!infoCache.expirado) {
+                    console.log(`Dados de ${dataIsoAtual} carregados a partir do cache local.`);
+                    aplicarDadosCarregados(infoCache.dados);
+                    return;
+                }
+
+                console.log(`Cache local para ${dataIsoAtual} expirado. Exibindo dados enquanto atualiza.`);
+                aplicarDadosCarregados(infoCache.dados, { manterIndicadorCarregamento: true });
+                togglePlanejamentoLoading(true);
+                usandoCacheExpirado = true;
+            } else {
+                estado.planejamentoLinhas = [];
+                try {
+                    renderPlanejamento();
+                } catch (err) {
+                    console.warn('Não foi possível atualizar visual do planejamento imediatamente:', err);
+                }
+            }
+
             if (isLoading) {
                 pendingReload = true;
                 togglePlanejamentoLoading(true);
@@ -4389,37 +4513,23 @@
             }
             isLoading = true;
             pendingReload = false;
-            mostrarLoading();
-
-            estado.planejamentoLinhas = [];
-            try {
-                renderPlanejamento();
-            } catch (err) {
-                console.warn('Não foi possível atualizar visual do planejamento imediatamente:', err);
+            if (usandoCacheExpirado) {
+                // Mantém o conteúdo visível enquanto atualiza em segundo plano
+                togglePlanejamentoLoading(true);
+            } else {
+                mostrarLoading();
             }
+
+            const diaSolicitado = dataIsoAtual;
 
             google.script.run
                 .withSuccessHandler(function(dados) {
                     console.log('Dados recebidos do server:', dados);
-                    estado.salas = (dados.salas || []).map(sala => ({
-                        ...sala,
-                        statusNormalizado: normalizarStatus(sala.statusGeral || sala.status)
-                    }));
-                    estado.agendamentos = (dados.agendamentos || []).map(ag => ({
-                        ...ag,
-                        turnoNormalizado: normalizarTurno(ag.turno),
-                        statusNormalizado: normalizarStatus(ag.status)
-                    }));
-                    console.log('Estado atualizado - Salas:', estado.salas.length, 'Agendamentos:', estado.agendamentos.length);
-                    aplicarFiltros();
-                    atualizarPlanejamento();
-                    const opcoesFiltros = preencherRelatorioFiltros();
-                    preencherDashboardFiltros(opcoesFiltros);
-                    preencherSalaMesFiltros(opcoesFiltros);
-                    registrarEventosFiltrosEspecificos();
-                    esconderLoading();
+                    salvarCacheDia(diaSolicitado, dados);
+                    aplicarDadosCarregados(dados);
                     console.log('Loading escondido - Verificando se monitor está visível');
                     isLoading = false;  // Libera para próximas chamadas
+                    prefetchDiasAdjacentes(diaSolicitado);
                     if (pendingReload) {
                         pendingReload = false;
                         carregarDados();
@@ -4427,7 +4537,9 @@
                 })
                 .withFailureHandler(function(error) {
                     console.error('Erro ao carregar dados:', error);
-                    alert('Erro ao carregar dados do sistema.');
+                    if (!tinhaDadosEmCache) {
+                        alert('Erro ao carregar dados do sistema.');
+                    }
                     esconderLoading();
                     const deveRecarregar = pendingReload;
                     pendingReload = false;
@@ -4436,7 +4548,7 @@
                         carregarDados();
                     }
                 })
-                .getDadosCompletos(estado.dataAtual.toISOString().split('T')[0]);
+                .getDadosCompletos(diaSolicitado);
         }
 
         function mostrarLoading() {
