@@ -633,17 +633,25 @@
           gap: 6px;
           color: var(--text-secondary);
           font-weight: 600;
+          min-width: 160px;
       }
 
-      .planejamento-controls select {
+      .planejamento-controls select,
+      .planejamento-controls input[type="text"] {
           border-radius: var(--radius-sm);
           border: 1px solid var(--border-soft);
           background: var(--surface-elevated);
           color: var(--text-primary);
           padding: 10px 12px;
+          min-height: 42px;
+      }
+
+      .planejamento-controls input[type="text"]::placeholder {
+          color: var(--text-muted);
       }
 
       .planejamento-table-wrapper {
+          position: relative;
           max-height: 65vh;
           min-height: 280px;
           overflow: auto;
@@ -651,9 +659,32 @@
           border: 1px solid var(--border-soft);
       }
 
+      .planejamento-loading {
+          position: absolute;
+          inset: 0;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          background: rgba(15, 23, 42, 0.72);
+          backdrop-filter: blur(2px);
+          color: var(--text-secondary);
+          font-weight: 600;
+          z-index: 2;
+      }
+
+      .planejamento-loading.active {
+          display: flex;
+      }
+
+      .planejamento-loading i {
+          font-size: 1.1rem;
+          animation: spin 1s linear infinite;
+      }
+
       .planejamento-table {
           width: 100%;
-          min-width: 780px;
+          min-width: 860px;
           border-collapse: collapse;
           color: var(--text-secondary);
           font-size: 0.92rem;
@@ -663,6 +694,12 @@
       .planejamento-table td {
           padding: 12px 16px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .planejamento-table th.planejamento-col-check,
+      .planejamento-table td.planejamento-col-check {
+          width: 72px;
+          text-align: center;
       }
 
       .planejamento-table th {
@@ -682,6 +719,33 @@
 
       body.light-theme .planejamento-table td {
           border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      body.light-theme .planejamento-loading {
+          background: rgba(248, 250, 252, 0.86);
+          color: var(--text-secondary);
+      }
+
+      body.light-theme .planejamento-row-marcado {
+          background: rgba(34, 197, 94, 0.12);
+      }
+
+      body.light-theme .planejamento-check-visual {
+          background: #fff;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+      }
+
+      body.light-theme .planejamento-check-input:checked + .planejamento-check-visual {
+          box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.22);
+      }
+
+      body.light-theme .planejamento-grupo {
+          background: rgba(79, 70, 229, 0.08);
+      }
+
+      body.light-theme .planejamento-grupo td {
+          border-color: rgba(79, 70, 229, 0.15);
+          color: var(--primary-strong);
       }
 
       .planejamento-table input[type="text"] {
@@ -741,6 +805,90 @@
           flex-direction: column;
           gap: 6px;
           align-items: flex-start;
+      }
+
+      .planejamento-check {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+      }
+
+      .planejamento-check-input {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          margin: 0;
+          padding: 0;
+          opacity: 0;
+          pointer-events: none;
+      }
+
+      .planejamento-check-visual {
+          width: 42px;
+          height: 42px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-elevated);
+          color: var(--text-muted);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+      }
+
+      .planejamento-check:hover .planejamento-check-visual {
+          color: var(--primary);
+          border-color: var(--primary);
+      }
+
+      .planejamento-check-input:focus-visible + .planejamento-check-visual {
+          outline: 2px solid var(--primary);
+          outline-offset: 2px;
+      }
+
+      .planejamento-check-input:checked + .planejamento-check-visual {
+          background: rgba(74, 222, 128, 0.16);
+          border-color: rgba(74, 222, 128, 0.45);
+          color: var(--success);
+          box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.18);
+      }
+
+      .planejamento-row-marcado {
+          background: rgba(74, 222, 128, 0.08);
+      }
+
+      .planejamento-row-marcado .planejamento-planejada-wrapper .planejamento-status-chip {
+          border: 1px solid rgba(74, 222, 128, 0.4);
+      }
+
+      .planejamento-grupo {
+          background: rgba(122, 141, 255, 0.08);
+      }
+
+      .planejamento-grupo td {
+          padding: 14px 18px;
+          font-weight: 600;
+          font-size: 0.95rem;
+          color: var(--primary);
+          border-top: 1px solid var(--border-soft);
+          border-bottom: 1px solid var(--border-soft);
+      }
+
+      .planejamento-grupo-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+      }
+
+      .planejamento-grupo-total {
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: var(--text-muted);
       }
 
       .planejamento-acoes-botoes {
@@ -1599,6 +1747,21 @@
           margin-bottom: 18px;
       }
 
+      #sala-mes-feedback {
+          margin-top: 12px;
+          font-weight: 600;
+          color: var(--text-muted);
+          display: none;
+      }
+
+      #sala-mes-feedback[data-status="erro"] {
+          color: var(--danger);
+      }
+
+      #sala-mes-feedback[data-status="sucesso"] {
+          color: var(--success);
+      }
+
       .sala-mes-eventos {
           list-style: none;
           margin: 0;
@@ -2039,6 +2202,68 @@
           border: 1px solid var(--border-soft);
           border-radius: var(--radius-sm);
           padding: 16px;
+      }
+
+      .agendamento-frequencia {
+          margin-top: 14px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          padding: 12px 14px;
+          border-radius: var(--radius-sm);
+          border: 1px dashed rgba(96, 165, 250, 0.35);
+          background: rgba(96, 165, 250, 0.12);
+          color: var(--info);
+          font-weight: 600;
+      }
+
+      .agendamento-frequencia span {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+      }
+
+      .agendamento-frequencia-titulo {
+          font-size: 0.75rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: currentColor;
+          opacity: 0.85;
+          flex-basis: 100%;
+      }
+
+      .agendamento-frequencia.registrado {
+          border-color: rgba(74, 222, 128, 0.4);
+          background: rgba(74, 222, 128, 0.12);
+          color: var(--success);
+      }
+
+      .agendamento-frequencia.faltou {
+          border-color: rgba(248, 113, 113, 0.4);
+          background: rgba(248, 113, 113, 0.12);
+          color: var(--danger);
+      }
+
+      .agendamento-frequencia i {
+          font-size: 0.95rem;
+      }
+
+      body.light-theme .agendamento-frequencia {
+          background: rgba(59, 130, 246, 0.1);
+          border-color: rgba(59, 130, 246, 0.25);
+          color: #1d4ed8;
+      }
+
+      body.light-theme .agendamento-frequencia.registrado {
+          background: rgba(34, 197, 94, 0.12);
+          border-color: rgba(34, 197, 94, 0.35);
+          color: #047857;
+      }
+
+      body.light-theme .agendamento-frequencia.faltou {
+          background: rgba(248, 113, 113, 0.12);
+          border-color: rgba(248, 113, 113, 0.35);
+          color: #b91c1c;
       }
 
       .agendamento-header {
@@ -2597,6 +2822,16 @@
                                         <option value="todos">Todos</option>
                                     </select>
                                 </label>
+                                <label>
+                                    Profissional
+                                    <input type="text" id="planejamento-filtro-nome" placeholder="Buscar por nome">
+                                </label>
+                                <label>
+                                    Especialidade
+                                    <select id="planejamento-filtro-especialidade">
+                                        <option value="">Todas</option>
+                                    </select>
+                                </label>
                                 <button class="btn btn-success admin-only" id="planejamento-adicionar" type="button">
                                     <i class="fas fa-user-plus"></i> Adicionar profissional
                                 </button>
@@ -2606,9 +2841,14 @@
                             </div>
                         </div>
                         <div class="planejamento-table-wrapper">
+                            <div class="planejamento-loading" id="planejamento-loading" aria-hidden="true" aria-live="polite">
+                                <i class="fas fa-spinner"></i>
+                                <span>Carregando planejamento...</span>
+                            </div>
                             <table class="planejamento-table">
                                 <thead>
                                 <tr>
+                                    <th class="planejamento-col-check">OK</th>
                                     <th>Profissional</th>
                                     <th>Especialidade</th>
                                     <th>Turno</th>
@@ -3145,6 +3385,7 @@
                             <tbody></tbody>
                         </table>
                     </div>
+                    <div id="sala-mes-feedback" aria-live="polite"></div>
                 </div>
 
             </div>
@@ -3697,6 +3938,8 @@
             visualizacaoSimplificada: true,  // Novo estado para toggle simplificado
             planejamentoTurno: 'manha',
             planejamentoLinhas: [],
+            planejamentoFiltroNome: '',
+            planejamentoFiltroEspecialidade: '',
             agendamentoEditarId: null,
             dashboardDiasEspecificos: [],
             dashboardIntervaloDias: { inicio: '', fim: '' },
@@ -4124,13 +4367,28 @@
         }   
 
         let isLoading = false;
+        let pendingReload = false;
+
+        function togglePlanejamentoLoading(visivel) {
+            const loader = document.getElementById('planejamento-loading');
+            if (!loader) return;
+            if (visivel) {
+                loader.classList.add('active');
+                loader.setAttribute('aria-hidden', 'false');
+            } else {
+                loader.classList.remove('active');
+                loader.setAttribute('aria-hidden', 'true');
+            }
+        }
 
         function carregarDados() {
             if (isLoading) {
-                console.log('Carga em andamento, ignorando nova chamada');
+                pendingReload = true;
+                togglePlanejamentoLoading(true);
                 return;
             }
             isLoading = true;
+            pendingReload = false;
             mostrarLoading();
 
             estado.planejamentoLinhas = [];
@@ -4162,12 +4420,21 @@
                     esconderLoading();
                     console.log('Loading escondido - Verificando se monitor está visível');
                     isLoading = false;  // Libera para próximas chamadas
+                    if (pendingReload) {
+                        pendingReload = false;
+                        carregarDados();
+                    }
                 })
                 .withFailureHandler(function(error) {
                     console.error('Erro ao carregar dados:', error);
                     alert('Erro ao carregar dados do sistema.');
                     esconderLoading();
+                    const deveRecarregar = pendingReload;
+                    pendingReload = false;
                     isLoading = false;
+                    if (deveRecarregar) {
+                        carregarDados();
+                    }
                 })
                 .getDadosCompletos(estado.dataAtual.toISOString().split('T')[0]);
         }
@@ -4175,11 +4442,13 @@
         function mostrarLoading() {
             document.getElementById('loading-monitor').style.display = 'block';
             document.getElementById('monitor-content').style.display = 'none';
+            togglePlanejamentoLoading(true);
         }
 
         function esconderLoading() {
             document.getElementById('loading-monitor').style.display = 'none';
             document.getElementById('monitor-content').style.display = 'flex';
+            togglePlanejamentoLoading(false);
         }
 
         function carregarDadosMestres() {
@@ -4921,6 +5190,22 @@
                 });
             }
 
+            const planejamentoFiltroNomeInput = document.getElementById('planejamento-filtro-nome');
+            if (planejamentoFiltroNomeInput) {
+                planejamentoFiltroNomeInput.addEventListener('input', function() {
+                    estado.planejamentoFiltroNome = this.value || '';
+                    renderPlanejamento();
+                });
+            }
+
+            const planejamentoFiltroEspecialidadeSelect = document.getElementById('planejamento-filtro-especialidade');
+            if (planejamentoFiltroEspecialidadeSelect) {
+                planejamentoFiltroEspecialidadeSelect.addEventListener('change', function() {
+                    estado.planejamentoFiltroEspecialidade = this.value || '';
+                    renderPlanejamento();
+                });
+            }
+
             const planejamentoAplicarBtn = document.getElementById('planejamento-aplicar');
             if (planejamentoAplicarBtn) {
                 planejamentoAplicarBtn.addEventListener('click', aplicarPlanejamentoTudo);
@@ -5393,10 +5678,15 @@
                 }
                 return turnoAg === turnoSelecionado || turnoAg === 'todos';
             }).sort((a, b) => {
+                const espA = normalizarTexto(a.especialidade || '');
+                const espB = normalizarTexto(b.especialidade || '');
+                if (espA !== espB) {
+                    return espA.localeCompare(espB, 'pt-BR', { sensitivity: 'base' });
+                }
                 const turnoA = a.turnoNormalizado || normalizarTurno(a.turno) || '';
                 const turnoB = b.turnoNormalizado || normalizarTurno(b.turno) || '';
                 if (turnoA !== turnoB) {
-                    return turnoA.localeCompare(turnoB);
+                    return turnoA.localeCompare(turnoB, 'pt-BR');
                 }
                 return (a.profissional || '').localeCompare(b.profissional || '', 'pt-BR');
             });
@@ -5407,7 +5697,7 @@
                 return {
                     id,
                     profissional: ag.profissional || '—',
-                    especialidade: ag.especialidade || '—',
+                    especialidade: ag.especialidade && ag.especialidade.trim() ? ag.especialidade : 'Sem especialidade',
                     turno: ag.turnoNormalizado || normalizarTurno(ag.turno) || 'manha',
                     dataInicio: ag.dataInicio || '',
                     dataFim: ag.dataFim || '',
@@ -5418,6 +5708,7 @@
                     horaChegadaReal: ag.horaChegadaReal || '',
                     horaSaidaReal: ag.horaSaidaReal || '',
                     faltou: valorFrequenciaEhFaltou(ag.horaChegadaReal) || valorFrequenciaEhFaltou(ag.horaSaidaReal),
+                    marcado: Boolean(anterior.marcado),
                     resultado: null,
                     mensagem: ''
                 };
@@ -5489,21 +5780,87 @@
             const tbody = document.getElementById('planejamento-tbody');
             const feedback = document.getElementById('planejamento-feedback');
             const turnoSelect = document.getElementById('planejamento-turno');
+            const filtroNomeInput = document.getElementById('planejamento-filtro-nome');
+            const filtroEspecialidadeSelect = document.getElementById('planejamento-filtro-especialidade');
             if (!tbody) return;
 
             if (turnoSelect) {
                 turnoSelect.value = estado.planejamentoTurno || 'manha';
             }
 
+            if (filtroNomeInput) {
+                filtroNomeInput.value = estado.planejamentoFiltroNome || '';
+            }
+
+            const linhas = Array.isArray(estado.planejamentoLinhas) ? estado.planejamentoLinhas : [];
+            const especialidadeMap = new Map();
+            linhas.forEach(item => {
+                const especialidadeBruta = item.especialidade || '';
+                const label = especialidadeBruta && especialidadeBruta.trim() && especialidadeBruta.trim() !== '—'
+                    ? especialidadeBruta
+                    : 'Sem especialidade';
+                const chave = normalizarTexto(label);
+                if (chave && !especialidadeMap.has(chave)) {
+                    especialidadeMap.set(chave, label);
+                }
+            });
+            const especialidadesOrdenadas = Array.from(especialidadeMap.values())
+                .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+
+            if (filtroEspecialidadeSelect) {
+                let valorAtual = estado.planejamentoFiltroEspecialidade || '';
+                if (valorAtual && valorAtual.trim() === '—') {
+                    valorAtual = 'Sem especialidade';
+                    estado.planejamentoFiltroEspecialidade = valorAtual;
+                }
+                const opcoes = ['<option value="">Todas</option>'];
+                especialidadesOrdenadas.forEach(esp => {
+                    opcoes.push(`<option value="${esp.replace(/"/g, '&quot;')}">${esp}</option>`);
+                });
+                filtroEspecialidadeSelect.innerHTML = opcoes.join('');
+                if (valorAtual && !especialidadesOrdenadas.includes(valorAtual)) {
+                    estado.planejamentoFiltroEspecialidade = '';
+                    filtroEspecialidadeSelect.value = '';
+                } else {
+                    filtroEspecialidadeSelect.value = valorAtual;
+                }
+            }
+
+            togglePlanejamentoLoading(isLoading);
+
+            const filtroNome = normalizarTexto(estado.planejamentoFiltroNome || '');
+            const filtroEspecialidade = normalizarTexto(estado.planejamentoFiltroEspecialidade || '');
+
+            const linhasFiltradas = linhas.filter(item => {
+                const nomeValido = !filtroNome || normalizarTexto(item.profissional).includes(filtroNome);
+                const especialidadeLabel = item.especialidade && item.especialidade.trim() && item.especialidade.trim() !== '—'
+                    ? item.especialidade
+                    : 'Sem especialidade';
+                const especialidadeValida = !filtroEspecialidade || normalizarTexto(especialidadeLabel).includes(filtroEspecialidade);
+                return nomeValido && especialidadeValida;
+            });
+
             tbody.innerHTML = '';
 
-            if (!Array.isArray(estado.planejamentoLinhas) || estado.planejamentoLinhas.length === 0) {
+            if (isLoading) {
+                if (feedback) {
+                    feedback.textContent = 'Carregando planejamento atualizado...';
+                    feedback.style.color = 'var(--text-muted)';
+                }
+                return;
+            }
+
+            const criarLinhaMensagem = mensagem => {
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.colSpan = 6;
-                td.textContent = 'Nenhum agendamento encontrado para o turno selecionado.';
+                td.colSpan = 7;
+                td.textContent = mensagem;
                 tr.appendChild(td);
                 tbody.appendChild(tr);
+            };
+
+            if (!linhas.length) {
+                criarLinhaMensagem('Nenhum agendamento encontrado para o turno selecionado.');
                 if (feedback) {
                     feedback.textContent = 'Informe as salas desejadas e utilize as ações para aplicar as alterações.';
                     feedback.style.color = 'var(--text-secondary)';
@@ -5511,125 +5868,193 @@
                 return;
             }
 
-            estado.planejamentoLinhas.forEach(item => {
-                const tr = document.createElement('tr');
-                let statusSpan;
-                let botaoAcao;
+            if (!linhasFiltradas.length) {
+                criarLinhaMensagem('Nenhum profissional corresponde aos filtros aplicados.');
+                if (feedback) {
+                    feedback.textContent = 'Ajuste os filtros de busca para visualizar o planejamento.';
+                    feedback.style.color = 'var(--warning)';
+                }
+                return;
+            }
 
-                const tdProfissional = document.createElement('td');
-                tdProfissional.textContent = item.profissional;
-
-                const tdEspecialidade = document.createElement('td');
-                tdEspecialidade.textContent = item.especialidade;
-
-                const tdTurno = document.createElement('td');
-                tdTurno.textContent = formatarTurnoLabel(item.turno) || '-';
-
-                const tdSalaAtual = document.createElement('td');
-                tdSalaAtual.textContent = item.salaAtual || '-';
-
-                const tdPlanejada = document.createElement('td');
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.placeholder = 'Sala desejada';
-                input.value = item.salaPlanejada || '';
-                input.dataset.id = item.id;
-                input.addEventListener('input', () => {
-                    const linha = estado.planejamentoLinhas.find(l => l.id === item.id);
-                    if (linha) {
-                        linha.salaPlanejada = input.value;
-                        atualizarVisualPlanejamento(linha, tr, statusSpan, botaoAcao);
-                    }
-                });
-                input.addEventListener('keydown', event => {
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        const todosInputs = Array.from(document.querySelectorAll('#planejamento-tbody input[type="text"]'));
-                        const indiceAtual = todosInputs.indexOf(event.currentTarget);
-                        if (indiceAtual >= 0) {
-                            const proximo = todosInputs[indiceAtual + 1];
-                            if (proximo) {
-                                proximo.focus();
-                                proximo.select();
-                            } else {
-                                event.currentTarget.blur();
-                            }
-                        }
-                    }
-                });
-                const planejarWrapper = document.createElement('div');
-                planejarWrapper.className = 'planejamento-planejada-wrapper';
-                planejarWrapper.appendChild(input);
-                statusSpan = document.createElement('span');
-                statusSpan.className = 'planejamento-status-chip';
-                planejarWrapper.appendChild(statusSpan);
-                tdPlanejada.appendChild(planejarWrapper);
-
-                const tdAcao = document.createElement('td');
-                const containerAcoes = document.createElement('div');
-                containerAcoes.className = 'planejamento-acoes';
-                const containerBotoes = document.createElement('div');
-                containerBotoes.className = 'planejamento-acoes-botoes';
-
-                const botaoFrequencia = document.createElement('button');
-                botaoFrequencia.type = 'button';
-                botaoFrequencia.className = 'btn btn-secondary';
-                botaoFrequencia.dataset.planejamentoFrequenciaId = item.id;
-                botaoFrequencia.innerHTML = '<i class="fas fa-user-check"></i> Frequência';
-                botaoFrequencia.addEventListener('click', () => abrirPlanejamentoFrequencia(item.id));
-
-                botaoAcao = document.createElement('button');
-                botaoAcao.type = 'button';
-                botaoAcao.className = 'btn btn-primary';
-                botaoAcao.dataset.planejamentoId = item.id;
-                botaoAcao.innerHTML = '<i class="fas fa-check"></i> Substituir';
-                botaoAcao.addEventListener('click', () => aplicarPlanejamentoLinha(item.id));
-
-                const botaoExcluir = document.createElement('button');
-                botaoExcluir.type = 'button';
-                botaoExcluir.className = 'btn btn-danger';
-                botaoExcluir.dataset.planejamentoId = item.id;
-                botaoExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
-                botaoExcluir.addEventListener('click', () => excluirPlanejamentoLinha(item.id));
-
-                containerBotoes.appendChild(botaoFrequencia);
-                containerBotoes.appendChild(botaoAcao);
-                containerBotoes.appendChild(botaoExcluir);
-
-                const frequenciaInfo = document.createElement('span');
-                frequenciaInfo.className = 'planejamento-frequencia-info';
-                atualizarInfoFrequenciaElemento(frequenciaInfo, item);
-
-                containerAcoes.appendChild(containerBotoes);
-                containerAcoes.appendChild(frequenciaInfo);
-                tdAcao.appendChild(containerAcoes);
-
-                tr.appendChild(tdProfissional);
-                tr.appendChild(tdEspecialidade);
-                tr.appendChild(tdTurno);
-                tr.appendChild(tdSalaAtual);
-                tr.appendChild(tdPlanejada);
-                tr.appendChild(tdAcao);
-
-                tbody.appendChild(tr);
-
-                atualizarVisualPlanejamento(item, tr, statusSpan, botaoAcao);
+            const grupos = new Map();
+            linhasFiltradas.forEach(item => {
+                const especialidadeBruta = item.especialidade || '';
+                const labelOriginal = especialidadeBruta && especialidadeBruta.trim() && especialidadeBruta.trim() !== '—'
+                    ? especialidadeBruta
+                    : 'Sem especialidade';
+                const chave = normalizarTexto(labelOriginal) || 'sem-especialidade';
+                if (!grupos.has(chave)) {
+                    grupos.set(chave, { label: labelOriginal, itens: [] });
+                }
+                grupos.get(chave).itens.push(item);
             });
 
+            const fragment = document.createDocumentFragment();
+            const gruposOrdenados = Array.from(grupos.values())
+                .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR', { sensitivity: 'base' }));
+
+            gruposOrdenados.forEach(grupo => {
+                const headerTr = document.createElement('tr');
+                headerTr.className = 'planejamento-grupo';
+                const headerTd = document.createElement('td');
+                headerTd.colSpan = 7;
+                const headerWrapper = document.createElement('div');
+                headerWrapper.className = 'planejamento-grupo-header';
+                const titulo = document.createElement('span');
+                titulo.textContent = grupo.label;
+                const total = document.createElement('span');
+                total.className = 'planejamento-grupo-total';
+                const quantidade = grupo.itens.length;
+                total.textContent = `${quantidade} profissional${quantidade === 1 ? '' : 's'}`;
+                headerWrapper.appendChild(titulo);
+                headerWrapper.appendChild(total);
+                headerTd.appendChild(headerWrapper);
+                headerTr.appendChild(headerTd);
+                fragment.appendChild(headerTr);
+
+                grupo.itens.sort((a, b) => (a.profissional || '').localeCompare(b.profissional || '', 'pt-BR'));
+
+                grupo.itens.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.classList.toggle('planejamento-row-marcado', Boolean(item.marcado));
+                    let statusSpan;
+                    let botaoAcao;
+
+                    const tdCheck = document.createElement('td');
+                    tdCheck.className = 'planejamento-col-check';
+                    const checkLabel = document.createElement('label');
+                    checkLabel.className = 'planejamento-check';
+                    const checkInput = document.createElement('input');
+                    checkInput.type = 'checkbox';
+                    checkInput.className = 'planejamento-check-input';
+                    checkInput.checked = Boolean(item.marcado);
+                    checkInput.setAttribute('aria-label', `Confirmar ${item.profissional || 'profissional'} no planejamento`);
+                    const checkVisual = document.createElement('span');
+                    checkVisual.className = 'planejamento-check-visual';
+                    checkVisual.innerHTML = '<i class="fas fa-check"></i>';
+                    checkInput.addEventListener('change', () => {
+                        item.marcado = checkInput.checked;
+                        tr.classList.toggle('planejamento-row-marcado', item.marcado);
+                    });
+                    checkLabel.appendChild(checkInput);
+                    checkLabel.appendChild(checkVisual);
+                    tdCheck.appendChild(checkLabel);
+
+                    const tdProfissional = document.createElement('td');
+                    tdProfissional.textContent = item.profissional;
+
+                    const tdEspecialidade = document.createElement('td');
+                    tdEspecialidade.textContent = grupo.label || 'Sem especialidade';
+
+                    const tdTurno = document.createElement('td');
+                    tdTurno.textContent = formatarTurnoLabel(item.turno) || '-';
+
+                    const tdSalaAtual = document.createElement('td');
+                    tdSalaAtual.textContent = item.salaAtual || '-';
+
+                    const tdPlanejada = document.createElement('td');
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = 'Sala desejada';
+                    input.value = item.salaPlanejada || '';
+                    input.dataset.id = item.id;
+                    input.addEventListener('input', () => {
+                        item.salaPlanejada = input.value;
+                        atualizarVisualPlanejamento(item, tr, statusSpan, botaoAcao);
+                    });
+                    input.addEventListener('keydown', event => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            const todosInputs = Array.from(document.querySelectorAll('#planejamento-tbody input[type="text"]'));
+                            const indiceAtual = todosInputs.indexOf(event.currentTarget);
+                            if (indiceAtual >= 0) {
+                                const proximo = todosInputs[indiceAtual + 1];
+                                if (proximo) {
+                                    proximo.focus();
+                                    proximo.select();
+                                } else {
+                                    event.currentTarget.blur();
+                                }
+                            }
+                        }
+                    });
+                    const planejarWrapper = document.createElement('div');
+                    planejarWrapper.className = 'planejamento-planejada-wrapper';
+                    planejarWrapper.appendChild(input);
+                    statusSpan = document.createElement('span');
+                    statusSpan.className = 'planejamento-status-chip';
+                    planejarWrapper.appendChild(statusSpan);
+                    tdPlanejada.appendChild(planejarWrapper);
+
+                    const tdAcao = document.createElement('td');
+                    const containerAcoes = document.createElement('div');
+                    containerAcoes.className = 'planejamento-acoes';
+                    const containerBotoes = document.createElement('div');
+                    containerBotoes.className = 'planejamento-acoes-botoes';
+
+                    const botaoFrequencia = document.createElement('button');
+                    botaoFrequencia.type = 'button';
+                    botaoFrequencia.className = 'btn btn-secondary';
+                    botaoFrequencia.dataset.planejamentoFrequenciaId = item.id;
+                    botaoFrequencia.innerHTML = '<i class="fas fa-user-check"></i> Frequência';
+                    botaoFrequencia.addEventListener('click', () => abrirPlanejamentoFrequencia(item.id));
+
+                    botaoAcao = document.createElement('button');
+                    botaoAcao.type = 'button';
+                    botaoAcao.className = 'btn btn-primary';
+                    botaoAcao.dataset.planejamentoId = item.id;
+                    botaoAcao.innerHTML = '<i class="fas fa-check"></i> Substituir';
+                    botaoAcao.addEventListener('click', () => aplicarPlanejamentoLinha(item.id));
+
+                    const botaoExcluir = document.createElement('button');
+                    botaoExcluir.type = 'button';
+                    botaoExcluir.className = 'btn btn-danger';
+                    botaoExcluir.dataset.planejamentoId = item.id;
+                    botaoExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+                    botaoExcluir.addEventListener('click', () => excluirPlanejamentoLinha(item.id));
+
+                    containerBotoes.appendChild(botaoFrequencia);
+                    containerBotoes.appendChild(botaoAcao);
+                    containerBotoes.appendChild(botaoExcluir);
+
+                    const frequenciaInfo = document.createElement('span');
+                    frequenciaInfo.className = 'planejamento-frequencia-info';
+                    atualizarInfoFrequenciaElemento(frequenciaInfo, item);
+
+                    containerAcoes.appendChild(containerBotoes);
+                    containerAcoes.appendChild(frequenciaInfo);
+                    tdAcao.appendChild(containerAcoes);
+
+                    tr.appendChild(tdCheck);
+                    tr.appendChild(tdProfissional);
+                    tr.appendChild(tdEspecialidade);
+                    tr.appendChild(tdTurno);
+                    tr.appendChild(tdSalaAtual);
+                    tr.appendChild(tdPlanejada);
+                    tr.appendChild(tdAcao);
+
+                    fragment.appendChild(tr);
+
+                    atualizarVisualPlanejamento(item, tr, statusSpan, botaoAcao);
+                });
+            });
+
+            tbody.appendChild(fragment);
+
             if (feedback) {
-                const divergentes = estado.planejamentoLinhas.filter(item => item.resultado === 'erro');
+                const divergentes = linhasFiltradas.filter(item => item.resultado === 'erro');
+                const pendentes = linhasFiltradas.filter(item => item.resultado === 'pendente');
+                const resumoBase = `${gruposOrdenados.length} especialidade${gruposOrdenados.length === 1 ? '' : 's'} em exibição • ${linhasFiltradas.length} ${linhasFiltradas.length === 1 ? 'profissional' : 'profissionais'}.`;
                 if (divergentes.length > 0) {
-                    feedback.textContent = `${divergentes.length} divergência${divergentes.length === 1 ? '' : 's'} pronta${divergentes.length === 1 ? '' : 's'} para substituição.`;
+                    feedback.textContent = `${resumoBase} ${divergentes.length} divergência${divergentes.length === 1 ? '' : 's'} pronta${divergentes.length === 1 ? '' : 's'} para substituição.`;
                     feedback.style.color = 'var(--danger)';
+                } else if (pendentes.length > 0) {
+                    feedback.textContent = `${resumoBase} ${pendentes.length} registro${pendentes.length === 1 ? '' : 's'} aguardando definição de sala.`;
+                    feedback.style.color = 'var(--warning)';
                 } else {
-                    const pendentes = estado.planejamentoLinhas.filter(item => item.resultado === 'pendente');
-                    if (pendentes.length > 0) {
-                        feedback.textContent = `${pendentes.length} registro${pendentes.length === 1 ? '' : 's'} aguardando definição de sala.`;
-                        feedback.style.color = 'var(--warning)';
-                    } else {
-                        feedback.textContent = 'Todas as salas planejadas conferem com o agendamento atual.';
-                        feedback.style.color = 'var(--success)';
-                    }
+                    feedback.textContent = `${resumoBase} Todas as salas planejadas conferem com o agendamento atual.`;
+                    feedback.style.color = 'var(--success)';
                 }
             }
         }
@@ -6934,9 +7359,21 @@
                     const statusAg = ag.statusNormalizado || normalizarStatus(ag.status);
                     const statusClasse = statusParaClasseVisual(statusAg);
                     const statusLabel = statusLabelMap[statusAg] || 'Ocupado';
+                    const chegadaReal = ag.horaChegadaReal || '--';
+                    const saidaReal = ag.horaSaidaReal || '--';
+                    const frequenciaRegistrada = Boolean(ag.horaChegadaReal || ag.horaSaidaReal);
+                    const frequenciaFaltou = valorFrequenciaEhFaltou(ag.horaChegadaReal)
+                        || valorFrequenciaEhFaltou(ag.horaSaidaReal)
+                        || normalizarTexto(ag.frequenciaStatus) === 'faltou';
+                    const frequenciaClasse = frequenciaFaltou ? 'faltou' : frequenciaRegistrada ? 'registrado' : 'pendente';
+                    const frequenciaTexto = frequenciaFaltou
+                        ? 'Frequência marcada como falta'
+                        : frequenciaRegistrada
+                            ? 'Frequência registrada'
+                            : 'Frequência pendente';
                     const agendamentoItem = document.createElement('div');
                     agendamentoItem.className = 'agendamento-item';
-                    agendamentoItem.setAttribute('data-agendamento-id', ag.id); // Novo: Adicionar ID do agendamento
+                    agendamentoItem.setAttribute('data-agendamento-id', ag.id);
                     agendamentoItem.innerHTML = `
                         <div class="agendamento-header">
                             <div class="agendamento-horario">${ag.horaInicio} - ${ag.horaFim}</div>
@@ -6944,21 +7381,27 @@
                         </div>
                         <div class="agendamento-details">
                             <div class="detail-item">
-                                <strong>Especialidade:</strong> 
+                                <strong>Especialidade:</strong>
                                 <span>${ag.especialidade}</span>
                             </div>
                             <div class="detail-item">
-                                <strong>Profissional:</strong> 
+                                <strong>Profissional:</strong>
                                 <span>${ag.profissional}</span>
                             </div>
                             <div class="detail-item">
-                                <strong>Categoria:</strong> 
+                                <strong>Categoria:</strong>
                                 <span>${ag.categoria}</span>
                             </div>
                             <div class="detail-item">
-                                <strong>Ilha:</strong> 
+                                <strong>Ilha:</strong>
                                 <span>${ag.ilha}</span>
                             </div>
+                        </div>
+                        <div class="agendamento-frequencia ${frequenciaClasse}">
+                            <span class="agendamento-frequencia-titulo"><i class="fas fa-user-check"></i> Frequência (Planejamento)</span>
+                            <span><i class="fas fa-info-circle"></i> ${frequenciaTexto}</span>
+                            <span><i class="fas fa-right-to-bracket"></i> Chegada: ${chegadaReal}</span>
+                            <span><i class="fas fa-right-from-bracket"></i> Saída: ${saidaReal}</span>
                         </div>
                         <div class="agendamento-actions admin-only">
                             <button class="btn-editar" data-agendamento-id="${ag.id}">
@@ -7850,6 +8293,63 @@
             atualizarVisibilidade();
         }
 
+        function prepararStatusDistribuicao(dadosStatus, ocupacaoGeral) {
+            const resultado = {};
+            if (dadosStatus && typeof dadosStatus === 'object') {
+                Object.entries(dadosStatus).forEach(([chave, valor]) => {
+                    const numero = Number(valor);
+                    if (!Number.isNaN(numero)) {
+                        resultado[chave] = numero;
+                    }
+                });
+            }
+
+            const uso = Number(ocupacaoGeral && (ocupacaoGeral.ocupadas ?? ocupacaoGeral.uso));
+            const livres = Number(ocupacaoGeral && ocupacaoGeral.livres);
+            const indisponiveis = Number(ocupacaoGeral && ocupacaoGeral.indisponiveis);
+            if (uso > 0) {
+                resultado.ocupado = Math.max(resultado.ocupado || 0, uso);
+            }
+            if (livres > 0) {
+                resultado.livre = Math.max(resultado.livre || 0, livres);
+            }
+            if (indisponiveis > 0) {
+                const manutencaoAtual = Number(resultado.manutencao || 0);
+                const bloqueadoAtual = Number(resultado.bloqueado || 0);
+                const restante = Math.max(indisponiveis - manutencaoAtual, 0);
+                if (restante > bloqueadoAtual) {
+                    resultado.bloqueado = restante;
+                } else if (!resultado.bloqueado && restante > 0) {
+                    resultado.bloqueado = restante;
+                }
+            }
+
+            const statusConhecidos = ['ocupado', 'livre', 'bloqueado', 'reservado', 'manutencao'];
+            if (Array.isArray(estado.salas) && estado.salas.length) {
+                statusConhecidos.forEach(statusChave => {
+                    const totalEstado = estado.salas.filter(sala => {
+                        const statusSala = normalizarStatus(sala.statusNormalizado || sala.statusGeral || sala.status);
+                        return statusSala === statusChave;
+                    }).length;
+                    if (totalEstado > 0) {
+                        const atual = Number(resultado[statusChave] || 0);
+                        resultado[statusChave] = Math.max(atual, totalEstado);
+                    } else if (!(statusChave in resultado)) {
+                        resultado[statusChave] = 0;
+                    }
+                });
+            }
+
+            if (Object.keys(resultado).length === 0) {
+                return {
+                    ocupado: uso || 0,
+                    livre: livres || 0,
+                    bloqueado: indisponiveis || 0
+                };
+            }
+            return resultado;
+        }
+
         function carregarDashboard() {
             const periodoSelect = document.getElementById('dashboard-periodo');
             const periodo = periodoSelect ? periodoSelect.value : 'dia';
@@ -7921,7 +8421,7 @@
             const evolucao = informacoes.evolucao || {};
             const especialidades = informacoes.especialidades || {};
             const ocupacaoGeral = informacoes.ocupacaoGeral || {};
-            const statusDistribuicao = informacoes.statusDistribuicao || {};
+            const statusDistribuicao = prepararStatusDistribuicao(informacoes.statusDistribuicao, ocupacaoGeral);
 
             const legendColor = '#dbe8ff';
             const gridColor = 'rgba(255, 255, 255, 0.08)';
@@ -8332,6 +8832,43 @@
             document.getElementById('sala-mes-periodo').value = mesAtual;
             preencherSalaMesFiltros();
             registrarEventosFiltrosEspecificos();
+            mostrarSalaMesStatus('', 'info');
+        }
+
+        function setSalaMesLoading(ativo) {
+            const botao = document.getElementById('btn-atualizar-sala-mes');
+            if (!botao) return;
+            if (ativo) {
+                if (!botao.dataset.originalText) {
+                    botao.dataset.originalText = botao.innerHTML;
+                }
+                botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+                botao.disabled = true;
+                botao.classList.add('is-processing');
+                botao.setAttribute('aria-busy', 'true');
+            } else {
+                if (botao.dataset.originalText) {
+                    botao.innerHTML = botao.dataset.originalText;
+                    delete botao.dataset.originalText;
+                }
+                botao.disabled = false;
+                botao.classList.remove('is-processing');
+                botao.removeAttribute('aria-busy');
+            }
+        }
+
+        function mostrarSalaMesStatus(mensagem, tipo = 'info') {
+            const feedback = document.getElementById('sala-mes-feedback');
+            if (!feedback) return;
+            if (!mensagem) {
+                feedback.textContent = '';
+                feedback.style.display = 'none';
+                feedback.removeAttribute('data-status');
+                return;
+            }
+            feedback.textContent = mensagem;
+            feedback.dataset.status = tipo;
+            feedback.style.display = 'block';
         }
 
         function atualizarSalaMes() {
@@ -8350,20 +8887,60 @@
                 profissionais: limparLista(obterValoresMultiplo('sala-mes-filtro-profissional'))
             };
             estado.filtrosSalaMes = { ...filtros };
+            mostrarSalaMesStatus('Carregando agendamentos da sala...', 'info');
+            setSalaMesLoading(true);
             google.script.run
                 .withSuccessHandler(renderMonthlyTable)
-                .withFailureHandler(error => console.error('Erro no sala-mes:', error))
+                .withFailureHandler(error => {
+                    console.error('Erro no sala-mes:', error);
+                    setSalaMesLoading(false);
+                    mostrarSalaMesStatus('Erro ao carregar os agendamentos da sala. Tente novamente.', 'erro');
+                    const tbody = document.querySelector('#monthly-schedule tbody');
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="2">Não foi possível carregar os agendamentos.</td></tr>';
+                    }
+                })
                 .getAgendamentosSalaMes(sala, mes, JSON.stringify(filtros));
         }
 
         function renderMonthlyTable(dados) {
             const tbody = document.querySelector('#monthly-schedule tbody');
-            tbody.innerHTML = '';
-            if (!Array.isArray(dados) || dados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="2">Nenhum agendamento neste mês</td></tr>';
+            if (!tbody) {
+                setSalaMesLoading(false);
                 return;
             }
-            dados.forEach(item => {
+            tbody.innerHTML = '';
+            setSalaMesLoading(false);
+            let dadosNormalizados = dados;
+            if (typeof dados === 'string') {
+                try {
+                    dadosNormalizados = JSON.parse(dados);
+                } catch (error) {
+                    console.error('Erro ao interpretar resposta do sala/mês:', error, dados);
+                    mostrarSalaMesStatus('Não foi possível interpretar a resposta recebida.', 'erro');
+                    tbody.innerHTML = '<tr><td colspan="2">Erro ao ler dados retornados.</td></tr>';
+                    return;
+                }
+            }
+            if (dadosNormalizados && typeof dadosNormalizados === 'object' && !Array.isArray(dadosNormalizados) && Array.isArray(dadosNormalizados.dados)) {
+                dadosNormalizados = dadosNormalizados.dados;
+            }
+            if (!Array.isArray(dadosNormalizados)) {
+                tbody.innerHTML = '<tr><td colspan="2">Erro ao carregar agendamentos.</td></tr>';
+                mostrarSalaMesStatus('Não foi possível carregar os agendamentos da sala.', 'erro');
+                return;
+            }
+            if (dadosNormalizados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2">Nenhum agendamento neste mês</td></tr>';
+                mostrarSalaMesStatus('Nenhum agendamento encontrado no período selecionado.', 'info');
+                return;
+            }
+            const diasComEventos = dadosNormalizados.filter(item => Array.isArray(item.eventos) && item.eventos.length > 0).length;
+            const mensagemResumo = diasComEventos > 0
+                ? `${diasComEventos} dia${diasComEventos === 1 ? '' : 's'} com agendamentos encontrados.`
+                : 'Nenhum dia possui agendamentos registrados neste mês.';
+            mostrarSalaMesStatus(mensagemResumo, diasComEventos > 0 ? 'sucesso' : 'info');
+            dadosNormalizados.forEach(item => {
                 const tr = document.createElement('tr');
                 const tdData = document.createElement('td');
                 tdData.textContent = item.data || '-';
