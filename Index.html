@@ -2174,102 +2174,57 @@
           }
       }
 
-      .monthly-table,
-      .table-card {
-          background: var(--surface-elevated);
-          border-radius: var(--radius-md);
-          border: 1px solid var(--border-soft);
-          padding: 18px;
-          box-shadow: var(--shadow-soft);
-          margin-bottom: 18px;
-      }
-
-      #sala-mes-feedback {
-          margin-top: 12px;
-          font-weight: 600;
-          color: var(--text-muted);
-          display: none;
-      }
-
-      #sala-mes-feedback[data-status="erro"] {
-          color: var(--danger);
-      }
-
-      #sala-mes-feedback[data-status="sucesso"] {
-          color: var(--success);
-      }
-
-      .sala-mes-eventos {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: grid;
-          gap: 10px;
-      }
-
-      .sala-mes-eventos li {
-          border-radius: var(--radius-sm);
-          border: 1px solid rgba(148, 163, 184, 0.18);
-          background: rgba(79, 70, 229, 0.08);
-          padding: 10px 14px;
-          display: grid;
-          gap: 6px;
-      }
-
-      .sala-mes-evento-horario {
-          font-weight: 600;
-          color: #c7d2fe;
-          letter-spacing: 0.02em;
-      }
-
-      .sala-mes-evento-detalhes {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px 12px;
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-      }
-
-      .sala-mes-evento-detalhes strong {
-          color: var(--text-primary);
-      }
-
-      .sala-mes-evento-status {
-          background: rgba(79, 70, 229, 0.22);
-          color: #e0e7ff;
-          padding: 2px 10px;
-          border-radius: 999px;
-          font-weight: 600;
-          letter-spacing: 0.01em;
-      }
-
-      .sala-mes-evento-vazio {
-          display: inline-block;
-          padding: 6px 12px;
-          border-radius: var(--radius-sm);
-          background: rgba(148, 163, 184, 0.12);
-          color: var(--text-muted);
-          font-size: 0.9rem;
-      }
-
       .status-map-card {
           background: var(--surface-elevated);
-          border-radius: var(--radius-md);
+          border-radius: var(--radius-lg);
           border: 1px solid var(--border-soft);
-          padding: 18px;
+          padding: 22px;
           box-shadow: var(--shadow-soft);
           margin-bottom: 18px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 18px;
+          position: relative;
+      }
+
+      .status-map-card.is-loading::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: rgba(15, 23, 42, 0.55);
+          backdrop-filter: blur(2px);
+          z-index: 1;
+      }
+
+      .status-map-card.is-loading::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          border: 3px solid rgba(148, 163, 184, 0.25);
+          border-top-color: var(--primary);
+          animation: spin 0.8s linear infinite;
+          transform: translate(-50%, -50%);
+          z-index: 2;
       }
 
       .status-map-header {
           display: flex;
           flex-wrap: wrap;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
-          gap: 12px;
+          gap: 16px;
+      }
+
+      .status-map-title {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          max-width: min(420px, 100%);
       }
 
       .status-map-header h3 {
@@ -2278,152 +2233,318 @@
       }
 
       .status-map-description {
-          margin: 4px 0 0;
+          margin: 0;
           color: var(--text-muted);
           font-size: 0.85rem;
+          line-height: 1.4;
       }
 
       .status-map-controls {
           display: flex;
-          align-items: center;
-          gap: 12px;
+          flex-wrap: wrap;
+          align-items: flex-end;
+          gap: 16px;
       }
 
-      .status-map-controls label {
-          font-size: 0.85rem;
+      .status-map-control {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          min-width: 160px;
+      }
+
+      .status-map-control label {
+          font-size: 0.8rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
           color: var(--text-muted);
       }
 
-      .status-map-select {
-          min-width: 160px;
-          padding: 8px 12px;
+      .status-map-select,
+      .status-map-input {
+          padding: 10px 14px;
           border-radius: var(--radius-sm);
           border: 1px solid var(--border-soft);
           background: var(--surface-base);
           color: var(--text-primary);
-          font-weight: 500;
+          font-weight: 600;
+          font-size: 0.9rem;
+          min-height: 44px;
+          transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      }
+
+      .status-map-select:focus,
+      .status-map-input:focus {
+          outline: none;
+          border-color: var(--primary);
+          box-shadow: 0 0 0 3px var(--primary-soft);
       }
 
       .status-map-feedback {
+          display: none;
           font-weight: 600;
           font-size: 0.85rem;
-          display: none;
+          border-radius: var(--radius-sm);
+          padding: 12px 16px;
+          border-left: 4px solid var(--border-strong);
+          background: rgba(148, 163, 184, 0.12);
       }
 
       .status-map-feedback[data-status="info"] {
-          color: var(--text-muted);
           display: block;
+          color: var(--text-muted);
       }
 
       .status-map-feedback[data-status="sucesso"] {
-          color: var(--success);
           display: block;
+          color: var(--success);
+          background: rgba(74, 222, 128, 0.08);
+          border-left-color: rgba(74, 222, 128, 0.45);
       }
 
       .status-map-feedback[data-status="erro"] {
-          color: var(--danger);
           display: block;
+          color: var(--danger);
+          background: rgba(248, 113, 113, 0.08);
+          border-left-color: rgba(248, 113, 113, 0.45);
       }
 
       .status-tree {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+          display: grid;
+          gap: 18px;
       }
 
       .status-tree details {
-          border: 1px solid rgba(148, 163, 184, 0.25);
-          border-radius: var(--radius-sm);
-          background: rgba(148, 163, 184, 0.08);
-          padding: 8px 12px;
+          border-radius: var(--radius-lg);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          background: linear-gradient(135deg, rgba(79, 70, 229, 0.14), rgba(15, 23, 42, 0.18));
+          box-shadow: var(--shadow-soft);
+          overflow: hidden;
+          position: relative;
+      }
+
+      body.light-theme .status-tree details {
+          background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(226, 232, 240, 0.6));
       }
 
       .status-tree details.status-tree-day {
-          background: rgba(148, 163, 184, 0.12);
-          border-style: dashed;
+          border-radius: var(--radius-md);
+          border: 1px solid rgba(148, 163, 184, 0.18);
+          background: rgba(15, 23, 42, 0.18);
+          margin: 0 16px 16px;
+          box-shadow: none;
+      }
+
+      body.light-theme .status-tree details.status-tree-day {
+          background: rgba(148, 163, 184, 0.16);
       }
 
       .status-tree summary {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 12px;
+          gap: 16px;
+          padding: 18px 22px;
           cursor: pointer;
           font-weight: 600;
           color: var(--text-secondary);
+          list-style: none;
       }
 
       .status-tree summary::-webkit-details-marker {
           display: none;
       }
 
-      .status-tree-title {
+      .status-tree summary::after {
+          content: '\\f107';
+          font-family: 'Font Awesome 6 Free';
+          font-weight: 900;
+          font-size: 0.85rem;
+          color: var(--text-muted);
+          transition: transform var(--transition-fast);
+      }
+
+      .status-tree details.status-tree-day > summary {
+          padding: 16px 18px;
+          background: transparent;
+      }
+
+      .status-tree details[open] > summary {
+          border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+          transform: none;
+      }
+
+      .status-tree details[open] > summary::after {
+          transform: rotate(180deg);
+      }
+
+      .status-island-info {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+      }
+
+      .status-island-icon {
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          background: rgba(79, 70, 229, 0.24);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--primary);
+      }
+
+      body.light-theme .status-island-icon {
+          background: rgba(79, 70, 229, 0.12);
+      }
+
+      .status-island-text {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+      }
+
+      .status-island-name {
+          font-size: 1rem;
+          font-weight: 700;
+          color: var(--text-primary);
+      }
+
+      .status-island-meta {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+      }
+
+      .status-island-count {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 4px;
+      }
+
+      .status-island-count-number {
+          font-size: 1.6rem;
+          font-weight: 700;
+          color: var(--primary);
+      }
+
+      .status-island-count-label {
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--text-muted);
+      }
+
+      .status-tree-children {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 0 0 18px;
+      }
+
+      .status-day-content {
+          padding: 0 18px 18px;
+      }
+
+      .status-day-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+      }
+
+      .status-day-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: rgba(148, 163, 184, 0.22);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-secondary);
+      }
+
+      .status-day-label {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+      }
+
+      .status-day-title {
           font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--text-primary);
+      }
+
+      .status-day-meta {
+          font-size: 0.8rem;
+          color: var(--text-muted);
       }
 
       .status-tree-count {
           font-size: 0.8rem;
           color: var(--text-muted);
-          font-weight: 500;
-      }
-
-      .status-tree-children {
-          margin-top: 10px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
+          font-weight: 600;
       }
 
       .status-room-list {
           list-style: none;
           margin: 0;
           padding: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 14px;
       }
 
       .status-room-item {
-          border: 1px solid rgba(79, 70, 229, 0.2);
-          border-radius: var(--radius-sm);
-          background: rgba(79, 70, 229, 0.08);
-          padding: 10px 12px;
+          border-radius: var(--radius-md);
+          background: rgba(12, 20, 44, 0.65);
+          border: 1px solid rgba(79, 70, 229, 0.28);
+          padding: 16px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 12px;
+          position: relative;
+      }
+
+      body.light-theme .status-room-item {
+          background: rgba(226, 232, 240, 0.75);
       }
 
       .status-room-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
       }
 
-      .status-room-name {
+      .status-room-title {
+          display: flex;
+          align-items: center;
+          gap: 10px;
           font-weight: 700;
           color: var(--text-primary);
+      }
+
+      .status-room-title i {
+          color: var(--primary);
       }
 
       .status-room-badge {
           background: rgba(79, 70, 229, 0.22);
           color: #ede9fe;
-          padding: 2px 10px;
+          padding: 4px 12px;
           border-radius: 999px;
-          font-size: 0.75rem;
+          font-size: 0.72rem;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          font-weight: 600;
+          letter-spacing: 0.08em;
+          font-weight: 700;
       }
 
       body.light-theme .status-room-badge {
           background: rgba(79, 70, 229, 0.12);
-          color: var(--primary);
-      }
-
-      .status-room-empty {
-          font-size: 0.85rem;
-          color: var(--text-muted);
+          color: var(--primary-strong);
       }
 
       .status-room-eventos {
@@ -2432,59 +2553,69 @@
           padding: 0;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 12px;
       }
 
       .status-room-eventos li {
           display: flex;
-          flex-direction: column;
-          gap: 4px;
+          gap: 12px;
+          align-items: flex-start;
+          background: rgba(15, 23, 42, 0.35);
+          border-radius: var(--radius-sm);
+          padding: 10px 12px;
+          border: 1px solid rgba(148, 163, 184, 0.16);
+      }
+
+      body.light-theme .status-room-eventos li {
+          background: rgba(148, 163, 184, 0.18);
       }
 
       .status-room-time {
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: #c7d2fe;
-      }
-
-      body.light-theme .status-room-time {
+          font-weight: 700;
           color: var(--primary);
+          font-size: 0.85rem;
+          min-width: 90px;
       }
 
       .status-room-info {
           display: flex;
           flex-wrap: wrap;
-          gap: 6px 10px;
-          font-size: 0.8rem;
+          gap: 8px;
+          align-items: center;
+      }
+
+      .status-room-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px;
+          border-radius: 999px;
+          background: rgba(148, 163, 184, 0.16);
+          font-size: 0.75rem;
           color: var(--text-secondary);
+          font-weight: 500;
       }
 
-      .sala-mes-eventos-resumo li {
-          border-style: dashed;
-          background: rgba(148, 163, 184, 0.08);
+      body.light-theme .status-room-tag {
+          background: rgba(148, 163, 184, 0.22);
       }
 
-      body.light-theme .sala-mes-eventos li {
-          background: rgba(226, 232, 240, 0.65);
-          border-color: rgba(148, 163, 184, 0.38);
-      }
-
-      body.light-theme .sala-mes-evento-horario {
+      .status-room-tag i {
           color: var(--primary);
       }
 
-      body.light-theme .sala-mes-evento-status {
-          background: rgba(59, 130, 246, 0.16);
-          color: var(--primary);
-      }
-
-      body.light-theme .sala-mes-evento-vazio {
-          background: rgba(226, 232, 240, 0.7);
+      .status-room-empty {
+          background: rgba(15, 23, 42, 0.2);
+          border-radius: var(--radius-md);
+          padding: 16px;
           color: var(--text-muted);
+          font-size: 0.9rem;
+          text-align: center;
+          border: 1px dashed rgba(148, 163, 184, 0.3);
       }
 
-      body.light-theme .sala-mes-eventos-resumo li {
-          border-color: rgba(148, 163, 184, 0.45);
+      body.light-theme .status-room-empty {
+          background: rgba(148, 163, 184, 0.2);
       }
 
       .resumo-grid {
@@ -4751,16 +4882,6 @@
 
                 <div class="dashboard-section" id="sala-mes-section">
                     <h2>Acompanhamento Sala por Mês</h2>
-                    <div class="dashboard-controls">
-                        <select id="sala-mes-select">
-                            <!-- Preenchido dinamicamente -->
-                        </select>
-                        <input type="month" id="sala-mes-periodo">
-                        <button class="icon-button icon-only" id="btn-atualizar-sala-mes" type="button" aria-label="Atualizar acompanhamento mensal">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-
                     <div class="filter-toggle-bar">
                         <button type="button" class="filter-toggle-btn" data-filter-toggle="sala-mes-filtros" data-expanded-text="Ocultar filtros" data-collapsed-text="Mostrar filtros" aria-expanded="true" aria-controls="sala-mes-filtros">
                             <i class="fas fa-eye-slash" aria-hidden="true"></i>
@@ -4842,33 +4963,26 @@
 
                     <div class="status-map-card">
                         <div class="status-map-header">
-                            <div>
+                            <div class="status-map-title">
                                 <h3>Salas por status no período</h3>
-                                <p class="status-map-description">Explore a disponibilidade por ilha e por dia do mês selecionado.</p>
+                                <p class="status-map-description">Clique em uma ilha para visualizar os dias disponíveis e, em seguida, explore as salas em cada dia.</p>
                             </div>
                             <div class="status-map-controls">
-                                <label for="sala-mes-status-visualizacao">Status</label>
-                                <select id="sala-mes-status-visualizacao" class="status-map-select">
-                                    <option value="livre">Livre</option>
-                                </select>
+                                <div class="status-map-control">
+                                    <label for="sala-mes-periodo">Período</label>
+                                    <input type="month" id="sala-mes-periodo" class="status-map-input">
+                                </div>
+                                <div class="status-map-control">
+                                    <label for="sala-mes-status-visualizacao">Status</label>
+                                    <select id="sala-mes-status-visualizacao" class="status-map-select">
+                                        <option value="livre">Livre</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div id="sala-mes-status-feedback" class="status-map-feedback" aria-live="polite"></div>
                         <div id="sala-mes-status-lista" class="status-tree"></div>
                     </div>
-
-                    <div class="monthly-table">
-                        <table id="monthly-schedule">
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Horários</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                    <div id="sala-mes-feedback" aria-live="polite"></div>
                 </div>
 
             </div>
@@ -7209,13 +7323,9 @@
             if (salaMesFiltros && salaMesFiltros.dataset.listenersAttached !== 'true') {
                 salaMesFiltros.querySelectorAll('select').forEach(select => {
                     select.addEventListener('change', () => {
-                        const salaSelecionada = document.getElementById('sala-mes-select');
                         const periodoSelecionado = document.getElementById('sala-mes-periodo');
                         if (periodoSelecionado && periodoSelecionado.value) {
                             atualizarSalaMesStatus();
-                        }
-                        if (salaSelecionada && periodoSelecionado && salaSelecionada.value && periodoSelecionado.value) {
-                            atualizarSalaMes();
                         }
                     });
                 });
@@ -7732,18 +7842,13 @@
             }
 
             // Sala/Mês
-            document.getElementById('btn-atualizar-sala-mes').addEventListener('click', () => {
-                atualizarSalaMes();
-                atualizarSalaMesStatus();
-            });
-
             const salaMesPeriodo = document.getElementById('sala-mes-periodo');
             if (salaMesPeriodo) {
                 salaMesPeriodo.addEventListener('change', () => {
-                    atualizarSalaMesStatus();
-                    const salaSelecionada = document.getElementById('sala-mes-select');
-                    if (salaSelecionada && salaSelecionada.value) {
-                        atualizarSalaMes();
+                    if (salaMesPeriodo.value) {
+                        atualizarSalaMesStatus();
+                    } else {
+                        mostrarSalaMesStatusMapa('Selecione um mês para visualizar o status das salas.', 'info');
                     }
                 });
             }
@@ -12517,62 +12622,34 @@
         }
 
         function carregarSalaMesOptions() {
-            const select = document.getElementById('sala-mes-select');
-            select.innerHTML = '<option value="">Selecione uma sala</option>';
-            [...estado.salas].sort((a, b) => ordenarAlphaNumerico(a.numero, b.numero)).forEach(sala => {
-                const option = document.createElement('option');
-                option.value = sala.numero;
-                option.textContent = `Sala ${sala.numero}`;
-                select.appendChild(option);
-            });
-
-            const mesAtual = new Date().toISOString().slice(0, 7);
-            document.getElementById('sala-mes-periodo').value = mesAtual;
+            const mesInput = document.getElementById('sala-mes-periodo');
+            if (mesInput && !mesInput.value) {
+                mesInput.value = new Date().toISOString().slice(0, 7);
+            }
             registrarEventosFiltrosEspecificos();
-            mostrarSalaMesStatus('', 'info');
             mostrarSalaMesStatusMapa('', 'info');
+            atualizarSalaMesStatus();
         }
 
         let salaMesLoadingPendencias = 0;
 
         function setSalaMesLoading(ativo) {
-            const botao = document.getElementById('btn-atualizar-sala-mes');
-            if (!botao) return;
             if (ativo) {
                 salaMesLoadingPendencias++;
             } else if (salaMesLoadingPendencias > 0) {
                 salaMesLoadingPendencias--;
             }
 
-            if (salaMesLoadingPendencias > 0) {
-                if (!botao.dataset.originalContent) {
-                    botao.dataset.originalContent = botao.innerHTML;
-                }
-                botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                botao.disabled = true;
-                botao.setAttribute('aria-busy', 'true');
-            } else {
-                if (botao.dataset.originalContent) {
-                    botao.innerHTML = botao.dataset.originalContent;
-                    delete botao.dataset.originalContent;
-                }
-                botao.disabled = false;
-                botao.removeAttribute('aria-busy');
-            }
-        }
+            const card = document.querySelector('.status-map-card');
+            if (!card) return;
 
-        function mostrarSalaMesStatus(mensagem, tipo = 'info') {
-            const feedback = document.getElementById('sala-mes-feedback');
-            if (!feedback) return;
-            if (!mensagem) {
-                feedback.textContent = '';
-                feedback.style.display = 'none';
-                feedback.removeAttribute('data-status');
-                return;
+            if (salaMesLoadingPendencias > 0) {
+                card.classList.add('is-loading');
+                card.setAttribute('aria-busy', 'true');
+            } else {
+                card.classList.remove('is-loading');
+                card.removeAttribute('aria-busy');
             }
-            feedback.textContent = mensagem;
-            feedback.dataset.status = tipo;
-            feedback.style.display = 'block';
         }
 
         function mostrarSalaMesStatusMapa(mensagem, tipo = 'info') {
@@ -12632,122 +12709,213 @@
                 return;
             }
 
+            const statusTitulo = dados.statusLabel || formatarStatusLabel(dados.status || 'livre');
+            const statusResumo = statusTitulo ? statusTitulo.toLowerCase() : 'com status selecionado';
+            const labelResumo = statusResumo.includes('sala') ? statusResumo : `salas ${statusResumo}`;
+            const contarTexto = quantidade => {
+                if (statusResumo.includes('sala')) {
+                    return `${quantidade} ${statusResumo}`;
+                }
+                return `${quantidade} sala${quantidade === 1 ? '' : 's'} ${statusResumo}`;
+            };
+
             const fragment = document.createDocumentFragment();
             ilhas.forEach(ilha => {
                 const detailsIlha = document.createElement('details');
                 detailsIlha.className = 'status-tree-node';
-                detailsIlha.open = true;
+                detailsIlha.open = false;
 
                 const summaryIlha = document.createElement('summary');
-                const tituloIlha = document.createElement('span');
-                tituloIlha.className = 'status-tree-title';
-                tituloIlha.textContent = ilha.label || 'Sem ilha definida';
+                summaryIlha.className = 'status-island-summary';
+
+                const infoIlha = document.createElement('div');
+                infoIlha.className = 'status-island-info';
+
+                const iconIlha = document.createElement('span');
+                iconIlha.className = 'status-island-icon';
+                const iconIlhaInner = document.createElement('i');
+                iconIlhaInner.className = 'fas fa-umbrella-beach';
+                iconIlha.appendChild(iconIlhaInner);
+
+                const textoIlha = document.createElement('div');
+                textoIlha.className = 'status-island-text';
+
+                const nomeIlha = document.createElement('span');
+                nomeIlha.className = 'status-island-name';
+                nomeIlha.textContent = ilha.label || 'Sem ilha definida';
+
+                const dias = Array.isArray(ilha.dias) ? ilha.dias : [];
+                const diasComSalas = dias.filter(dia => Number(dia.total) > 0).length;
+                const metaIlha = document.createElement('span');
+                metaIlha.className = 'status-island-meta';
+                metaIlha.textContent = diasComSalas > 0
+                    ? `${diasComSalas} dia${diasComSalas === 1 ? '' : 's'} com ${statusResumo.includes('sala') ? statusResumo : 'salas neste status'}`
+                    : 'Nenhum dia com salas neste status.';
+
+                textoIlha.append(nomeIlha, metaIlha);
+                infoIlha.append(iconIlha, textoIlha);
+
                 const totalSalas = Number(ilha.totalSalas) || 0;
-                const countIlha = document.createElement('span');
-                countIlha.className = 'status-tree-count';
-                countIlha.textContent = `${totalSalas} sala${totalSalas === 1 ? '' : 's'}`;
-                summaryIlha.append(tituloIlha, countIlha);
+                const countIlha = document.createElement('div');
+                countIlha.className = 'status-island-count';
+                const countNumero = document.createElement('span');
+                countNumero.className = 'status-island-count-number';
+                countNumero.textContent = totalSalas.toLocaleString('pt-BR');
+                const countLabel = document.createElement('span');
+                countLabel.className = 'status-island-count-label';
+                countLabel.textContent = labelResumo;
+                countIlha.append(countNumero, countLabel);
+
+                summaryIlha.append(infoIlha, countIlha);
                 detailsIlha.appendChild(summaryIlha);
 
                 const diasWrapper = document.createElement('div');
                 diasWrapper.className = 'status-tree-children';
 
-                const dias = Array.isArray(ilha.dias) ? ilha.dias : [];
-                dias.forEach(dia => {
-                    const detalheDia = document.createElement('details');
-                    detalheDia.className = 'status-tree-day';
-                    if (dia.total && dia.total <= 2) {
-                        detalheDia.open = true;
-                    }
+                if (!dias.length) {
+                    const vazioIlha = document.createElement('div');
+                    vazioIlha.className = 'status-room-empty';
+                    vazioIlha.textContent = 'Nenhum dia disponível neste status.';
+                    diasWrapper.appendChild(vazioIlha);
+                } else {
+                    dias.forEach(dia => {
+                        const detalheDia = document.createElement('details');
+                        detalheDia.className = 'status-tree-day';
+                        detalheDia.open = false;
 
-                    const resumoDia = document.createElement('summary');
-                    const tituloDia = document.createElement('span');
-                    tituloDia.className = 'status-tree-title';
-                    tituloDia.textContent = dia.label || dia.data || 'Dia';
-                    const countDia = document.createElement('span');
-                    countDia.className = 'status-tree-count';
-                    const totalDia = Number(dia.total) || 0;
-                    countDia.textContent = `${totalDia} sala${totalDia === 1 ? '' : 's'}`;
-                    resumoDia.append(tituloDia, countDia);
-                    detalheDia.appendChild(resumoDia);
+                        const resumoDia = document.createElement('summary');
+                        resumoDia.className = 'status-day-summary';
 
-                    if (totalDia > 0) {
-                        const listaSalas = document.createElement('ul');
-                        listaSalas.className = 'status-room-list';
+                        const infoDia = document.createElement('div');
+                        infoDia.className = 'status-day-info';
+                        const iconDia = document.createElement('span');
+                        iconDia.className = 'status-day-icon';
+                        const iconDiaInner = document.createElement('i');
+                        iconDiaInner.className = 'fas fa-calendar-day';
+                        iconDia.appendChild(iconDiaInner);
 
-                        const salasOrdenadas = Array.isArray(dia.salas)
-                            ? [...dia.salas].sort((a, b) => String(a.sala || '').localeCompare(String(b.sala || ''), undefined, { numeric: true }))
-                            : [];
+                        const labelDia = document.createElement('div');
+                        labelDia.className = 'status-day-label';
+                        const tituloDia = document.createElement('span');
+                        tituloDia.className = 'status-day-title';
+                        tituloDia.textContent = dia.label || dia.data || 'Dia';
+                        const totalDia = Number(dia.total) || 0;
+                        const metaDia = document.createElement('span');
+                        metaDia.className = 'status-day-meta';
+                        metaDia.textContent = totalDia > 0
+                            ? contarTexto(totalDia)
+                            : 'Nenhuma sala neste status.';
+                        labelDia.append(tituloDia, metaDia);
+                        infoDia.append(iconDia, labelDia);
 
-                        salasOrdenadas.forEach(item => {
-                            const liSala = document.createElement('li');
-                            liSala.className = 'status-room-item';
+                        const countDia = document.createElement('span');
+                        countDia.className = 'status-tree-count';
+                        countDia.textContent = totalDia.toLocaleString('pt-BR');
 
-                            const cabecalho = document.createElement('div');
-                            cabecalho.className = 'status-room-header';
-                            const nomeSala = document.createElement('span');
-                            nomeSala.className = 'status-room-name';
-                            nomeSala.textContent = `Sala ${item.sala || '-'}`;
-                            const badgeSala = document.createElement('span');
-                            badgeSala.className = 'status-room-badge';
-                            badgeSala.textContent = formatarStatusLabel(item.statusBase || dados.status || 'livre');
-                            cabecalho.append(nomeSala, badgeSala);
-                            liSala.appendChild(cabecalho);
+                        resumoDia.append(infoDia, countDia);
+                        detalheDia.appendChild(resumoDia);
 
-                            const eventos = Array.isArray(item.eventos) ? item.eventos : [];
-                            if (eventos.length) {
-                                const listaEventos = document.createElement('ul');
-                                listaEventos.className = 'status-room-eventos';
-                                eventos.forEach(evento => {
-                                    const liEvento = document.createElement('li');
-                                    const horario = document.createElement('span');
-                                    horario.className = 'status-room-time';
-                                    const horaInicio = evento.horaInicio || '';
-                                    const horaFim = evento.horaFim || '';
-                                    let horarioTexto = 'Horário não informado';
-                                    if (horaInicio && horaFim) {
-                                        horarioTexto = `${horaInicio} - ${horaFim}`;
-                                    } else if (horaInicio || horaFim) {
-                                        horarioTexto = horaInicio || horaFim;
-                                    }
-                                    horario.textContent = horarioTexto;
+                        const conteudoDia = document.createElement('div');
+                        conteudoDia.className = 'status-day-content';
 
-                                    const info = document.createElement('div');
-                                    info.className = 'status-room-info';
-                                    const profissional = document.createElement('span');
-                                    profissional.textContent = evento.profissional || 'Profissional não informado';
-                                    const especialidade = document.createElement('span');
-                                    especialidade.textContent = evento.especialidade || 'Especialidade não informada';
-                                    const categoria = document.createElement('span');
-                                    categoria.textContent = evento.categoria || 'Categoria não informada';
-                                    const badgeEvento = document.createElement('span');
-                                    badgeEvento.className = 'status-room-badge';
-                                    badgeEvento.textContent = formatarStatusLabel(evento.status || item.statusBase || dados.status || 'ocupado');
-                                    info.append(profissional, especialidade, categoria, badgeEvento);
+                        if (totalDia > 0) {
+                            const listaSalas = document.createElement('ul');
+                            listaSalas.className = 'status-room-list';
 
-                                    liEvento.append(horario, info);
-                                    listaEventos.appendChild(liEvento);
-                                });
-                                liSala.appendChild(listaEventos);
-                            } else {
-                                const vazio = document.createElement('div');
-                                vazio.className = 'status-room-empty';
-                                vazio.textContent = 'Sem agendamentos no filtro aplicado.';
-                                liSala.appendChild(vazio);
-                            }
+                            const salasOrdenadas = Array.isArray(dia.salas)
+                                ? [...dia.salas].sort((a, b) => String(a.sala || '').localeCompare(String(b.sala || ''), undefined, { numeric: true }))
+                                : [];
 
-                            listaSalas.appendChild(liSala);
-                        });
-                        detalheDia.appendChild(listaSalas);
-                    } else {
-                        const vazioDia = document.createElement('div');
-                        vazioDia.className = 'status-room-empty';
-                        vazioDia.textContent = 'Nenhuma sala com este status neste dia.';
-                        detalheDia.appendChild(vazioDia);
-                    }
+                            salasOrdenadas.forEach(item => {
+                                const liSala = document.createElement('li');
+                                liSala.className = 'status-room-item';
 
-                    diasWrapper.appendChild(detalheDia);
-                });
+                                const cabecalho = document.createElement('div');
+                                cabecalho.className = 'status-room-header';
+                                const tituloSala = document.createElement('div');
+                                tituloSala.className = 'status-room-title';
+                                const iconSala = document.createElement('i');
+                                iconSala.className = 'fas fa-door-open';
+                                const nomeSala = document.createElement('span');
+                                nomeSala.textContent = `Sala ${item.sala || '-'}`;
+                                tituloSala.append(iconSala, nomeSala);
+
+                                const badgeSala = document.createElement('span');
+                                badgeSala.className = 'status-room-badge';
+                                badgeSala.textContent = formatarStatusLabel(item.statusBase || dados.status || 'livre');
+                                cabecalho.append(tituloSala, badgeSala);
+                                liSala.appendChild(cabecalho);
+
+                                const eventos = Array.isArray(item.eventos) ? item.eventos : [];
+                                if (eventos.length) {
+                                    const listaEventos = document.createElement('ul');
+                                    listaEventos.className = 'status-room-eventos';
+                                    eventos.forEach(evento => {
+                                        const liEvento = document.createElement('li');
+                                        const horario = document.createElement('span');
+                                        horario.className = 'status-room-time';
+                                        const horaInicio = evento.horaInicio || '';
+                                        const horaFim = evento.horaFim || '';
+                                        let horarioTexto = 'Horário não informado';
+                                        if (horaInicio && horaFim) {
+                                            horarioTexto = `${horaInicio} - ${horaFim}`;
+                                        } else if (horaInicio || horaFim) {
+                                            horarioTexto = horaInicio || horaFim;
+                                        }
+                                        horario.textContent = horarioTexto;
+
+                                        const infoEvento = document.createElement('div');
+                                        infoEvento.className = 'status-room-info';
+
+                                        const profissional = document.createElement('span');
+                                        profissional.className = 'status-room-tag';
+                                        const profissionalIcon = document.createElement('i');
+                                        profissionalIcon.className = 'fas fa-user-md';
+                                        profissional.append(profissionalIcon, document.createTextNode(evento.profissional || 'Profissional não informado'));
+
+                                        const especialidade = document.createElement('span');
+                                        especialidade.className = 'status-room-tag';
+                                        const especialidadeIcon = document.createElement('i');
+                                        especialidadeIcon.className = 'fas fa-stethoscope';
+                                        especialidade.append(especialidadeIcon, document.createTextNode(evento.especialidade || 'Especialidade não informada'));
+
+                                        const categoria = document.createElement('span');
+                                        categoria.className = 'status-room-tag';
+                                        const categoriaIcon = document.createElement('i');
+                                        categoriaIcon.className = 'fas fa-layer-group';
+                                        categoria.append(categoriaIcon, document.createTextNode(evento.categoria || 'Categoria não informada'));
+
+                                        const badgeEvento = document.createElement('span');
+                                        badgeEvento.className = 'status-room-badge';
+                                        badgeEvento.textContent = formatarStatusLabel(evento.status || item.statusBase || dados.status || 'ocupado');
+
+                                        infoEvento.append(profissional, especialidade, categoria, badgeEvento);
+                                        liEvento.append(horario, infoEvento);
+                                        listaEventos.appendChild(liEvento);
+                                    });
+                                    liSala.appendChild(listaEventos);
+                                } else {
+                                    const vazio = document.createElement('div');
+                                    vazio.className = 'status-room-empty';
+                                    vazio.textContent = 'Sem agendamentos no filtro aplicado.';
+                                    liSala.appendChild(vazio);
+                                }
+
+                                listaSalas.appendChild(liSala);
+                            });
+
+                            conteudoDia.appendChild(listaSalas);
+                        } else {
+                            const vazioDia = document.createElement('div');
+                            vazioDia.className = 'status-room-empty';
+                            vazioDia.textContent = 'Nenhuma sala com este status neste dia.';
+                            conteudoDia.appendChild(vazioDia);
+                        }
+
+                        detalheDia.appendChild(conteudoDia);
+                        diasWrapper.appendChild(detalheDia);
+                    });
+                }
 
                 detailsIlha.appendChild(diasWrapper);
                 fragment.appendChild(detailsIlha);
@@ -12757,9 +12925,8 @@
 
             const totalIlhas = Number(dados.totalIlhas) || ilhas.length;
             const totalSalas = Number(dados.totalSalas) || 0;
-            const statusLabel = dados.statusLabel || 'status selecionado';
-            const resumo = `${totalIlhas} ilha${totalIlhas === 1 ? '' : 's'} com ${totalSalas} sala${totalSalas === 1 ? '' : 's'} ${statusLabel.toLowerCase()} no período.`;
-            mostrarSalaMesStatusMapa(resumo, 'sucesso');
+            const resumo = `${totalIlhas} ilha${totalIlhas === 1 ? '' : 's'} com ${contarTexto(totalSalas)} no período.`;
+            mostrarSalaMesStatusMapa(resumo, totalSalas > 0 ? 'sucesso' : 'info');
             setSalaMesLoading(false);
         }
 
@@ -12822,186 +12989,6 @@
             };
         }
 
-        function atualizarSalaMes() {
-            const sala = document.getElementById('sala-mes-select').value;
-            const mes = document.getElementById('sala-mes-periodo').value;
-            if (!sala || !mes) {
-                alert('Selecione sala e mês');
-                return;
-            }
-            const filtros = coletarFiltrosSalaMes({ incluirStatus: true });
-
-            const chaveCache = JSON.stringify({ sala, mes, filtros });
-            const dadosCache = obterCacheSalaMes(chaveCache);
-            if (dadosCache) {
-                mostrarSalaMesStatus('Exibindo dados recentes armazenados.', 'info');
-                renderMonthlyTable(dadosCache);
-                return;
-            }
-
-            mostrarSalaMesStatus('Carregando agendamentos da sala...', 'info');
-            setSalaMesLoading(true);
-            try {
-                const runner = typeof google !== 'undefined' && google.script ? google.script.run : null;
-                if (!runner) {
-                    throw new Error('Serviço de scripts indisponível');
-                }
-                runner
-                    .withSuccessHandler(dados => {
-                        salvarCacheSalaMes(chaveCache, dados);
-                        renderMonthlyTable(dados);
-                    })
-                    .withFailureHandler(error => {
-                        console.error('Erro no sala-mes:', error);
-                        setSalaMesLoading(false);
-                        mostrarSalaMesStatus('Erro ao carregar os agendamentos da sala. Tente novamente.', 'erro');
-                        const tbody = document.querySelector('#monthly-schedule tbody');
-                        if (tbody) {
-                            tbody.innerHTML = '<tr><td colspan="2">Não foi possível carregar os agendamentos.</td></tr>';
-                        }
-                    })
-                    .getAgendamentosSalaMes(sala, mes, JSON.stringify(filtros));
-            } catch (error) {
-                console.error('Erro ao iniciar atualização de sala/mês:', error);
-                setSalaMesLoading(false);
-                mostrarSalaMesStatus('Não foi possível iniciar a atualização. Verifique sua conexão e tente novamente.', 'erro');
-            }
-        }
-
-        function renderMonthlyTable(dados) {
-            const tbody = document.querySelector('#monthly-schedule tbody');
-            if (!tbody) {
-                setSalaMesLoading(false);
-                return;
-            }
-            tbody.innerHTML = '';
-            let dadosNormalizados = dados;
-            if (typeof dados === 'string') {
-                try {
-                    dadosNormalizados = JSON.parse(dados);
-                } catch (error) {
-                    console.error('Erro ao interpretar resposta do sala/mês:', error, dados);
-                    mostrarSalaMesStatus('Não foi possível interpretar a resposta recebida.', 'erro');
-                    tbody.innerHTML = '<tr><td colspan="2">Erro ao ler dados retornados.</td></tr>';
-                    setSalaMesLoading(false);
-                    return;
-                }
-            }
-            if (dadosNormalizados && typeof dadosNormalizados === 'object' && !Array.isArray(dadosNormalizados) && Array.isArray(dadosNormalizados.dados)) {
-                dadosNormalizados = dadosNormalizados.dados;
-            }
-            if (!Array.isArray(dadosNormalizados)) {
-                tbody.innerHTML = '<tr><td colspan="2">Erro ao carregar agendamentos.</td></tr>';
-                mostrarSalaMesStatus('Não foi possível carregar os agendamentos da sala.', 'erro');
-                setSalaMesLoading(false);
-                return;
-            }
-            if (dadosNormalizados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="2">Nenhum agendamento neste mês</td></tr>';
-                mostrarSalaMesStatus('Nenhum agendamento encontrado no período selecionado.', 'info');
-                setSalaMesLoading(false);
-                return;
-            }
-            const diasComEventos = dadosNormalizados.filter(item => Array.isArray(item.eventos) && item.eventos.length > 0).length;
-            const mensagemResumo = diasComEventos > 0
-                ? `${diasComEventos} dia${diasComEventos === 1 ? '' : 's'} com agendamentos encontrados.`
-                : 'Nenhum dia possui agendamentos registrados neste mês.';
-            mostrarSalaMesStatus(mensagemResumo, diasComEventos > 0 ? 'sucesso' : 'info');
-            const total = dadosNormalizados.length;
-
-            const criarLinha = item => {
-                const tr = document.createElement('tr');
-                const tdData = document.createElement('td');
-                tdData.textContent = item.data || '-';
-
-                const tdEventos = document.createElement('td');
-                const eventos = Array.isArray(item.eventos) ? item.eventos : [];
-                if (!eventos.length) {
-                    const horarios = Array.isArray(item.horarios) ? item.horarios.filter(Boolean) : [];
-                    if (horarios.length) {
-                        const listaResumo = document.createElement('ul');
-                        listaResumo.className = 'sala-mes-eventos sala-mes-eventos-resumo';
-                        horarios.forEach(texto => {
-                            const li = document.createElement('li');
-                            li.innerHTML = `<div class="sala-mes-evento-horario">${texto}</div>`;
-                            listaResumo.appendChild(li);
-                        });
-                        tdEventos.appendChild(listaResumo);
-                    } else {
-                        const vazio = document.createElement('span');
-                        vazio.className = 'sala-mes-evento-vazio';
-                        vazio.textContent = 'Sem agendamentos';
-                        tdEventos.appendChild(vazio);
-                    }
-                } else {
-                    const lista = document.createElement('ul');
-                    lista.className = 'sala-mes-eventos';
-                    eventos.forEach(evento => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `
-                            <div class="sala-mes-evento-horario">${(evento.horaInicio || '--')} - ${(evento.horaFim || '--')}</div>
-                            <div class="sala-mes-evento-detalhes">
-                                <strong>${evento.profissional || 'Profissional não informado'}</strong>
-                                <span>${evento.especialidade || 'Especialidade não informada'}</span>
-                                <span>${evento.categoria || 'Categoria não informada'}</span>
-                                <span class="sala-mes-evento-status">${formatarStatusLabel(evento.status)}</span>
-                            </div>
-                        `;
-                        lista.appendChild(li);
-                    });
-                    tdEventos.appendChild(lista);
-                }
-
-                tr.appendChild(tdData);
-                tr.appendChild(tdEventos);
-                return tr;
-            };
-
-            const scheduler = callback => {
-                if (typeof window === 'undefined') {
-                    setTimeout(() => callback({ timeRemaining: () => 0, didTimeout: true }), 16);
-                    return;
-                }
-                if (typeof window.requestIdleCallback === 'function') {
-                    window.requestIdleCallback(callback, { timeout: 120 });
-                } else if (typeof window.requestAnimationFrame === 'function') {
-                    window.requestAnimationFrame(() => callback({ timeRemaining: () => 0, didTimeout: true }));
-                } else {
-                    setTimeout(() => callback({ timeRemaining: () => 0, didTimeout: true }), 16);
-                }
-            };
-
-            const getNow = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
-            let indiceAtual = 0;
-
-            const processarLote = deadline => {
-                const fragmento = document.createDocumentFragment();
-                const inicio = getNow();
-                const tempoMaximo = 14;
-                while (indiceAtual < total) {
-                    fragmento.appendChild(criarLinha(dadosNormalizados[indiceAtual]));
-                    indiceAtual++;
-
-                    if (deadline && typeof deadline.timeRemaining === 'function') {
-                        if (deadline.timeRemaining() <= 4 && !deadline.didTimeout) break;
-                    } else if (getNow() - inicio > tempoMaximo) {
-                        break;
-                    }
-                }
-
-                if (fragmento.childNodes.length) {
-                    tbody.appendChild(fragmento);
-                }
-
-                if (indiceAtual < total) {
-                    scheduler(processarLote);
-                } else {
-                    setSalaMesLoading(false);
-                }
-            };
-
-            scheduler(processarLote);
-        }
 
     </script>
 </body>
