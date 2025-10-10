@@ -261,22 +261,23 @@
       .date-controls {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 8px;
           background: var(--surface-elevated);
           border-radius: var(--radius-md);
-          padding: 12px 18px;
+          padding: 8px 14px;
           border: 1px solid var(--border-soft);
       }
 
       .date-controls button {
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
           border: 1px solid transparent;
           background: rgba(255, 255, 255, 0.06);
           color: var(--text-secondary);
           cursor: pointer;
           transition: var(--transition-fast);
+          font-size: 0.85rem;
       }
 
       .date-controls button:hover,
@@ -290,9 +291,9 @@
           border: none;
           color: var(--text-primary);
           font-weight: 600;
-          font-size: 0.95rem;
-          padding: 0 6px;
-          min-width: 140px;
+          font-size: 0.9rem;
+          padding: 0 4px;
+          min-width: 120px;
       }
 
       .date-controls input[type="date"]::-webkit-calendar-picker-indicator {
@@ -314,10 +315,54 @@
           filter: invert(0);
       }
 
+      .filter-toggle-bar {
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+      }
+
+      .filter-toggle-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 14px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border-soft);
+          background: rgba(122, 141, 255, 0.08);
+          color: var(--text-secondary);
+          font-weight: 600;
+          cursor: pointer;
+          transition: var(--transition-fast);
+      }
+
+      .filter-toggle-btn:hover,
+      .filter-toggle-btn:focus-visible {
+          border-color: var(--primary);
+          color: var(--text-primary);
+          outline: none;
+          box-shadow: 0 8px 20px rgba(14, 23, 42, 0.22);
+      }
+
+      .filter-toggle-btn i {
+          font-size: 0.95rem;
+      }
+
+      .filter-toggle-label {
+          white-space: nowrap;
+      }
+
+      .report-filters.is-collapsed,
+      .report-filters.compact.is-collapsed {
+          display: none;
+      }
+
       #current-date {
-          min-width: 160px;
+          min-width: 130px;
           text-align: center;
           font-weight: 600;
+          font-size: 0.95rem;
       }
 
       .turno-selector {
@@ -1760,6 +1805,27 @@
           background: rgba(255, 255, 255, 0.92);
       }
 
+      body.light-theme #btn-login {
+          background: linear-gradient(135deg, #4f46e5, #6366f1 55%, #a855f7);
+          box-shadow: 0 16px 32px rgba(79, 70, 229, 0.28);
+          color: #fff;
+      }
+
+      body.light-theme #btn-login:hover,
+      body.light-theme #btn-login:focus-visible {
+          box-shadow: 0 22px 40px rgba(79, 70, 229, 0.38);
+      }
+
+      body.light-theme .filter-toggle-btn {
+          background: rgba(99, 102, 241, 0.14);
+          color: var(--text-secondary);
+      }
+
+      body.light-theme .filter-toggle-btn:hover,
+      body.light-theme .filter-toggle-btn:focus-visible {
+          color: var(--text-primary);
+      }
+
       .medicos-header h2 {
           margin: 0;
           font-size: 1.25rem;
@@ -2981,6 +3047,108 @@
           margin-top: 4px;
       }
 
+      #btn-login {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          min-width: 160px;
+          padding: 12px 26px;
+          font-size: 0.98rem;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          background: linear-gradient(135deg, #60a5fa, #4f46e5 55%, #7c3aed);
+          border: none;
+          border-radius: 999px;
+          box-shadow: 0 16px 32px rgba(76, 106, 255, 0.35);
+          color: #fff;
+          position: relative;
+          overflow: hidden;
+          transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+      }
+
+      #btn-login i {
+          font-size: 1.05rem;
+      }
+
+      #btn-login .button-spinner {
+          margin-left: 6px;
+          border-width: 2px;
+          width: 16px;
+          height: 16px;
+      }
+
+      .login-button-label {
+          white-space: nowrap;
+      }
+
+      #btn-login::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(120deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+          transform: translateX(-120%);
+          transition: transform 0.6s ease;
+      }
+
+      #btn-login:hover,
+      #btn-login:focus-visible {
+          transform: translateY(-2px);
+          box-shadow: 0 22px 38px rgba(76, 106, 255, 0.45);
+          outline: none;
+      }
+
+      #btn-login:hover::after,
+      #btn-login:focus-visible::after {
+          transform: translateX(0%);
+      }
+
+      #btn-login.login-button-animating::after {
+          animation: loginShimmer 1.2s ease-in-out;
+      }
+
+      #btn-login.login-button-error {
+          animation: loginShake 0.6s ease;
+      }
+
+      .login-form.login-form-processing {
+          animation: loginPulse 1.4s ease-in-out infinite;
+      }
+
+      .login-form.login-form-processing::before,
+      .login-form.login-form-processing::after {
+          opacity: 0.7;
+          transform: scale(1.02);
+      }
+
+      @keyframes loginPulse {
+          0%, 100% {
+              transform: translateY(0);
+              box-shadow: var(--shadow-strong);
+          }
+          50% {
+              transform: translateY(-4px);
+              box-shadow: 0 28px 48px rgba(76, 106, 255, 0.45);
+          }
+      }
+
+      @keyframes loginShimmer {
+          0% {
+              transform: translateX(-140%);
+          }
+          100% {
+              transform: translateX(120%);
+          }
+      }
+
+      @keyframes loginShake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
+      }
+
       .login-divider {
           height: 2px;
           background: linear-gradient(90deg, transparent, rgba(94, 129, 255, 0.65), transparent);
@@ -3217,8 +3385,10 @@
                 <input type="password" id="login-senha" placeholder="Digite sua senha" required>
             </div>
             <div class="login-actions">
-                <button class="btn btn-primary" id="btn-login">
-                    <i class="fas fa-sign-in-alt"></i> Entrar
+                <button class="btn" id="btn-login" type="button">
+                    <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                    <span class="login-button-label">Entrar</span>
+                    <span class="button-spinner" aria-hidden="true"></span>
                 </button>
             </div>
             <div class="forgot-password" id="btn-forgot">Precisa de ajuda com o acesso?</div>
@@ -3621,6 +3791,12 @@
                             <span class="dashboard-day-range-hint">Escolha a data inicial e final para analisar o período.</span>
                         </div>
                     </div>
+                    <div class="filter-toggle-bar">
+                        <button type="button" class="filter-toggle-btn" data-filter-toggle="dashboard-filtros" data-expanded-text="Ocultar filtros" data-collapsed-text="Mostrar filtros" aria-expanded="true" aria-controls="dashboard-filtros">
+                            <i class="fas fa-eye-slash" aria-hidden="true"></i>
+                            <span class="filter-toggle-label">Ocultar filtros</span>
+                        </button>
+                    </div>
                     <div class="report-filters compact" id="dashboard-filtros">
                         <div class="report-filter-field">
                             <label for="dashboard-filtro-turno">Turnos</label>
@@ -3828,7 +4004,13 @@
                         <input type="date" id="relatorio-data-fim">
                         <button class="btn btn-primary" id="btn-gerar-relatorio">Gerar</button>
                     </div>
-                    <div class="report-filters">
+                    <div class="filter-toggle-bar">
+                        <button type="button" class="filter-toggle-btn" data-filter-toggle="relatorio-filtros" data-expanded-text="Ocultar filtros" data-collapsed-text="Mostrar filtros" aria-expanded="true" aria-controls="relatorio-filtros">
+                            <i class="fas fa-eye-slash" aria-hidden="true"></i>
+                            <span class="filter-toggle-label">Ocultar filtros</span>
+                        </button>
+                    </div>
+                    <div class="report-filters" id="relatorio-filtros">
                         <div class="report-filter-field">
                             <label for="relatorio-filtro-turno">Turnos</label>
                             <div class="report-multiselect" data-select-id="relatorio-filtro-turno" data-placeholder="Todos os turnos">
@@ -4026,6 +4208,12 @@
                         </button>
                     </div>
 
+                    <div class="filter-toggle-bar">
+                        <button type="button" class="filter-toggle-btn" data-filter-toggle="sala-mes-filtros" data-expanded-text="Ocultar filtros" data-collapsed-text="Mostrar filtros" aria-expanded="true" aria-controls="sala-mes-filtros">
+                            <i class="fas fa-eye-slash" aria-hidden="true"></i>
+                            <span class="filter-toggle-label">Ocultar filtros</span>
+                        </button>
+                    </div>
                     <div class="report-filters compact" id="sala-mes-filtros">
                         <div class="report-filter-field">
                             <label for="sala-mes-filtro-turno">Turnos</label>
@@ -4873,6 +5061,9 @@
             const status = normalizarTexto(valor);
             if (!status) return 'livre';
             if (status.includes('ocup')) return 'ocupado';
+            if (status.includes('agend') || status.includes('confir') || status.includes('atend') || status.includes('presen') || status.includes('compare')) {
+                return 'ocupado';
+            }
             if (status.includes('reser')) return 'reservado';
             if (status.includes('bloq')) return 'bloqueado';
             if (status.includes('manut')) return 'manutencao';
@@ -5066,9 +5257,43 @@
                 return;
             }
 
+            const btnLogin = document.getElementById('btn-login');
+            const loginForm = document.querySelector('#login-container .login-form');
+
+            const finalizarLoginAnimacao = estadoFinal => {
+                if (btnLogin) {
+                    delete btnLogin.dataset.keepBusy;
+                    btnLogin.classList.remove('is-processing', 'login-button-animating', 'login-button-error');
+                    if (estadoFinal === 'erro') {
+                        btnLogin.classList.add('login-button-error');
+                        setTimeout(() => btnLogin.classList.remove('login-button-error'), 700);
+                    }
+                    btnLogin.blur();
+                }
+                if (loginForm) {
+                    loginForm.classList.remove('login-form-processing');
+                }
+            };
+
+            if (btnLogin) {
+                btnLogin.dataset.keepBusy = 'true';
+                btnLogin.classList.add('login-button-animating');
+            }
+
+            if (loginForm) {
+                loginForm.classList.add('login-form-processing');
+            }
+
+            if (!google?.script?.run) {
+                finalizarLoginAnimacao('erro');
+                mostrarLoginAlerta('Serviço de autenticação indisponível no momento.');
+                return;
+            }
+
             google.script.run
                 .withSuccessHandler(result => {
                     if (result.success) {
+                        finalizarLoginAnimacao('ok');
                         localStorage.setItem('authToken', result.token);
                         localStorage.setItem('userRole', result.role);
                         estado.userRole = result.role;
@@ -5076,10 +5301,12 @@
                         document.getElementById('main-container').style.display = 'block';
                         toggleAdminFeatures(result.role === 'admin');
                     } else {
+                        finalizarLoginAnimacao('erro');
                         mostrarLoginAlerta(result.message);
                     }
                 })
                 .withFailureHandler(error => {
+                    finalizarLoginAnimacao('erro');
                     mostrarLoginAlerta('Erro ao fazer login.');
                 })
                 .login(matricula, senha);
@@ -6313,6 +6540,38 @@
         }
 
         function configurarEventListeners() {
+            document.querySelectorAll('[data-filter-toggle]').forEach(botao => {
+                const alvoId = botao.getAttribute('data-filter-toggle');
+                const alvo = document.getElementById(alvoId);
+                if (!alvo) return;
+
+                const icone = botao.querySelector('i');
+                const label = botao.querySelector('.filter-toggle-label');
+                const textoExpandido = botao.dataset.expandedText || 'Ocultar filtros';
+                const textoRecolhido = botao.dataset.collapsedText || 'Mostrar filtros';
+
+                const atualizarVisual = recolhido => {
+                    botao.setAttribute('aria-expanded', recolhido ? 'false' : 'true');
+                    if (icone) {
+                        icone.className = recolhido ? 'fas fa-eye' : 'fas fa-eye-slash';
+                    }
+                    if (label) {
+                        label.textContent = recolhido ? textoRecolhido : textoExpandido;
+                    }
+                };
+
+                atualizarVisual(false);
+
+                botao.addEventListener('click', () => {
+                    const recolhido = alvo.classList.toggle('is-collapsed');
+                    if (recolhido) {
+                        alvo.querySelectorAll('.report-multiselect-panel').forEach(panel => panel.classList.remove('open'));
+                        alvo.querySelectorAll('.report-multiselect-btn').forEach(btn => btn.classList.remove('open'));
+                    }
+                    atualizarVisual(recolhido);
+                });
+            });
+
             // Seletor de turno
             document.querySelectorAll('.turno-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -10650,7 +10909,7 @@
             preencherSalaMesFiltros(opcoesAtualizadas);
             registrarEventosFiltrosEspecificos();
 
-            const filtrosContainer = document.querySelector('.report-filters');
+            const filtrosContainer = document.getElementById('relatorio-filtros');
             if (filtrosContainer && !filtrosContainer.dataset.listenersAttached) {
                 filtrosContainer.querySelectorAll('select').forEach(select => {
                     select.addEventListener('change', () => {
