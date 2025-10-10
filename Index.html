@@ -3120,8 +3120,8 @@
                     </div>
                     
                     <div class="view-selector">
-                        <button class="view-btn active" data-view="ilha">Visualização por Ilha</button>
-                        <button class="view-btn" data-view="planta">Visualização em Planta</button>
+                        <button class="view-btn" data-view="ilha">Visualização por Ilha</button>
+                        <button class="view-btn active" data-view="planta">Visualização em Planta</button>
                     </div>
                     
                     <div class="toggle-container" id="toggle-simplificada-container" style="display: none;">
@@ -4219,7 +4219,7 @@
         let estado = {
             dataAtual: new Date(),
             turnoAtual: 'manha',
-            viewAtual: 'ilha',  // Alterado para ilha como padrão
+            viewAtual: 'planta',  // Visualização em planta como padrão
             salas: [],
             agendamentos: [],
             dadosMestres: {
@@ -5398,6 +5398,8 @@
             function toggleSimplificadaContainer(show) {
                 document.getElementById('toggle-simplificada-container').style.display = show ? 'flex' : 'none';
             }
+
+            toggleSimplificadaContainer(estado.viewAtual === 'ilha');
 
             // Configurar multiselect buttons
             document.querySelectorAll('.multiselect-btn').forEach(btn => {
