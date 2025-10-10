@@ -11819,6 +11819,10 @@
                 }
             };
 
+            const gerarLegendasPadrao = Chart?.defaults?.plugins?.legend?.labels?.generateLabels;
+            const onClickLegendaPadrao = Chart?.defaults?.plugins?.legend?.onClick;
+            const exibirLegendaEvolucao = possuiFuturo || possuiHoje;
+
             document.getElementById('chart-evolucao').chart = new Chart(ctxEvolucao, {
                 type: 'line',
                 data: {
@@ -11829,7 +11833,36 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: possuiFuturo, labels: { color: legendColor } },
+                        legend: {
+                            display: exibirLegendaEvolucao,
+                            labels: {
+                                color: legendColor,
+                                usePointStyle: true,
+                                generateLabels(chart) {
+                                    const labels = gerarLegendasPadrao ? gerarLegendasPadrao(chart) : [];
+                                    if (possuiHoje) {
+                                        labels.push({
+                                            text: 'Hoje',
+                                            fillStyle: corHoje,
+                                            strokeStyle: corHoje,
+                                            lineWidth: 0,
+                                            hidden: false,
+                                            datasetIndex: -1,
+                                            pointStyle: 'circle'
+                                        });
+                                    }
+                                    return labels;
+                                }
+                            },
+                            onClick(event, legendItem, legend) {
+                                if (legendItem && legendItem.text === 'Hoje') {
+                                    return;
+                                }
+                                if (typeof onClickLegendaPadrao === 'function') {
+                                    onClickLegendaPadrao.call(this, event, legendItem, legend);
+                                }
+                            }
+                        },
                         tooltip: tooltipEvolucao,
                         percentagePlugin: { enabled: false }
                     },
