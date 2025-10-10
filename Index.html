@@ -5747,9 +5747,11 @@
                 .withSuccessHandler(function(dados) {
                     console.log('Dados recebidos do server:', dados);
                     salvarCacheDia(diaSolicitado, dados);
+                    // Libera o estado de carregamento antes de atualizar as views para garantir
+                    // que componentes como o planejamento sejam renderizados com os dados recebidos.
+                    isLoading = false;
                     aplicarDadosCarregados(dados);
                     console.log('Loading escondido - Verificando se monitor está visível');
-                    isLoading = false;  // Libera para próximas chamadas
                     prefetchDiasAdjacentes(diaSolicitado);
                     if (pendingReload) {
                         pendingReload = false;
