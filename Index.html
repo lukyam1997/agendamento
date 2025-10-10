@@ -40,6 +40,10 @@
           --shadow-strong: 0 22px 45px rgba(7, 12, 26, 0.45);
           --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
           --transition-base: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+          --medico-nome: #fde047;
+          --medico-nome-intenso: #facc15;
+          --medico-nome-suave: #fef08a;
+          --ilha-pin-bg: rgba(148, 163, 184, 0.2);
       }
 
       body.light-theme {
@@ -63,6 +67,10 @@
           --primary-strong: #4338ca;
           --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.12);
           --shadow-strong: 0 22px 45px rgba(15, 23, 42, 0.18);
+          --medico-nome: #ca8a04;
+          --medico-nome-intenso: #d97706;
+          --medico-nome-suave: #fbbf24;
+          --ilha-pin-bg: rgba(148, 163, 184, 0.15);
       }
 
       *, *::before, *::after {
@@ -1024,33 +1032,6 @@
           align-items: center;
       }
 
-      .view-selector {
-          display: inline-flex;
-          gap: 8px;
-          padding: 6px;
-          border-radius: var(--radius-md);
-          background: var(--surface-elevated);
-          border: 1px solid var(--border-soft);
-          margin-bottom: 16px;
-      }
-
-      .view-btn {
-          border: none;
-          background: transparent;
-          color: var(--text-muted);
-          font-weight: 600;
-          padding: 8px 14px;
-          border-radius: var(--radius-sm);
-          cursor: pointer;
-          transition: var(--transition-fast);
-      }
-
-      .view-btn.active {
-          background: var(--primary);
-          color: #fff;
-          box-shadow: 0 6px 12px rgba(91, 124, 253, 0.3);
-      }
-
       .toggle-container {
           display: flex;
           align-items: center;
@@ -1135,10 +1116,6 @@
           height: 100%;
       }
 
-      .monitor > .planta-wrapper {
-          flex: 1 1 100%;
-      }
-
       @media (max-width: 1400px) {
           .monitor {
               gap: 16px;
@@ -1162,184 +1139,6 @@
           }
       }
 
-      .planta-wrapper {
-          width: 100%;
-          padding: 18px;
-          border-radius: var(--radius-lg);
-          background: var(--surface-elevated);
-          border: 1px solid var(--border-soft);
-          box-shadow: var(--shadow-soft);
-          overflow: auto;
-      }
-
-      .planta-container {
-          display: grid;
-          grid-template-columns: repeat(22, 150px);
-          grid-auto-rows: 150px;
-          gap: 16px;
-          min-width: max-content;
-          justify-content: center;
-      }
-
-      .planta-cell {
-          display: flex;
-          align-items: stretch;
-          min-width: 0;
-      }
-
-      .planta-cell.vazia {
-          visibility: hidden;
-          pointer-events: none;
-      }
-
-      .planta-card {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          gap: 8px;
-          padding: 14px 16px;
-          border-radius: var(--radius-md);
-          border: 1px solid var(--border-soft);
-          background: var(--surface-base);
-          color: var(--text-secondary);
-          cursor: pointer;
-          transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-          height: 100%;
-      }
-
-      .planta-card:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-soft);
-      }
-
-      .planta-card.status-livre {
-          background: rgba(74, 222, 128, 0.12);
-          border-color: rgba(74, 222, 128, 0.35);
-      }
-
-      .planta-card.status-ocupado {
-          background: rgba(248, 113, 113, 0.12);
-          border-color: rgba(248, 113, 113, 0.35);
-      }
-
-      .planta-card.status-reservado {
-          background: rgba(129, 140, 248, 0.12);
-          border-color: rgba(129, 140, 248, 0.35);
-      }
-
-      .planta-card.status-bloqueado,
-      .planta-card.status-manutencao {
-          background: rgba(148, 163, 184, 0.14);
-          border-color: rgba(148, 163, 184, 0.35);
-      }
-
-      .planta-card-title {
-          font-weight: 600;
-          font-size: 0.9rem;
-          color: var(--text-primary);
-      }
-
-      .planta-card-subtitle {
-          font-size: 0.72rem;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-      }
-
-      .planta-status-label {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: var(--text-primary);
-      }
-
-      .planta-status-label::before {
-          content: '';
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: currentColor;
-          opacity: 0.5;
-      }
-
-      .planta-card.status-livre .planta-status-label {
-          color: #4ade80;
-      }
-
-      .planta-card.status-ocupado .planta-status-label {
-          color: #f87171;
-      }
-
-      .planta-card.status-reservado .planta-status-label {
-          color: #818cf8;
-      }
-
-      .planta-card.status-bloqueado .planta-status-label,
-      .planta-card.status-manutencao .planta-status-label {
-          color: #cbd5f5;
-      }
-
-      .planta-card-info {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          font-size: 0.78rem;
-          color: var(--text-secondary);
-          margin-top: auto;
-      }
-
-      .planta-card-info span {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-      }
-
-      .planta-card-extra {
-          font-size: 0.72rem;
-          color: var(--text-muted);
-      }
-
-      .planta-card-estatico {
-          cursor: default;
-          background: transparent;
-          border-style: dashed;
-          color: var(--text-muted);
-      }
-
-      .planta-card-estatico:hover {
-          transform: none;
-          box-shadow: none;
-      }
-
-      body.light-theme .planta-wrapper {
-          background: #fff;
-      }
-
-      body.light-theme .planta-card {
-          background: #f8fafc;
-          border-color: rgba(148, 163, 184, 0.3);
-      }
-
-      body.light-theme .planta-card.status-livre {
-          background: rgba(34, 197, 94, 0.14);
-      }
-
-      body.light-theme .planta-card.status-ocupado {
-          background: rgba(239, 68, 68, 0.14);
-      }
-
-      body.light-theme .planta-card.status-reservado {
-          background: rgba(79, 70, 229, 0.14);
-      }
-
-      body.light-theme .planta-card.status-bloqueado,
-      body.light-theme .planta-card.status-manutencao {
-          background: rgba(148, 163, 184, 0.18);
-      }
-
       .bloco {
           display: flex;
           flex-direction: column;
@@ -1361,6 +1160,10 @@
           align-items: center;
           gap: 8px;
           flex-shrink: 0;
+      }
+
+      .bloco h3 i {
+          color: var(--primary);
       }
 
       .salas-container {
@@ -1405,6 +1208,25 @@
           display: flex;
           align-items: center;
           gap: 8px;
+      }
+
+      .ilha-pin {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          background: var(--ilha-pin-bg);
+          color: var(--primary);
+          font-weight: 600;
+          font-size: 0.78rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+      }
+
+      .ilha-pin i {
+          color: currentColor;
+          font-size: 0.85rem;
       }
 
       .horario-slot {
@@ -1457,12 +1279,62 @@
           overflow-wrap: anywhere;
       }
 
+      .horario-status-especialidade {
+          font-size: 0.78rem;
+          font-weight: 500;
+          color: var(--text-muted);
+      }
+
+      .horario-status-profissional {
+          font-size: 1rem;
+          font-weight: 700;
+          color: var(--medico-nome-intenso);
+          text-shadow: 0 0 12px rgba(250, 204, 21, 0.25);
+      }
+
+      body.light-theme .horario-status-profissional {
+          text-shadow: none;
+      }
+
+      .horario-slot.horario-ocupado .horario-status-profissional,
+      .horario-slot.horario-reservado .horario-status-profissional {
+          color: var(--medico-nome);
+      }
+
+      .horario-slot.horario-livre .horario-status-profissional {
+          color: var(--medico-nome-suave);
+          text-shadow: none;
+      }
+
+      .horario-slot.horario-bloqueado .horario-status-profissional {
+          color: rgba(255, 255, 255, 0.7);
+          text-shadow: none;
+      }
+
+      body.light-theme .horario-slot.horario-bloqueado .horario-status-profissional {
+          color: rgba(15, 23, 42, 0.7);
+      }
+
+      .horario-slot.horario-ocupado .horario-status-especialidade,
+      .horario-slot.horario-reservado .horario-status-especialidade {
+          color: rgba(255, 255, 255, 0.75);
+      }
+
+      body.light-theme .horario-slot.horario-ocupado .horario-status-especialidade,
+      body.light-theme .horario-slot.horario-reservado .horario-status-especialidade {
+          color: rgba(15, 23, 42, 0.75);
+      }
+
       .horario-livre {
           background: rgba(74, 222, 128, 0.22);
       }
 
       .horario-ocupado {
           background: rgba(122, 141, 255, 0.22);
+      }
+
+      .horario-reservado {
+          background: rgba(129, 140, 248, 0.22);
       }
 
       .horario-bloqueado {
@@ -1791,6 +1663,49 @@
           position: relative;
       }
 
+      .medicos-filtro-periodo .medicos-periodo-wrapper {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          align-items: center;
+      }
+
+      .medicos-periodo-wrapper > select {
+          min-width: 140px;
+          width: auto;
+      }
+
+      .medicos-periodo-wrapper input,
+      .medicos-periodo-wrapper select {
+          flex: 0 0 auto;
+      }
+
+      .medicos-periodo-detalhes {
+          display: none;
+          align-items: center;
+          gap: 8px;
+      }
+
+      .medicos-periodo-detalhes.active {
+          display: inline-flex;
+      }
+
+      .medicos-periodo-intervalo input {
+          width: 150px;
+      }
+
+      .medicos-periodo-separador {
+          font-weight: 600;
+          color: var(--text-muted);
+          display: inline-flex;
+          align-items: center;
+      }
+
+      .medicos-periodo-detalhes select,
+      .medicos-periodo-detalhes input {
+          width: auto;
+      }
+
       .medicos-busca-input i {
           position: absolute;
           top: 50%;
@@ -1808,6 +1723,32 @@
       body.light-theme .medicos-filtro select {
           background: #fff;
           color: var(--text-secondary);
+      }
+
+      body.light-theme .login-form {
+          background: linear-gradient(145deg, rgba(248, 250, 252, 0.95), rgba(191, 219, 254, 0.6));
+          border: 1px solid rgba(148, 163, 184, 0.35);
+      }
+
+      body.light-theme .login-form h2 {
+          color: rgba(15, 23, 42, 0.55);
+      }
+
+      body.light-theme .login-brand img {
+          box-shadow: 0 12px 28px rgba(148, 163, 184, 0.22);
+          background: #fff;
+      }
+
+      body.light-theme .login-brand h1 {
+          color: var(--text-secondary);
+      }
+
+      body.light-theme .login-brand p {
+          color: var(--text-muted);
+      }
+
+      body.light-theme .login-group input {
+          background: rgba(255, 255, 255, 0.92);
       }
 
       .medicos-header h2 {
@@ -2296,26 +2237,67 @@
           flex-wrap: wrap;
           gap: 12px;
           margin-bottom: 18px;
+          align-items: flex-end;
+      }
+
+      .dashboard-controls > * {
+          flex: 0 0 auto;
       }
 
       .dashboard-periodo-detalhes {
-          width: 100%;
           display: none;
+          flex: 1 1 auto;
+          justify-content: flex-end;
           gap: 12px;
+          align-items: flex-end;
+          flex-wrap: wrap;
+          margin-left: auto;
       }
 
       .dashboard-periodo-detalhes.active {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          align-items: end;
+          display: flex;
       }
 
       .dashboard-periodo-field {
           display: none;
+          min-width: 220px;
+          max-width: 320px;
       }
 
       .dashboard-periodo-field.active {
-          display: block;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+      }
+
+      #dashboard-section .dashboard-controls {
+          align-items: center;
+      }
+
+      #dashboard-section .dashboard-controls > #dashboard-periodo {
+          min-width: 160px;
+      }
+
+      #dashboard-periodo-detalhes .report-multiselect {
+          min-width: 220px;
+          max-width: 320px;
+          width: 100%;
+      }
+
+      @media (max-width: 1100px) {
+          .dashboard-periodo-detalhes {
+              flex-wrap: wrap;
+          }
+
+          #dashboard-section .dashboard-controls {
+              align-items: flex-end;
+          }
+
+          #dashboard-periodo-detalhes .dashboard-periodo-field,
+          #dashboard-periodo-detalhes .report-multiselect {
+              width: 100%;
+              max-width: none;
+          }
       }
 
       .dashboard-periodo-field label {
@@ -2845,30 +2827,100 @@
           display: flex;
           align-items: center;
           justify-content: center;
+          padding: 32px;
       }
 
       .login-form {
-          background: var(--surface-base);
-          border: 1px solid var(--border-soft);
-          border-radius: var(--radius-md);
-          padding: 32px;
-          width: min(420px, 100%);
+          background: linear-gradient(145deg, rgba(15, 23, 42, 0.82), rgba(30, 64, 175, 0.78)), var(--surface-base);
+          border: 1px solid var(--border-strong);
+          border-radius: var(--radius-lg);
+          padding: 40px 44px;
+          width: min(460px, 100%);
           box-shadow: var(--shadow-strong);
+          display: flex;
+          flex-direction: column;
+          gap: 22px;
+          position: relative;
+          overflow: hidden;
+          isolation: isolate;
+      }
+
+      .login-form > * {
+          position: relative;
+          z-index: 1;
+      }
+
+      .login-form::before,
+      .login-form::after {
+          content: '';
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(0.4px);
+          opacity: 0.55;
+          pointer-events: none;
+      }
+
+      .login-form::before {
+          width: 260px;
+          height: 260px;
+          top: -120px;
+          right: -80px;
+          background: radial-gradient(circle at center, rgba(96, 165, 250, 0.35), rgba(15, 23, 42, 0));
+      }
+
+      .login-form::after {
+          width: 180px;
+          height: 180px;
+          bottom: -90px;
+          left: -60px;
+          background: radial-gradient(circle at center, rgba(34, 197, 94, 0.32), rgba(15, 23, 42, 0));
       }
 
       .login-form h2 {
-          margin-top: 0;
-          margin-bottom: 24px;
-          text-align: center;
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: rgba(255, 255, 255, 0.65);
+      }
+
+      .login-brand {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+      }
+
+      .login-brand img {
+          width: 76px;
+          height: 76px;
+          object-fit: cover;
+          border-radius: 18px;
+          box-shadow: 0 14px 32px rgba(14, 165, 233, 0.25);
+          border: 1px solid rgba(148, 163, 184, 0.25);
+          background: rgba(15, 23, 42, 0.4);
+      }
+
+      .login-brand h1 {
+          margin: 0;
+          font-size: 1.45rem;
+          color: #f8fafc;
+      }
+
+      .login-brand p {
+          margin: 4px 0 0;
+          color: rgba(226, 232, 240, 0.75);
+          font-size: 0.92rem;
       }
 
       .login-group {
-          margin-bottom: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
       }
 
       .login-group label {
           display: block;
-          margin-bottom: 6px;
           color: var(--text-secondary);
           font-weight: 600;
       }
@@ -2877,9 +2929,24 @@
           width: 100%;
           border-radius: var(--radius-sm);
           border: 1px solid var(--border-soft);
-          padding: 10px 12px;
-          background: var(--surface-elevated);
+          padding: 12px 14px;
+          background: rgba(15, 23, 42, 0.55);
           color: var(--text-primary);
+          font-size: 1rem;
+      }
+
+      .login-group input::placeholder {
+          color: rgba(148, 163, 184, 0.7);
+      }
+
+      .login-actions {
+          margin-top: 4px;
+      }
+
+      .login-divider {
+          height: 1px;
+          background: rgba(148, 163, 184, 0.25);
+          margin: 4px 0;
       }
 
       .drawer-backdrop {
@@ -2997,6 +3064,41 @@
               flex: 1 1 auto;
           }
 
+          .dashboard-periodo-detalhes.active {
+              justify-content: flex-start;
+          }
+
+          .dashboard-periodo-field.active {
+              min-width: 100%;
+          }
+
+          .medicos-periodo-wrapper {
+              flex-direction: column;
+              align-items: stretch;
+          }
+
+          .medicos-periodo-wrapper > select {
+              width: 100%;
+          }
+
+          .medicos-periodo-detalhes.active {
+              width: 100%;
+              justify-content: flex-start;
+          }
+
+          .medicos-periodo-intervalo {
+              flex-direction: column;
+              align-items: stretch;
+          }
+
+          .medicos-periodo-intervalo input {
+              width: 100%;
+          }
+
+          .medicos-periodo-separador {
+              display: none;
+          }
+
           .planejamento-container {
               padding: 18px;
           }
@@ -3058,24 +3160,32 @@
 <body>
     <div id="login-container">
         <div class="login-form">
-            <h2><i class="fas fa-lock"></i> Login</h2>
+            <h2><i class="fas fa-lock"></i> Acesso restrito</h2>
+            <div class="login-brand">
+                <img src="https://i.ibb.co/hxbRMNvV/logo-HUC.jpg" alt="Hospital de Referência">
+                <div>
+                    <h1>Hospital César Cals</h1>
+                    <p>Portal institucional de agendamento SUS</p>
+                </div>
+            </div>
+            <div class="login-divider"></div>
             <div class="alert alert-error" id="login-alert" style="display: none;">
                 <i class="fas fa-exclamation-triangle"></i> <span id="login-message"></span>
             </div>
             <div class="login-group">
                 <label for="login-matricula">Matrícula</label>
-                <input type="text" id="login-matricula" required>
+                <input type="text" id="login-matricula" placeholder="Informe sua matrícula" required>
             </div>
             <div class="login-group">
                 <label for="login-senha">Senha</label>
-                <input type="password" id="login-senha" required>
+                <input type="password" id="login-senha" placeholder="Digite sua senha" required>
             </div>
             <div class="login-actions">
                 <button class="btn btn-primary" id="btn-login">
                     <i class="fas fa-sign-in-alt"></i> Entrar
                 </button>
             </div>
-            <div class="forgot-password" id="btn-forgot">Esqueceu a senha?</div>
+            <div class="forgot-password" id="btn-forgot">Precisa de ajuda com o acesso?</div>
         </div>
     </div>
 
@@ -3152,7 +3262,7 @@
                         </div>
                     </div>
                     <div class="filter-group">
-                        <label for="filter-ilha"><i class="fas fa-map-pin"></i> Ilha</label>
+                        <label for="filter-ilha"><i class="fas fa-umbrella-beach"></i> Ilha</label>
                         <div class="multiselect" id="filter-ilha-multi">
                             <button class="multiselect-btn">Todas as ilhas</button>
                             <div class="multiselect-options" id="filter-ilha-options"></div>
@@ -3201,12 +3311,7 @@
                         </div>
                     </div>
                     
-                    <div class="view-selector">
-                        <button class="view-btn" data-view="ilha">Visualização por Ilha</button>
-                        <button class="view-btn active" data-view="planta">Visualização em Planta</button>
-                    </div>
-                    
-                    <div class="toggle-container" id="toggle-simplificada-container" style="display: none;">
+                    <div class="toggle-container" id="toggle-simplificada-container">
                         <span class="toggle-label">Visualização Simplificada:</span>
                         <button class="toggle-simplificada active" id="toggle-simplificada">Ativado</button>
                     </div>
@@ -3307,6 +3412,35 @@
                                 <select id="medicos-especialidade">
                                     <option value="todas">Todas</option>
                                 </select>
+                            </div>
+                            <div class="medicos-filtro medicos-filtro-periodo">
+                                <label for="medicos-periodo">Período</label>
+                                <div class="medicos-periodo-wrapper">
+                                    <select id="medicos-periodo">
+                                        <option value="dia">Dia</option>
+                                        <option value="semana">Semana</option>
+                                        <option value="mes">Mês</option>
+                                        <option value="ano">Ano</option>
+                                        <option value="intervalo">Intervalo</option>
+                                    </select>
+                                    <div class="medicos-periodo-detalhes" data-periodo="dia">
+                                        <input type="date" id="medicos-periodo-dia">
+                                    </div>
+                                    <div class="medicos-periodo-detalhes" data-periodo="semana">
+                                        <input type="week" id="medicos-periodo-semana">
+                                    </div>
+                                    <div class="medicos-periodo-detalhes" data-periodo="mes">
+                                        <input type="month" id="medicos-periodo-mes">
+                                    </div>
+                                    <div class="medicos-periodo-detalhes" data-periodo="ano">
+                                        <select id="medicos-periodo-ano"></select>
+                                    </div>
+                                    <div class="medicos-periodo-detalhes medicos-periodo-intervalo" data-periodo="intervalo">
+                                        <input type="date" id="medicos-periodo-inicio">
+                                        <span class="medicos-periodo-separador">até</span>
+                                        <input type="date" id="medicos-periodo-fim">
+                                    </div>
+                                </div>
                             </div>
                             <div class="medicos-filtro">
                                 <label for="medicos-frequencia">Frequência</label>
@@ -4068,7 +4202,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="cadastro-ilha"><i class="fas fa-map-pin"></i> Ilha</label>
+                        <label for="cadastro-ilha"><i class="fas fa-umbrella-beach"></i> Ilha</label>
                         <select id="cadastro-ilha" required>
                             <option value="">Selecione uma ilha</option>
                         </select>
@@ -4130,7 +4264,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="planejamento-inserir-ilha"><i class="fas fa-map-pin"></i> Ilha</label>
+                        <label for="planejamento-inserir-ilha"><i class="fas fa-umbrella-beach"></i> Ilha</label>
                         <select id="planejamento-inserir-ilha" required>
                             <option value="">Selecione uma ilha</option>
                         </select>
@@ -4461,19 +4595,10 @@
             profissionais: 'profissional'
         };
 
-        // Layout da planta como array 2D
-        const plantaLayout = [
-            ['10','11','12','13','14','-','-','-','15','16','17','18','19','20','21','22','-','-','23','24','25','26'],
-            ['-','-','-','7','8','9','-','-','-','-','30','31','32','33','34','35','36','37','-','27','28','29'],
-            ['-','-','-','3','2','1','-','-','-','-','38','39','40','41','42','43','44','45','-','46','47','48'],
-            ['-','-','NUT','6','5','4','S.S','PSI','-','-','51','52','53','54','55','56','-','-','-','-','49','50']
-        ];
-
         // Estado atual da aplicação
         let estado = {
             dataAtual: new Date(),
             turnoAtual: 'manha',
-            viewAtual: 'planta',  // Visualização em planta como padrão
             salas: [],
             agendamentos: [],
             dadosMestres: {
@@ -4507,7 +4632,16 @@
                 busca: '',
                 especialidade: 'todas',
                 frequencia: 'todos',
-                ordenacao: 'atrasos'
+                ordenacao: 'atrasos',
+                periodo: {
+                    tipo: 'dia',
+                    dia: new Date().toISOString().split('T')[0],
+                    semana: '',
+                    mes: '',
+                    ano: '',
+                    inicio: '',
+                    fim: ''
+                }
             },
             temaAtual: 'dark'
         };
@@ -5019,6 +5153,9 @@
             if (prevBtn) {
                 prevBtn.addEventListener('click', function() {
                     estado.dataAtual.setDate(estado.dataAtual.getDate() - 1);
+                    if (estado.acompanhamentoMedicos?.periodo?.tipo === 'dia') {
+                        estado.acompanhamentoMedicos.periodo.dia = estado.dataAtual.toISOString().split('T')[0];
+                    }
                     atualizarVisualData();
                     carregarDados();
                 });
@@ -5027,6 +5164,9 @@
             if (nextBtn) {
                 nextBtn.addEventListener('click', function() {
                     estado.dataAtual.setDate(estado.dataAtual.getDate() + 1);
+                    if (estado.acompanhamentoMedicos?.periodo?.tipo === 'dia') {
+                        estado.acompanhamentoMedicos.periodo.dia = estado.dataAtual.toISOString().split('T')[0];
+                    }
                     atualizarVisualData();
                     carregarDados();
                 });
@@ -5038,6 +5178,9 @@
                     const novaData = new Date(`${datePicker.value}T00:00:00`);
                     if (!isNaN(novaData.getTime())) {
                         estado.dataAtual = novaData;
+                        if (estado.acompanhamentoMedicos?.periodo?.tipo === 'dia') {
+                            estado.acompanhamentoMedicos.periodo.dia = novaData.toISOString().split('T')[0];
+                        }
                         atualizarVisualData();
                         carregarDados();
                     }
@@ -5046,9 +5189,193 @@
         }
 
         function formatarData(data) {
-            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-            return data.toLocaleDateString('pt-BR', options);
-        }   
+            if (!(data instanceof Date) || Number.isNaN(data.getTime())) {
+                return '';
+            }
+            const texto = data.toLocaleDateString('pt-BR', { weekday: 'long' });
+            return texto.charAt(0).toUpperCase() + texto.slice(1);
+        }
+
+        function normalizarDataISO(valor) {
+            if (!valor && valor !== 0) return null;
+            if (valor instanceof Date) {
+                return Number.isNaN(valor.getTime()) ? null : valor.toISOString().split('T')[0];
+            }
+            if (typeof valor === 'number') {
+                const dataNumero = new Date(valor);
+                return Number.isNaN(dataNumero.getTime()) ? null : dataNumero.toISOString().split('T')[0];
+            }
+            const texto = String(valor).trim();
+            if (!texto) return null;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) return texto;
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(texto)) {
+                const [dia, mes, ano] = texto.split('/');
+                return `${ano.padStart(4, '0')}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+            }
+            const data = new Date(texto);
+            if (Number.isNaN(data.getTime())) return null;
+            return data.toISOString().split('T')[0];
+        }
+
+        function obterInicioSemanaISO(ano, semana) {
+            const simples = new Date(Date.UTC(ano, 0, 1 + (semana - 1) * 7));
+            const diaSemana = simples.getUTCDay() || 7;
+            if (diaSemana <= 4) {
+                simples.setUTCDate(simples.getUTCDate() - (diaSemana - 1));
+            } else {
+                simples.setUTCDate(simples.getUTCDate() + (8 - diaSemana));
+            }
+            return simples;
+        }
+
+        function obterIntervaloAgendamento(ag) {
+            const inicio = normalizarDataISO(ag?.dataInicio || ag?.data);
+            const fim = normalizarDataISO(ag?.dataFim || ag?.data);
+            if (inicio && fim) {
+                return inicio <= fim ? { inicio, fim } : { inicio: fim, fim: inicio };
+            }
+            const unico = inicio || fim;
+            return { inicio: unico, fim: unico };
+        }
+
+        function calcularPeriodoMedicos(config = {}) {
+            const tipo = config.tipo || 'dia';
+            const hoje = estado.dataAtual instanceof Date ? estado.dataAtual : new Date();
+            const dataHoje = normalizarDataISO(hoje) || new Date().toISOString().split('T')[0];
+
+            if (tipo === 'intervalo') {
+                let inicio = normalizarDataISO(config.inicio) || dataHoje;
+                let fim = normalizarDataISO(config.fim) || inicio;
+                if (inicio > fim) [inicio, fim] = [fim, inicio];
+                return { inicio, fim, tipo };
+            }
+
+            if (tipo === 'mes') {
+                const valor = (config.mes || dataHoje.slice(0, 7)).trim();
+                if (/^\d{4}-\d{2}$/.test(valor)) {
+                    const [anoStr, mesStr] = valor.split('-');
+                    const ano = Number(anoStr);
+                    const mes = Number(mesStr) - 1;
+                    const inicio = new Date(Date.UTC(ano, mes, 1));
+                    const fim = new Date(Date.UTC(ano, mes + 1, 0));
+                    return { inicio: normalizarDataISO(inicio), fim: normalizarDataISO(fim), tipo };
+                }
+            }
+
+            if (tipo === 'semana') {
+                const valor = (config.semana || '').trim();
+                const padraoSemana = /^\d{4}-W(\d{2})$/;
+                const anoAtual = dataHoje.slice(0, 4);
+                const semanaValor = padraoSemana.test(valor) ? valor : `${anoAtual}-W${obterSemanaISO(hoje)}`;
+                const [, semanaStr] = semanaValor.match(/^(\d{4})-W(\d{2})$/) || [];
+                const ano = Number(semanaValor.slice(0, 4));
+                const semanaNumero = Number(semanaStr || obterSemanaISO(hoje));
+                const inicioData = obterInicioSemanaISO(ano, semanaNumero);
+                const fimData = new Date(inicioData);
+                fimData.setUTCDate(fimData.getUTCDate() + 6);
+                return {
+                    inicio: normalizarDataISO(inicioData),
+                    fim: normalizarDataISO(fimData),
+                    tipo,
+                    semana: `${ano}-W${String(semanaNumero).padStart(2, '0')}`
+                };
+            }
+
+            if (tipo === 'ano') {
+                const ano = (config.ano || dataHoje.slice(0, 4)).padStart(4, '0');
+                return {
+                    inicio: `${ano}-01-01`,
+                    fim: `${ano}-12-31`,
+                    tipo,
+                    ano
+                };
+            }
+
+            const dia = normalizarDataISO(config.dia) || dataHoje;
+            return { inicio: dia, fim: dia, tipo: 'dia' };
+        }
+
+        function obterSemanaISO(data) {
+            const alvo = new Date(Date.UTC(data.getFullYear(), data.getMonth(), data.getDate()));
+            const diaSemana = (alvo.getUTCDay() + 6) % 7;
+            alvo.setUTCDate(alvo.getUTCDate() - diaSemana + 3);
+            const primeiraQuinta = new Date(Date.UTC(alvo.getUTCFullYear(), 0, 4));
+            const diff = alvo - primeiraQuinta;
+            const semana = 1 + Math.round(diff / (7 * 24 * 3600 * 1000));
+            return String(semana).padStart(2, '0');
+        }
+
+        function filtrarAgendamentosPorPeriodoMedicos(lista) {
+            const periodoConfig = estado.acompanhamentoMedicos?.periodo || {};
+            const periodo = calcularPeriodoMedicos(periodoConfig);
+            if (!periodo.inicio || !periodo.fim) {
+                return Array.isArray(lista) ? [...lista] : [];
+            }
+            if (estado.acompanhamentoMedicos?.periodo) {
+                if (periodo.semana) {
+                    estado.acompanhamentoMedicos.periodo.semana = periodo.semana;
+                }
+                if (periodo.ano) {
+                    estado.acompanhamentoMedicos.periodo.ano = periodo.ano;
+                }
+            }
+            const inicioFiltro = periodo.inicio;
+            const fimFiltro = periodo.fim;
+            const resultado = [];
+            (lista || []).forEach(ag => {
+                const intervalo = obterIntervaloAgendamento(ag);
+                const inicio = intervalo.inicio || intervalo.fim;
+                const fim = intervalo.fim || intervalo.inicio;
+                if (!inicio && !fim) {
+                    resultado.push(ag);
+                    return;
+                }
+                const inicioComparar = inicio || fimFiltro;
+                const fimComparar = fim || inicioFiltro;
+                if (inicioComparar <= fimFiltro && fimComparar >= inicioFiltro) {
+                    resultado.push(ag);
+                }
+            });
+            return resultado;
+        }
+
+        function atualizarMedicosPeriodoAnos() {
+            const selectAno = document.getElementById('medicos-periodo-ano');
+            if (!selectAno) return;
+            const anos = new Set();
+            (estado.agendamentos || []).forEach(ag => {
+                const intervalo = obterIntervaloAgendamento(ag);
+                [intervalo.inicio, intervalo.fim].forEach(dataISO => {
+                    if (typeof dataISO === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dataISO)) {
+                        anos.add(dataISO.slice(0, 4));
+                    }
+                });
+            });
+            if (!anos.size) {
+                anos.add(new Date().getFullYear().toString());
+            }
+            const valores = Array.from(anos).sort();
+            const periodo = estado.acompanhamentoMedicos?.periodo || {};
+            const atual = periodo.ano && valores.includes(periodo.ano)
+                ? periodo.ano
+                : valores[valores.length - 1];
+            selectAno.innerHTML = valores.map(ano => `<option value="${ano}">${ano}</option>`).join('');
+            selectAno.value = atual;
+            estado.acompanhamentoMedicos.periodo.ano = atual;
+        }
+
+        function atualizarMedicosPeriodoUI() {
+            const periodoSelect = document.getElementById('medicos-periodo');
+            const tipoAtual = periodoSelect ? periodoSelect.value : 'dia';
+            document.querySelectorAll('.medicos-periodo-detalhes').forEach(container => {
+                const tipo = container.getAttribute('data-periodo');
+                if (tipo === tipoAtual) {
+                    container.classList.add('active');
+                } else {
+                    container.classList.remove('active');
+                }
+            });
+        }
 
         let isLoading = false;
         let pendingReload = false;
@@ -5945,17 +6272,6 @@
                 });
             });
 
-            // Seletor de visualização
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    estado.viewAtual = this.getAttribute('data-view');
-                    toggleSimplificadaContainer(estado.viewAtual === 'ilha');
-                    atualizarMonitor();
-                });
-            });
-
             // Novo toggle para visualização simplificada
             document.getElementById('toggle-simplificada').addEventListener('click', function() {
                 estado.visualizacaoSimplificada = !estado.visualizacaoSimplificada;
@@ -5963,12 +6279,6 @@
                 this.textContent = estado.visualizacaoSimplificada ? 'Ativado' : 'Desativado';
                 atualizarMonitor();
             });
-
-            function toggleSimplificadaContainer(show) {
-                document.getElementById('toggle-simplificada-container').style.display = show ? 'flex' : 'none';
-            }
-
-            toggleSimplificadaContainer(estado.viewAtual === 'ilha');
 
             // Configurar multiselect buttons
             document.querySelectorAll('.multiselect-btn').forEach(btn => {
@@ -6194,6 +6504,104 @@
                 });
             }
 
+            const garantirPeriodoEstado = () => {
+                if (!estado.acompanhamentoMedicos.periodo) {
+                    estado.acompanhamentoMedicos.periodo = {
+                        tipo: 'dia',
+                        dia: (estado.dataAtual instanceof Date ? estado.dataAtual : new Date()).toISOString().split('T')[0],
+                        semana: '',
+                        mes: '',
+                        ano: '',
+                        inicio: '',
+                        fim: ''
+                    };
+                }
+                return estado.acompanhamentoMedicos.periodo;
+            };
+
+            const periodoSelect = document.getElementById('medicos-periodo');
+            if (periodoSelect) {
+                periodoSelect.addEventListener('change', () => {
+                    const periodo = garantirPeriodoEstado();
+                    periodo.tipo = periodoSelect.value || 'dia';
+                    if (periodo.tipo === 'mes' && !periodo.mes) {
+                        periodo.mes = (periodo.dia || new Date().toISOString().split('T')[0]).slice(0, 7);
+                    }
+                    if (periodo.tipo === 'ano' && !periodo.ano) {
+                        periodo.ano = (periodo.dia || new Date().toISOString().split('T')[0]).slice(0, 4);
+                    }
+                    if (periodo.tipo === 'semana' && !periodo.semana) {
+                        const base = estado.dataAtual instanceof Date ? estado.dataAtual : new Date();
+                        periodo.semana = `${base.getFullYear()}-W${obterSemanaISO(base)}`;
+                    }
+                    if (periodo.tipo === 'intervalo') {
+                        const hojeIso = new Date().toISOString().split('T')[0];
+                        if (!periodo.inicio) periodo.inicio = hojeIso;
+                        if (!periodo.fim) periodo.fim = periodo.inicio;
+                    }
+                    atualizarMedicosPeriodoUI();
+                    recalcularAcompanhamentoMedicos();
+                });
+            }
+
+            const periodoDia = document.getElementById('medicos-periodo-dia');
+            if (periodoDia) {
+                periodoDia.addEventListener('change', () => {
+                    const periodo = garantirPeriodoEstado();
+                    if (periodoDia.value) {
+                        periodo.dia = periodoDia.value;
+                    }
+                    recalcularAcompanhamentoMedicos();
+                });
+            }
+
+            const periodoSemana = document.getElementById('medicos-periodo-semana');
+            if (periodoSemana) {
+                periodoSemana.addEventListener('change', () => {
+                    const periodo = garantirPeriodoEstado();
+                    periodo.semana = periodoSemana.value;
+                    recalcularAcompanhamentoMedicos();
+                });
+            }
+
+            const periodoMes = document.getElementById('medicos-periodo-mes');
+            if (periodoMes) {
+                periodoMes.addEventListener('change', () => {
+                    const periodo = garantirPeriodoEstado();
+                    periodo.mes = periodoMes.value;
+                    recalcularAcompanhamentoMedicos();
+                });
+            }
+
+            const periodoAno = document.getElementById('medicos-periodo-ano');
+            if (periodoAno) {
+                periodoAno.addEventListener('change', () => {
+                    const periodo = garantirPeriodoEstado();
+                    periodo.ano = periodoAno.value;
+                    recalcularAcompanhamentoMedicos();
+                });
+            }
+
+            const periodoInicio = document.getElementById('medicos-periodo-inicio');
+            if (periodoInicio) {
+                periodoInicio.addEventListener('change', () => {
+                    const periodo = garantirPeriodoEstado();
+                    periodo.inicio = periodoInicio.value;
+                    recalcularAcompanhamentoMedicos();
+                });
+            }
+
+            const periodoFim = document.getElementById('medicos-periodo-fim');
+            if (periodoFim) {
+                periodoFim.addEventListener('change', () => {
+                    const periodo = garantirPeriodoEstado();
+                    periodo.fim = periodoFim.value;
+                    recalcularAcompanhamentoMedicos();
+                });
+            }
+
+            atualizarMedicosPeriodoUI();
+
             // Dashboard update
             document.getElementById('btn-atualizar-dashboard').addEventListener('click', carregarDashboard);
 
@@ -6390,91 +6798,53 @@
             const monitorContent = document.getElementById('monitor-content');
             monitorContent.innerHTML = '';
 
-            // Obter horários baseado no turno atual
             let horarios;
-            switch(estado.turnoAtual) {
+            switch (estado.turnoAtual) {
                 case 'manha': horarios = horariosManha; break;
                 case 'tarde': horarios = horariosTarde; break;
                 case 'noite': horarios = horariosNoite; break;
-                default: horarios = []; // Para 'todos', não usa o param horarios
+                default: horarios = [];
             }
 
-            if (estado.viewAtual === 'ilha') {
-                // Visualização por ilha
-                const salasFiltradas = estado.salas.filter(salaAtendeFiltros);
-                const ilhasUnicas = [...new Set(salasFiltradas.map(s => s.ilha))].sort((a, b) => parseFloat(a) - parseFloat(b));
+            const salasFiltradas = estado.salas.filter(salaAtendeFiltros);
+            const ilhasUnicas = [...new Set(salasFiltradas.map(s => s.ilha))]
+                .filter(valor => valor !== undefined && valor !== null)
+                .sort((a, b) => parseFloat(a) - parseFloat(b));
 
-                ilhasUnicas.forEach(ilha => {
-                    const groupSalas = salasFiltradas.filter(s => s.ilha === ilha);
-                    if (groupSalas.length > 0) {
-                        const bloco = document.createElement('div');
-                        bloco.className = 'bloco';
-                        bloco.innerHTML = `<h3><i class="fas fa-map-pin"></i> Ilha ${ilha}</h3><div class="salas-container" id="ilha${ilha}"></div>`;
-                        monitorContent.appendChild(bloco);
+            ilhasUnicas.forEach(ilha => {
+                const groupSalas = salasFiltradas.filter(s => s.ilha === ilha);
+                if (!groupSalas.length) return;
 
-                        groupSalas.sort((a, b) => {
-                            const numA = parseFloat(a.numero);
-                            const numB = parseFloat(b.numero);
-                            if (!isNaN(numA) && !isNaN(numB)) {
-                                return numA - numB;
-                            }
-                            return a.numero.localeCompare(b.numero, undefined, {numeric: true});
-                        });
+                const bloco = document.createElement('div');
+                bloco.className = 'bloco';
+                bloco.innerHTML = `<h3><i class="fas fa-umbrella-beach"></i> Ilha ${ilha}</h3><div class="salas-container" id="ilha${ilha}"></div>`;
+                monitorContent.appendChild(bloco);
 
-                        groupSalas.forEach(sala => {
-                            const salaElement = criarElementoSala(sala, horarios);
-                            document.getElementById(`ilha${ilha}`).appendChild(salaElement);
-                        });
+                groupSalas.sort((a, b) => {
+                    const numA = parseFloat(a.numero);
+                    const numB = parseFloat(b.numero);
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB;
                     }
+                    return a.numero.localeCompare(b.numero, undefined, { numeric: true });
                 });
 
-                if (ilhasUnicas.length === 0) {
-                    monitorContent.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-door-closed"></i>
-                            <p>Nenhuma sala encontrada com os filtros aplicados</p>
-                        </div>
-                    `;
-                }
-
-            } else {
-                // Renderizar visualização em planta
-                const plantaWrapper = document.createElement('div');
-                plantaWrapper.className = 'planta-wrapper';
-                const plantaDiv = document.createElement('div');
-                plantaDiv.className = 'planta-container';
-                plantaLayout.forEach(row => {
-                    row.forEach(cell => {
-                        const valor = String(cell || '').trim();
-                        const cellDiv = document.createElement('div');
-                        cellDiv.className = 'planta-cell';
-
-                        if (!valor || valor === '-') {
-                            cellDiv.classList.add('vazia');
-                            plantaDiv.appendChild(cellDiv);
-                            return;
-                        }
-
-                        if (!/^[0-9]+$/.test(valor)) {
-                            cellDiv.appendChild(criarCardEstatistico(valor));
-                            plantaDiv.appendChild(cellDiv);
-                            return;
-                        }
-
-                        const sala = estado.salas.find(s => String(s.numero) === valor);
-                        if (sala && salaAtendeFiltros(sala)) {
-                            cellDiv.appendChild(criarCardPlanta(sala));
-                        } else if (!sala) {
-                            cellDiv.appendChild(criarCardEstatistico(`Sala ${valor}`));
-                        } else {
-                            cellDiv.classList.add('vazia');
-                        }
-
-                        plantaDiv.appendChild(cellDiv);
-                    });
+                const container = document.getElementById(`ilha${ilha}`);
+                const fragment = document.createDocumentFragment();
+                groupSalas.forEach(sala => {
+                    const salaElement = criarElementoSala(sala, horarios);
+                    fragment.appendChild(salaElement);
                 });
-                plantaWrapper.appendChild(plantaDiv);
-                monitorContent.appendChild(plantaWrapper);
+                container.appendChild(fragment);
+            });
+
+            if (!ilhasUnicas.length) {
+                monitorContent.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-door-closed"></i>
+                        <p>Nenhuma sala encontrada com os filtros aplicados</p>
+                    </div>
+                `;
             }
         }
 
@@ -6528,79 +6898,6 @@
                 agenda,
                 total: agendamentosSala.length
             };
-        }
-
-        function criarCardPlanta(sala) {
-            const resumo = obterResumoSalaDetalhado(sala);
-            const card = document.createElement('article');
-            card.className = `planta-card status-${resumo.statusClasse}`;
-
-            const titulo = document.createElement('div');
-            titulo.className = 'planta-card-title';
-            titulo.textContent = `Sala ${sala.numero}`;
-            card.appendChild(titulo);
-
-            const subtitulo = document.createElement('div');
-            subtitulo.className = 'planta-card-subtitle';
-            subtitulo.textContent = resumo.ilha ? `Ilha ${resumo.ilha}` : 'Sem ilha';
-            card.appendChild(subtitulo);
-
-            const status = document.createElement('div');
-            status.className = 'planta-status-label';
-            status.textContent = resumo.statusLabel;
-            card.appendChild(status);
-
-            if (resumo.agenda.length) {
-                const info = document.createElement('div');
-                info.className = 'planta-card-info';
-                const primeiro = resumo.agenda[0];
-                if (primeiro.horario) {
-                    const horario = document.createElement('span');
-                    horario.textContent = primeiro.horario;
-                    info.appendChild(horario);
-                }
-                if (primeiro.profissional) {
-                    const profissional = document.createElement('span');
-                    profissional.textContent = primeiro.profissional;
-                    info.appendChild(profissional);
-                }
-                const especialidade = document.createElement('span');
-                especialidade.textContent = primeiro.especialidade || 'Especialidade não informada';
-                info.appendChild(especialidade);
-                card.appendChild(info);
-
-                if (resumo.total > 1) {
-                    const extra = document.createElement('div');
-                    extra.className = 'planta-card-extra';
-                    extra.textContent = `+${resumo.total - 1} agendamento(s)`;
-                    card.appendChild(extra);
-                }
-            } else {
-                const vazio = document.createElement('div');
-                vazio.className = 'planta-card-extra';
-                vazio.textContent = 'Sem agendamentos para o dia.';
-                card.appendChild(vazio);
-            }
-
-            card.addEventListener('click', () => abrirModalSala(sala.numero));
-            return card;
-        }
-
-        function criarCardEstatistico(label) {
-            const card = document.createElement('article');
-            card.className = 'planta-card planta-card-estatico';
-
-            const titulo = document.createElement('div');
-            titulo.className = 'planta-card-title';
-            titulo.textContent = label;
-            card.appendChild(titulo);
-
-            const subtitulo = document.createElement('div');
-            subtitulo.className = 'planta-card-subtitle';
-            subtitulo.textContent = 'Área técnica';
-            card.appendChild(subtitulo);
-
-            return card;
         }
 
         function atualizarIndicadores() {
@@ -7956,7 +8253,10 @@
                 <div class="sala-numero">
                     <i class="fas fa-door-open"></i> SALA ${sala.numero}
                 </div>
-                <div class="ilha-pin">${sala.ilha}</div>
+                <div class="ilha-pin">
+                    <i class="fas fa-umbrella-beach" aria-hidden="true"></i>
+                    <span>${sala.ilha ? `Ilha ${sala.ilha}` : 'Sem ilha'}</span>
+                </div>
             `;
             salaDiv.appendChild(headerDiv);
             
@@ -8005,13 +8305,15 @@
                         // Um agendamento cobrindo o turno inteiro
                         salaDiv.classList.add('sala-simplificada');
                         const ag = agendamentosSala[0];
+                        const especialidadeLabel = (ag.especialidade || '').trim() || 'Especialidade não informada';
+                        const profissionalLabel = (ag.profissional || '').trim() || 'Profissional não informado';
                         const ocupadoDiv = document.createElement('div');
                         ocupadoDiv.className = 'horario-slot horario-ocupado single-block';
                         ocupadoDiv.innerHTML = `
                             <span>${formatarTurnoLabel(ag.turno)}</span>
                             <div class="horario-status-container">
-                                <span class="horario-status">${ag.especialidade}</span>
-                                <span class="horario-status">${ag.profissional}</span>
+                                <span class="horario-status horario-status-especialidade">${especialidadeLabel}</span>
+                                <span class="horario-status horario-status-profissional">${profissionalLabel}</span>
                             </div>
                         `;
                         horariosDiv.appendChild(ocupadoDiv);
@@ -8067,11 +8369,13 @@
                     const horarioDiv = document.createElement('div');
                     horarioDiv.className = `horario-slot ${horarioClass}`;
                     if (agendamento) {
+                        const especialidadeLabel = (agendamento.especialidade || '').trim() || 'Especialidade não informada';
+                        const profissionalLabel = (agendamento.profissional || '').trim() || 'Profissional não informado';
                         horarioDiv.innerHTML = `
                             <span>${horario}</span>
                             <div class="horario-status-container">
-                                <span class="horario-status">${agendamento.especialidade}</span>
-                                <span class="horario-status">${agendamento.profissional}</span>
+                                <span class="horario-status horario-status-especialidade">${especialidadeLabel}</span>
+                                <span class="horario-status horario-status-profissional">${profissionalLabel}</span>
                             </div>
                         `;
                     } else {
@@ -8111,11 +8415,13 @@
                         const horarioDiv = document.createElement('div');
                         horarioDiv.className = `horario-slot ${horarioClass}`;
                         if (agendamento) {
+                            const especialidadeLabel = (agendamento.especialidade || '').trim() || 'Especialidade não informada';
+                            const profissionalLabel = (agendamento.profissional || '').trim() || 'Profissional não informado';
                             horarioDiv.innerHTML = `
                                 <span>${horario}</span>
                                 <div class="horario-status-container">
-                                    <span class="horario-status">${agendamento.especialidade}</span>
-                                    <span class="horario-status">${agendamento.profissional}</span>
+                                    <span class="horario-status horario-status-especialidade">${especialidadeLabel}</span>
+                                    <span class="horario-status horario-status-profissional">${profissionalLabel}</span>
                                 </div>
                             `;
                         } else {
@@ -9586,6 +9892,29 @@
             if (ordenacaoSelect && ordenacaoSelect.value !== (filtros.ordenacao || 'atrasos')) {
                 ordenacaoSelect.value = filtros.ordenacao || 'atrasos';
             }
+
+            const periodo = filtros.periodo || {};
+            const periodoSelect = document.getElementById('medicos-periodo');
+            const tipoPeriodo = periodo.tipo || 'dia';
+            if (periodoSelect && periodoSelect.value !== tipoPeriodo) {
+                periodoSelect.value = tipoPeriodo;
+            }
+
+            const atualizarCampo = (id, valor) => {
+                const elemento = document.getElementById(id);
+                if (elemento && elemento.value !== (valor || '')) {
+                    elemento.value = valor || '';
+                }
+            };
+
+            atualizarCampo('medicos-periodo-dia', periodo.dia);
+            atualizarCampo('medicos-periodo-semana', periodo.semana);
+            atualizarCampo('medicos-periodo-mes', periodo.mes);
+            atualizarCampo('medicos-periodo-ano', periodo.ano);
+            atualizarCampo('medicos-periodo-inicio', periodo.inicio);
+            atualizarCampo('medicos-periodo-fim', periodo.fim);
+
+            atualizarMedicosPeriodoUI();
         }
 
         function atualizarResumoMedicosCards(medicosFiltrados) {
@@ -9810,7 +10139,9 @@
         }
 
         function recalcularAcompanhamentoMedicos() {
-            estado.medicosResumo = calcularResumoMedicos(estado.agendamentos || []);
+            const agendamentosFiltrados = filtrarAgendamentosPorPeriodoMedicos(estado.agendamentos || []);
+            estado.medicosResumo = calcularResumoMedicos(agendamentosFiltrados);
+            atualizarMedicosPeriodoAnos();
             atualizarAcompanhamentoMedicosFiltros();
             sincronizarFiltrosMedicos();
             renderAcompanhamentoMedicos();
@@ -10539,7 +10870,6 @@
                 return;
             }
             tbody.innerHTML = '';
-            setSalaMesLoading(false);
             let dadosNormalizados = dados;
             if (typeof dados === 'string') {
                 try {
@@ -10548,6 +10878,7 @@
                     console.error('Erro ao interpretar resposta do sala/mês:', error, dados);
                     mostrarSalaMesStatus('Não foi possível interpretar a resposta recebida.', 'erro');
                     tbody.innerHTML = '<tr><td colspan="2">Erro ao ler dados retornados.</td></tr>';
+                    setSalaMesLoading(false);
                     return;
                 }
             }
@@ -10557,11 +10888,13 @@
             if (!Array.isArray(dadosNormalizados)) {
                 tbody.innerHTML = '<tr><td colspan="2">Erro ao carregar agendamentos.</td></tr>';
                 mostrarSalaMesStatus('Não foi possível carregar os agendamentos da sala.', 'erro');
+                setSalaMesLoading(false);
                 return;
             }
             if (dadosNormalizados.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="2">Nenhum agendamento neste mês</td></tr>';
                 mostrarSalaMesStatus('Nenhum agendamento encontrado no período selecionado.', 'info');
+                setSalaMesLoading(false);
                 return;
             }
             const diasComEventos = dadosNormalizados.filter(item => Array.isArray(item.eventos) && item.eventos.length > 0).length;
@@ -10569,14 +10902,16 @@
                 ? `${diasComEventos} dia${diasComEventos === 1 ? '' : 's'} com agendamentos encontrados.`
                 : 'Nenhum dia possui agendamentos registrados neste mês.';
             mostrarSalaMesStatus(mensagemResumo, diasComEventos > 0 ? 'sucesso' : 'info');
-            dadosNormalizados.forEach(item => {
+            const total = dadosNormalizados.length;
+
+            const criarLinha = item => {
                 const tr = document.createElement('tr');
                 const tdData = document.createElement('td');
                 tdData.textContent = item.data || '-';
 
                 const tdEventos = document.createElement('td');
                 const eventos = Array.isArray(item.eventos) ? item.eventos : [];
-                if (eventos.length === 0) {
+                if (!eventos.length) {
                     const horarios = Array.isArray(item.horarios) ? item.horarios.filter(Boolean) : [];
                     if (horarios.length) {
                         const listaResumo = document.createElement('ul');
@@ -10614,8 +10949,53 @@
 
                 tr.appendChild(tdData);
                 tr.appendChild(tdEventos);
-                tbody.appendChild(tr);
-            });
+                return tr;
+            };
+
+            const scheduler = callback => {
+                if (typeof window === 'undefined') {
+                    setTimeout(() => callback({ timeRemaining: () => 0, didTimeout: true }), 16);
+                    return;
+                }
+                if (typeof window.requestIdleCallback === 'function') {
+                    window.requestIdleCallback(callback, { timeout: 120 });
+                } else if (typeof window.requestAnimationFrame === 'function') {
+                    window.requestAnimationFrame(() => callback({ timeRemaining: () => 0, didTimeout: true }));
+                } else {
+                    setTimeout(() => callback({ timeRemaining: () => 0, didTimeout: true }), 16);
+                }
+            };
+
+            const getNow = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
+            let indiceAtual = 0;
+
+            const processarLote = deadline => {
+                const fragmento = document.createDocumentFragment();
+                const inicio = getNow();
+                const tempoMaximo = 14;
+                while (indiceAtual < total) {
+                    fragmento.appendChild(criarLinha(dadosNormalizados[indiceAtual]));
+                    indiceAtual++;
+
+                    if (deadline && typeof deadline.timeRemaining === 'function') {
+                        if (deadline.timeRemaining() <= 4 && !deadline.didTimeout) break;
+                    } else if (getNow() - inicio > tempoMaximo) {
+                        break;
+                    }
+                }
+
+                if (fragmento.childNodes.length) {
+                    tbody.appendChild(fragmento);
+                }
+
+                if (indiceAtual < total) {
+                    scheduler(processarLote);
+                } else {
+                    setSalaMesLoading(false);
+                }
+            };
+
+            scheduler(processarLote);
         }
 
     </script>
