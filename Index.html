@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Agendamento - Salas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       :root {
-          --font-family: 'Inter', 'Segoe UI', sans-serif;
+          --font-family: 'Public Sans', 'Inter', 'Segoe UI', sans-serif;
           --bg-body: #0f172a;
           --bg-gradient: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.22), transparent 55%),
               radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.18), transparent 60%),
@@ -103,28 +104,18 @@
       }
 
       button::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 14px;
-          height: 14px;
-          pointer-events: none;
-          background: radial-gradient(circle, rgba(122, 141, 255, 0.4) 0%, rgba(122, 141, 255, 0) 70%);
-          transform: translate(-50%, -50%) scale(0);
-          opacity: 0;
-          transition: transform 0.35s ease, opacity 0.35s ease;
+          display: none;
       }
 
       button:active {
-          transform: scale(0.97);
-          box-shadow: 0 14px 28px rgba(90, 115, 255, 0.32);
-          filter: brightness(1.05);
+          transform: translateY(1px);
+          box-shadow: none;
+          filter: none;
       }
 
       button:active::after {
-          transform: translate(-50%, -50%) scale(12);
-          opacity: 0.55;
+          transform: none;
+          opacity: 0;
       }
 
       button.is-processing {
@@ -249,6 +240,7 @@
           color: var(--text-secondary);
           cursor: pointer;
           transition: var(--transition-fast);
+          line-height: 1;
       }
 
       .theme-toggle:hover,
@@ -259,7 +251,11 @@
       }
 
       .theme-toggle i {
-          font-size: 1.1rem;
+          font-size: 1.2rem;
+          line-height: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
       }
 
       .date-controls {
@@ -301,6 +297,21 @@
 
       .date-controls input[type="date"]::-webkit-calendar-picker-indicator {
           filter: invert(1);
+          opacity: 0.85;
+      }
+
+      body.light-theme .date-controls input[type="date"]::-webkit-calendar-picker-indicator {
+          filter: invert(0);
+      }
+
+      input[type="date"]::-webkit-calendar-picker-indicator,
+      input[type="time"]::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+      }
+
+      body.light-theme input[type="date"]::-webkit-calendar-picker-indicator,
+      body.light-theme input[type="time"]::-webkit-calendar-picker-indicator {
+          filter: invert(0);
       }
 
       #current-date {
@@ -1100,7 +1111,7 @@
       .monitor {
           display: flex;
           gap: 18px;
-          justify-content: space-between;
+          justify-content: flex-start;
           align-items: stretch;
           min-height: 65vh;
           height: 100%;
@@ -1109,7 +1120,8 @@
       }
 
       .monitor > .bloco {
-          flex: 1;
+          flex: 0 0 clamp(280px, 26vw, 340px);
+          max-width: clamp(280px, 32vw, 380px);
           display: flex;
           flex-direction: column;
           min-width: 0;
@@ -1136,6 +1148,7 @@
 
           .monitor > .bloco {
               flex: 1 1 260px;
+              max-width: none;
           }
       }
 
@@ -1739,11 +1752,7 @@
           background: #fff;
       }
 
-      body.light-theme .login-brand h1 {
-          color: var(--text-secondary);
-      }
-
-      body.light-theme .login-brand p {
+      body.light-theme .login-subtitle {
           color: var(--text-muted);
       }
 
@@ -2247,11 +2256,10 @@
       .dashboard-periodo-detalhes {
           display: none;
           flex: 1 1 auto;
-          justify-content: flex-end;
+          justify-content: flex-start;
           gap: 12px;
           align-items: flex-end;
           flex-wrap: wrap;
-          margin-left: auto;
       }
 
       .dashboard-periodo-detalhes.active {
@@ -2272,6 +2280,27 @@
 
       #dashboard-section .dashboard-controls {
           align-items: center;
+      }
+
+      #dashboard-section > h2 {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          font-size: 1.75rem;
+          font-weight: 700;
+          letter-spacing: 0.01em;
+          color: var(--text-primary);
+          margin: 0 0 20px;
+      }
+
+      #dashboard-section > h2::before {
+          content: '';
+          width: 36px;
+          height: 4px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, var(--primary), var(--info));
+          box-shadow: 0 6px 18px rgba(122, 141, 255, 0.35);
+          flex-shrink: 0;
       }
 
       #dashboard-section .dashboard-controls > #dashboard-periodo {
@@ -2878,39 +2907,47 @@
 
       .login-form h2 {
           margin: 0;
-          font-size: 1rem;
-          font-weight: 600;
+          font-size: 1.1rem;
+          font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
-          color: rgba(255, 255, 255, 0.65);
+          letter-spacing: 0.14em;
+          color: rgba(255, 255, 255, 0.72);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          align-self: center;
+          gap: 10px;
+      }
+
+      .login-form h2 i {
+          color: var(--primary);
       }
 
       .login-brand {
           display: flex;
+          flex-direction: column;
           align-items: center;
-          gap: 16px;
+          gap: 18px;
+          text-align: center;
       }
 
       .login-brand img {
-          width: 200px;
-          height: 70px;
-          object-fit: cover;
+          width: 210px;
+          height: 78px;
+          object-fit: contain;
           border-radius: 18px;
           box-shadow: 0 14px 32px rgba(14, 165, 233, 0.25);
           border: 1px solid rgba(148, 163, 184, 0.25);
           background: rgba(15, 23, 42, 0.4);
+          padding: 6px 10px;
       }
 
-      .login-brand h1 {
+      .login-subtitle {
           margin: 0;
-          font-size: 1.45rem;
-          color: #f8fafc;
-      }
-
-      .login-brand p {
-          margin: 4px 0 0;
-          color: rgba(226, 232, 240, 0.75);
-          font-size: 0.92rem;
+          color: rgba(226, 232, 240, 0.8);
+          font-size: 0.95rem;
+          font-weight: 500;
+          letter-spacing: 0.01em;
       }
 
       .login-group {
@@ -2944,9 +2981,10 @@
       }
 
       .login-divider {
-          height: 1px;
-          background: rgba(148, 163, 184, 0.25);
-          margin: 4px 0;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(94, 129, 255, 0.65), transparent);
+          margin: 8px 0 4px;
+          border-radius: 999px;
       }
 
       .drawer-backdrop {
@@ -3163,10 +3201,7 @@
             <h2><i class="fas fa-lock"></i> Acesso restrito</h2>
             <div class="login-brand">
                 <img src="https://i.ibb.co/hxbRMNvV/logo-HUC.jpg" alt="Hospital de Referência">
-                <div>
-                    <h1>Hospital César Cals</h1>
-                    <p>Portal institucional de agendamento SUS</p>
-                </div>
+                <p class="login-subtitle">Portal institucional de agendamento SUS</p>
             </div>
             <div class="login-divider"></div>
             <div class="alert alert-error" id="login-alert" style="display: none;">
@@ -5145,6 +5180,30 @@
                 }
             };
 
+            const definirDataAtual = novaData => {
+                estado.dataAtual = novaData;
+                if (estado.acompanhamentoMedicos?.periodo?.tipo === 'dia') {
+                    estado.acompanhamentoMedicos.periodo.dia = novaData.toISOString().split('T')[0];
+                }
+                atualizarVisualData();
+                carregarDados();
+            };
+
+            const ehFinalDeSemana = data => {
+                if (!(data instanceof Date)) return false;
+                const dia = data.getDay();
+                return dia === 0 || dia === 6;
+            };
+
+            const calcularDiaUtil = (referencia, direcao) => {
+                const novaData = new Date(referencia.getTime());
+                novaData.setDate(novaData.getDate() + direcao);
+                while (ehFinalDeSemana(novaData)) {
+                    novaData.setDate(novaData.getDate() + direcao);
+                }
+                return novaData;
+            };
+
             atualizarVisualData();
 
             const prevBtn = document.getElementById('prev-date');
@@ -5152,23 +5211,15 @@
 
             if (prevBtn) {
                 prevBtn.addEventListener('click', function() {
-                    estado.dataAtual.setDate(estado.dataAtual.getDate() - 1);
-                    if (estado.acompanhamentoMedicos?.periodo?.tipo === 'dia') {
-                        estado.acompanhamentoMedicos.periodo.dia = estado.dataAtual.toISOString().split('T')[0];
-                    }
-                    atualizarVisualData();
-                    carregarDados();
+                    const novaData = calcularDiaUtil(estado.dataAtual, -1);
+                    definirDataAtual(novaData);
                 });
             }
 
             if (nextBtn) {
                 nextBtn.addEventListener('click', function() {
-                    estado.dataAtual.setDate(estado.dataAtual.getDate() + 1);
-                    if (estado.acompanhamentoMedicos?.periodo?.tipo === 'dia') {
-                        estado.acompanhamentoMedicos.periodo.dia = estado.dataAtual.toISOString().split('T')[0];
-                    }
-                    atualizarVisualData();
-                    carregarDados();
+                    const novaData = calcularDiaUtil(estado.dataAtual, 1);
+                    definirDataAtual(novaData);
                 });
             }
 
@@ -5177,12 +5228,7 @@
                     if (!datePicker.value) return;
                     const novaData = new Date(`${datePicker.value}T00:00:00`);
                     if (!isNaN(novaData.getTime())) {
-                        estado.dataAtual = novaData;
-                        if (estado.acompanhamentoMedicos?.periodo?.tipo === 'dia') {
-                            estado.acompanhamentoMedicos.periodo.dia = novaData.toISOString().split('T')[0];
-                        }
-                        atualizarVisualData();
-                        carregarDados();
+                        definirDataAtual(novaData);
                     }
                 });
             }
@@ -5598,6 +5644,11 @@
             }
         }
 
+        function corrigirOrtografiaProfissionais(texto) {
+            if (typeof texto !== 'string') return texto;
+            return texto.replace(/profissionals/gi, 'profissionais').replace(/professionals/gi, 'profissionais');
+        }
+
         function atualizarReportMultiselect(selectId, opcoes) {
             const select = document.getElementById(selectId);
             const container = document.querySelector(`.report-multiselect[data-select-id="${selectId}"]`);
@@ -5605,7 +5656,7 @@
                 return;
             }
 
-            const placeholder = container.dataset.placeholder || 'Selecionar';
+            const placeholder = corrigirOrtografiaProfissionais(container.dataset.placeholder || 'Selecionar');
             const button = container.querySelector('.report-multiselect-btn');
             const panel = container.querySelector('.report-multiselect-panel');
             const optionsWrapper = container.querySelector('.report-multiselect-options');
@@ -5617,10 +5668,12 @@
                 if (selecionados.length === 0) {
                     button.textContent = placeholder;
                 } else if (selecionados.length === 1) {
-                    const item = opcoes.find(opcao => opcao.value === selecionados[0]);
-                    button.textContent = item ? item.label : `${selecionados.length} selecionado`;
+                    const item = Array.isArray(opcoes)
+                        ? opcoes.find(opcao => opcao.value === selecionados[0])
+                        : null;
+                    button.textContent = corrigirOrtografiaProfissionais(item ? item.label : `${selecionados.length} selecionado`);
                 } else {
-                    button.textContent = `${selecionados.length} selecionados`;
+                    button.textContent = corrigirOrtografiaProfissionais(`${selecionados.length} selecionados`);
                 }
             };
 
@@ -5640,7 +5693,7 @@
                     input.id = checkboxId;
                     input.checked = Array.from(select.options).some(opt => opt.value === value && opt.selected);
                     const texto = document.createElement('span');
-                    texto.textContent = label;
+                    texto.textContent = corrigirOrtografiaProfissionais(label);
                     linha.appendChild(input);
                     linha.appendChild(texto);
                     optionsWrapper.appendChild(linha);
@@ -5706,7 +5759,7 @@
             (valores || []).forEach(({ value, label }) => {
                 const option = document.createElement('option');
                 option.value = value;
-                option.textContent = label;
+                option.textContent = corrigirOrtografiaProfissionais(label);
                 if (selecionados.has(value)) {
                     option.selected = true;
                 }
@@ -9502,6 +9555,10 @@
             const configClonada = clonarConfigChart(chartOrigem);
             if (!configClonada) return;
 
+            if (configClonada?.options?.plugins?.percentagePlugin) {
+                configClonada.options.plugins.percentagePlugin.enabled = true;
+            }
+
             const tituloOrigem = canvasOrigem.closest('.chart-container')?.querySelector('.chart-header h3');
             if (modalTitulo && tituloOrigem) {
                 modalTitulo.innerHTML = `<i class="fas fa-chart-bar"></i> ${tituloOrigem.textContent.trim()}`;
@@ -10462,7 +10519,7 @@
                         legend: { display: false },
                         tooltip: tooltipEspecialidade,
                         percentagePlugin: {
-                            enabled: true,
+                            enabled: false,
                             color: legendColor,
                             fontSize: 11,
                             fontWeight: '600',
