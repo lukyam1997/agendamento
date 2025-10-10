@@ -461,6 +461,12 @@
           border: 1px solid transparent;
       }
 
+      .btn-tertiary {
+          background: transparent;
+          color: var(--text-secondary);
+          border: 1px solid var(--border-soft);
+      }
+
       .btn-success {
           background: var(--success);
           color: #052e16;
@@ -488,6 +494,15 @@
       body.light-theme .btn-secondary:hover {
           background: rgba(79, 70, 229, 0.2);
           color: var(--primary-strong);
+      }
+
+      body.light-theme .btn-tertiary {
+          border-color: rgba(15, 23, 42, 0.1);
+          color: var(--text-secondary);
+      }
+
+      body.light-theme .btn-tertiary:hover {
+          background: rgba(15, 23, 42, 0.08);
       }
 
       .main-nav {
@@ -2418,6 +2433,132 @@
           padding: 10px 12px;
       }
 
+      .comparison-toggle-group {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+      }
+
+      .comparison-panel {
+          display: none;
+          flex-wrap: wrap;
+          gap: 16px;
+          padding: 16px;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-filter-panel);
+          margin-bottom: 18px;
+      }
+
+      .comparison-panel.active {
+          display: flex;
+      }
+
+      .comparison-panel .comparison-field {
+          flex: 1 1 200px;
+          min-width: 180px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+      }
+
+      .comparison-panel .comparison-field label {
+          font-weight: 600;
+          color: var(--text-secondary);
+      }
+
+      .comparison-panel .comparison-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          align-items: flex-end;
+      }
+
+      .comparison-banner {
+          display: none;
+          flex-direction: column;
+          gap: 14px;
+          background: var(--surface-subtle);
+          border: 1px solid var(--border-soft);
+          border-radius: var(--radius-md);
+          padding: 16px;
+          margin: 18px 0 10px;
+      }
+
+      .comparison-banner.active {
+          display: flex;
+      }
+
+      .comparison-header {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-between;
+          gap: 10px;
+          align-items: center;
+      }
+
+      .comparison-header strong {
+          color: var(--text-secondary);
+      }
+
+      .comparison-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 12px;
+      }
+
+      .comparison-card {
+          background: var(--surface-elevated);
+          border: 1px solid var(--border-soft);
+          border-radius: var(--radius-sm);
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+      }
+
+      .comparison-label {
+          font-size: 0.85rem;
+          color: var(--text-muted);
+      }
+
+      .comparison-value {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+      }
+
+      .comparison-diff {
+          font-size: 0.85rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+      }
+
+      .comparison-diff.up {
+          color: var(--success);
+      }
+
+      .comparison-diff.down {
+          color: var(--danger);
+      }
+
+      .comparison-diff.neutral {
+          color: var(--text-muted);
+      }
+
+      .chart-note {
+          margin-top: 10px;
+          font-size: 0.85rem;
+          color: var(--warning);
+          display: none;
+      }
+
+      .chart-note.active {
+          display: block;
+      }
+
       .dashboard-day-selector {
           width: 100%;
           display: none;
@@ -3762,9 +3903,80 @@
                                 <select id="dashboard-periodo-anos" multiple class="sr-only-input"></select>
                             </div>
                         </div>
-                        <button class="icon-button icon-only" id="btn-atualizar-dashboard" type="button" aria-label="Atualizar indicadores do dashboard">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                        <div class="comparison-toggle-group">
+                            <button class="btn btn-secondary" type="button" id="btn-dashboard-comparar">
+                                <i class="fas fa-arrow-right-arrow-left"></i>
+                                <span>Comparar</span>
+                            </button>
+                            <button class="btn btn-tertiary" type="button" id="btn-dashboard-pdf">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>Exportar PDF</span>
+                            </button>
+                            <button class="icon-button icon-only" id="btn-atualizar-dashboard" type="button" aria-label="Atualizar indicadores do dashboard">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="comparison-panel" id="dashboard-comparar-panel">
+                        <div class="comparison-field">
+                            <label for="dashboard-comparar-tipo">Tipo de período</label>
+                            <select id="dashboard-comparar-tipo">
+                                <option value="">Selecione</option>
+                                <option value="dia">Dia específico</option>
+                                <option value="intervalo">Intervalo de datas</option>
+                                <option value="mes">Mês(es)</option>
+                                <option value="ano">Ano(s)</option>
+                            </select>
+                        </div>
+                        <div class="comparison-field" data-comparar="dia">
+                            <label for="dashboard-comparar-dia">Dia para comparação</label>
+                            <input type="date" id="dashboard-comparar-dia">
+                        </div>
+                        <div class="comparison-field" data-comparar="intervalo">
+                            <label>Intervalo</label>
+                            <div class="dashboard-day-range-fields">
+                                <label class="dashboard-day-range-label" for="dashboard-comparar-inicio">
+                                    <span>Início</span>
+                                    <input type="date" id="dashboard-comparar-inicio">
+                                </label>
+                                <label class="dashboard-day-range-label" for="dashboard-comparar-fim">
+                                    <span>Fim</span>
+                                    <input type="date" id="dashboard-comparar-fim">
+                                </label>
+                            </div>
+                        </div>
+                        <div class="comparison-field" data-comparar="mes">
+                            <label for="dashboard-comparar-meses">Meses para comparação</label>
+                            <div class="report-multiselect" data-select-id="dashboard-comparar-meses" data-placeholder="Selecionar meses">
+                                <button type="button" class="report-multiselect-btn">Selecionar meses</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="dashboard-comparar-meses" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="comparison-field" data-comparar="ano">
+                            <label for="dashboard-comparar-anos">Anos para comparação</label>
+                            <div class="report-multiselect" data-select-id="dashboard-comparar-anos" data-placeholder="Selecionar anos">
+                                <button type="button" class="report-multiselect-btn">Selecionar anos</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="dashboard-comparar-anos" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="comparison-actions">
+                            <button class="btn btn-secondary" type="button" id="dashboard-comparar-aplicar">Aplicar comparação</button>
+                            <button class="btn btn-tertiary" type="button" id="dashboard-comparar-limpar">Remover comparação</button>
+                        </div>
                     </div>
                     <div class="dashboard-day-selector" id="dashboard-dia-especifico-container">
                         <div class="dashboard-day-mode">
@@ -3939,6 +4151,37 @@
                             <span class="resumo-valor" id="dashboard-resumo-salas-consideradas">0</span>
                         </div>
                     </div>
+                    <div class="comparison-banner" id="dashboard-comparativo-resumo">
+                        <div class="comparison-header">
+                            <div>
+                                <strong>Comparação ativa:</strong>
+                                <span id="dashboard-comparativo-periodo"></span>
+                            </div>
+                            <div class="comparison-actions">
+                                <button class="btn btn-tertiary" type="button" id="dashboard-comparativo-remover">
+                                    <i class="fas fa-xmark"></i>
+                                    <span>Encerrar comparação</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="comparison-grid">
+                            <div class="comparison-card">
+                                <span class="comparison-label">Total de agendamentos</span>
+                                <span class="comparison-value" id="dashboard-comparativo-total"></span>
+                                <span class="comparison-diff" id="dashboard-comparativo-total-diff"></span>
+                            </div>
+                            <div class="comparison-card">
+                                <span class="comparison-label">Ocupação média</span>
+                                <span class="comparison-value" id="dashboard-comparativo-ocupacao"></span>
+                                <span class="comparison-diff" id="dashboard-comparativo-ocupacao-diff"></span>
+                            </div>
+                            <div class="comparison-card">
+                                <span class="comparison-label">Aproveitamento médio</span>
+                                <span class="comparison-value" id="dashboard-comparativo-aproveitamento"></span>
+                                <span class="comparison-diff" id="dashboard-comparativo-aproveitamento-diff"></span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="dashboard-grid">
                         <div class="chart-container">
                             <div class="chart-header">
@@ -3966,6 +4209,7 @@
                                 </button>
                             </div>
                             <canvas id="chart-evolucao"></canvas>
+                            <div class="chart-note" id="chart-evolucao-nota"></div>
                         </div>
                         <div class="chart-container">
                             <div class="chart-header">
@@ -4003,6 +4247,77 @@
                         <input type="date" id="relatorio-data-inicio">
                         <input type="date" id="relatorio-data-fim">
                         <button class="btn btn-primary" id="btn-gerar-relatorio">Gerar</button>
+                        <div class="comparison-toggle-group">
+                            <button class="btn btn-secondary" type="button" id="btn-relatorio-comparar">
+                                <i class="fas fa-arrow-right-arrow-left"></i>
+                                <span>Comparar</span>
+                            </button>
+                            <button class="btn btn-tertiary" type="button" id="btn-relatorio-pdf">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>Exportar PDF</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="comparison-panel" id="relatorio-comparar-panel">
+                        <div class="comparison-field">
+                            <label for="relatorio-comparar-tipo">Tipo de período</label>
+                            <select id="relatorio-comparar-tipo">
+                                <option value="">Selecione</option>
+                                <option value="dia">Dia específico</option>
+                                <option value="intervalo">Intervalo de datas</option>
+                                <option value="mes">Mês(es)</option>
+                                <option value="ano">Ano(s)</option>
+                            </select>
+                        </div>
+                        <div class="comparison-field" data-comparar="dia">
+                            <label for="relatorio-comparar-dia">Dia para comparação</label>
+                            <input type="date" id="relatorio-comparar-dia">
+                        </div>
+                        <div class="comparison-field" data-comparar="intervalo">
+                            <label>Intervalo</label>
+                            <div class="dashboard-day-range-fields">
+                                <label class="dashboard-day-range-label" for="relatorio-comparar-inicio">
+                                    <span>Início</span>
+                                    <input type="date" id="relatorio-comparar-inicio">
+                                </label>
+                                <label class="dashboard-day-range-label" for="relatorio-comparar-fim">
+                                    <span>Fim</span>
+                                    <input type="date" id="relatorio-comparar-fim">
+                                </label>
+                            </div>
+                        </div>
+                        <div class="comparison-field" data-comparar="mes">
+                            <label for="relatorio-comparar-meses">Meses para comparação</label>
+                            <div class="report-multiselect" data-select-id="relatorio-comparar-meses" data-placeholder="Selecionar meses">
+                                <button type="button" class="report-multiselect-btn">Selecionar meses</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="relatorio-comparar-meses" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="comparison-field" data-comparar="ano">
+                            <label for="relatorio-comparar-anos">Anos para comparação</label>
+                            <div class="report-multiselect" data-select-id="relatorio-comparar-anos" data-placeholder="Selecionar anos">
+                                <button type="button" class="report-multiselect-btn">Selecionar anos</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="relatorio-comparar-anos" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="comparison-actions">
+                            <button class="btn btn-secondary" type="button" id="relatorio-comparar-aplicar">Aplicar comparação</button>
+                            <button class="btn btn-tertiary" type="button" id="relatorio-comparar-limpar">Remover comparação</button>
+                        </div>
                     </div>
                     <div class="filter-toggle-bar">
                         <button type="button" class="filter-toggle-btn" data-filter-toggle="relatorio-filtros" data-expanded-text="Ocultar filtros" data-collapsed-text="Mostrar filtros" aria-expanded="true" aria-controls="relatorio-filtros">
@@ -4154,6 +4469,37 @@
                         <div class="resumo-card">
                             <span class="resumo-label">Salas consideradas</span>
                             <span class="resumo-valor" id="relatorio-resumo-salas-consideradas">0</span>
+                        </div>
+                    </div>
+                    <div class="comparison-banner" id="relatorio-comparativo-resumo">
+                        <div class="comparison-header">
+                            <div>
+                                <strong>Comparação ativa:</strong>
+                                <span id="relatorio-comparativo-periodo"></span>
+                            </div>
+                            <div class="comparison-actions">
+                                <button class="btn btn-tertiary" type="button" id="relatorio-comparativo-remover">
+                                    <i class="fas fa-xmark"></i>
+                                    <span>Encerrar comparação</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="comparison-grid">
+                            <div class="comparison-card">
+                                <span class="comparison-label">Total de agendamentos</span>
+                                <span class="comparison-value" id="relatorio-comparativo-total"></span>
+                                <span class="comparison-diff" id="relatorio-comparativo-total-diff"></span>
+                            </div>
+                            <div class="comparison-card">
+                                <span class="comparison-label">Ocupação média</span>
+                                <span class="comparison-value" id="relatorio-comparativo-ocupacao"></span>
+                                <span class="comparison-diff" id="relatorio-comparativo-ocupacao-diff"></span>
+                            </div>
+                            <div class="comparison-card">
+                                <span class="comparison-label">Aproveitamento médio</span>
+                                <span class="comparison-value" id="relatorio-comparativo-aproveitamento"></span>
+                                <span class="comparison-diff" id="relatorio-comparativo-aproveitamento-diff"></span>
+                            </div>
                         </div>
                     </div>
                     <div class="table-card">
@@ -4847,6 +5193,10 @@
             dashboardDiasEspecificos: [],
             dashboardIntervaloDias: { inicio: '', fim: '' },
             dashboardDados: null,
+            dashboardComparacaoAtiva: false,
+            dashboardComparativoConfig: null,
+            dashboardComparativoDados: null,
+            dashboardComparativoInfo: null,
             dashboardMesesSelecionados: [],
             dashboardSemanaMesesSelecionados: [],
             dashboardSemanasSelecionadas: [],
@@ -4867,7 +5217,13 @@
                     fim: ''
                 }
             },
-            temaAtual: 'dark'
+            temaAtual: 'dark',
+            relatorioComparacaoAtiva: false,
+            relatorioComparativoConfig: null,
+            relatorioComparativoDados: null,
+            relatorioComparativoInfo: null,
+            relatorioResumoAtual: null,
+            dashboardResumoAtual: null
         };
 
         // Cache local para dados por dia visando carregamentos mais ágeis
@@ -5157,7 +5513,7 @@
             localStorage.setItem('themePreference', normalizado);
 
             if (estado.dashboardDados) {
-                renderCharts(estado.dashboardDados);
+                renderCharts(estado.dashboardDados, estado.dashboardComparativoDados, estado.dashboardComparativoInfo);
             }
         }
 
@@ -6148,6 +6504,19 @@
             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
         ];
 
+        function formatarMesHumano(valor) {
+            if (typeof valor !== 'string' || valor.length < 7) {
+                return valor || '';
+            }
+            const [ano, mes] = valor.split('-');
+            if (!ano || !mes) {
+                return valor;
+            }
+            const indice = Math.max(Math.min(Number(mes) - 1, NOMES_MESES_PT.length - 1), 0);
+            const nome = NOMES_MESES_PT[indice] || `Mês ${mes}`;
+            return `${nome} ${ano}`;
+        }
+
         function obterMesAtualValor() {
             const base = estado.dataAtual instanceof Date ? new Date(estado.dataAtual) : new Date();
             const ano = base.getFullYear();
@@ -6248,6 +6617,10 @@
             definirRelatorioOpcoes('dashboard-periodo-semana-meses', meses);
             definirRelatorioOpcoes('dashboard-periodo-semanas', semanas);
             definirRelatorioOpcoes('dashboard-periodo-anos', anos);
+            definirRelatorioOpcoes('dashboard-comparar-meses', meses);
+            definirRelatorioOpcoes('dashboard-comparar-anos', anos);
+            definirRelatorioOpcoes('relatorio-comparar-meses', meses);
+            definirRelatorioOpcoes('relatorio-comparar-anos', anos);
 
             if (!Array.isArray(estado.dashboardMesesSelecionados) || !estado.dashboardMesesSelecionados.length) {
                 if (meses.length) {
@@ -6395,6 +6768,188 @@
 
             garantirPadroes(periodoSelect.value || 'dia');
             atualizarVisibilidade();
+        }
+
+        function atualizarCamposComparacaoPainel(painel, tipoSelecionado) {
+            if (!painel) return;
+            painel.querySelectorAll('[data-comparar]').forEach(campo => {
+                const tipos = (campo.dataset.comparar || '')
+                    .split(',')
+                    .map(item => item.trim())
+                    .filter(Boolean);
+                const visivel = tipoSelecionado && tipos.includes(tipoSelecionado);
+                campo.style.display = visivel ? 'flex' : 'none';
+            });
+        }
+
+        function coletarConfiguracaoComparacaoDashboard() {
+            const tipoSelect = document.getElementById('dashboard-comparar-tipo');
+            if (!tipoSelect) return null;
+            const tipo = tipoSelect.value;
+            if (!tipo) {
+                alert('Selecione o tipo de período para comparar.');
+                return null;
+            }
+
+            if (tipo === 'dia') {
+                const dia = document.getElementById('dashboard-comparar-dia')?.value;
+                if (!dia) {
+                    alert('Escolha o dia que deseja utilizar na comparação.');
+                    return null;
+                }
+                return { tipo: 'dia', dia, descricao: `Dia ${formatarDataCompleta(dia)}` };
+            }
+
+            if (tipo === 'intervalo') {
+                const inicio = document.getElementById('dashboard-comparar-inicio')?.value;
+                const fim = document.getElementById('dashboard-comparar-fim')?.value;
+                if (!inicio || !fim) {
+                    alert('Informe as datas inicial e final para comparar.');
+                    return null;
+                }
+                if (inicio > fim) {
+                    alert('No comparativo do dashboard a data inicial não pode ser maior que a final.');
+                    return null;
+                }
+                return {
+                    tipo: 'intervalo',
+                    inicio,
+                    fim,
+                    descricao: `De ${formatarDataCompleta(inicio)} até ${formatarDataCompleta(fim)}`
+                };
+            }
+
+            if (tipo === 'mes') {
+                const meses = obterValoresMultiplo('dashboard-comparar-meses');
+                if (!meses.length) {
+                    alert('Selecione ao menos um mês para comparar.');
+                    return null;
+                }
+                const descricao = meses.map(formatarMesHumano).join(', ');
+                return { tipo: 'mes', meses, descricao: `Meses: ${descricao}` };
+            }
+
+            if (tipo === 'ano') {
+                const anos = obterValoresMultiplo('dashboard-comparar-anos');
+                if (!anos.length) {
+                    alert('Selecione ao menos um ano para comparar.');
+                    return null;
+                }
+                return { tipo: 'ano', anos, descricao: `Ano(s): ${anos.join(', ')}` };
+            }
+
+            alert('Tipo de comparação do dashboard não reconhecido.');
+            return null;
+        }
+
+        function obterDashboardComparativoPayload(filtrosBase) {
+            if (!estado.dashboardComparacaoAtiva || !estado.dashboardComparativoConfig) {
+                return null;
+            }
+            const config = estado.dashboardComparativoConfig;
+            const filtros = JSON.parse(JSON.stringify(filtrosBase || {}));
+            filtros.diasEspecificos = [];
+            filtros.intervaloDias = null;
+            filtros.meses = [];
+            filtros.semanas = [];
+            filtros.anos = [];
+
+            let periodo = 'dia';
+            if (config.tipo === 'dia') {
+                filtros.diasEspecificos = [config.dia];
+                periodo = 'dia';
+            } else if (config.tipo === 'intervalo') {
+                filtros.intervaloDias = { inicio: config.inicio, fim: config.fim };
+                periodo = 'dia';
+            } else if (config.tipo === 'mes') {
+                filtros.meses = Array.isArray(config.meses) ? [...config.meses] : [];
+                periodo = 'mes';
+            } else if (config.tipo === 'ano') {
+                filtros.anos = Array.isArray(config.anos) ? config.anos.map(ano => parseInt(ano, 10)).filter(Number.isFinite) : [];
+                periodo = 'ano';
+            }
+
+            return {
+                periodo,
+                filtros,
+                descricao: config.descricao || ''
+            };
+        }
+
+        function removerDashboardComparacao({ recarregar = true } = {}) {
+            estado.dashboardComparacaoAtiva = false;
+            estado.dashboardComparativoConfig = null;
+            estado.dashboardComparativoDados = null;
+            estado.dashboardComparativoInfo = null;
+            const banner = document.getElementById('dashboard-comparativo-resumo');
+            if (banner) {
+                banner.classList.remove('active');
+            }
+            if (recarregar) {
+                carregarDashboard();
+            } else {
+                atualizarDashboardComparativoResumo(null, null);
+            }
+        }
+
+        function inicializarDashboardComparacaoUI() {
+            const painel = document.getElementById('dashboard-comparar-panel');
+            const tipoSelect = document.getElementById('dashboard-comparar-tipo');
+            const botaoToggle = document.getElementById('btn-dashboard-comparar');
+            const botaoAplicar = document.getElementById('dashboard-comparar-aplicar');
+            const botaoLimpar = document.getElementById('dashboard-comparar-limpar');
+            const botaoRemover = document.getElementById('dashboard-comparativo-remover');
+            if (!painel || !tipoSelect || !botaoToggle) {
+                return;
+            }
+
+            const atualizarCampos = () => {
+                atualizarCamposComparacaoPainel(painel, tipoSelect.value);
+            };
+
+            botaoToggle.addEventListener('click', () => {
+                painel.classList.toggle('active');
+            });
+
+            tipoSelect.addEventListener('change', atualizarCampos);
+            atualizarCampos();
+
+            if (botaoAplicar) {
+                botaoAplicar.addEventListener('click', () => {
+                    const config = coletarConfiguracaoComparacaoDashboard();
+                    if (!config) return;
+                    estado.dashboardComparacaoAtiva = true;
+                    estado.dashboardComparativoConfig = config;
+                    estado.dashboardComparativoInfo = { descricao: config.descricao };
+                    painel.classList.remove('active');
+                    carregarDashboard();
+                });
+            }
+
+            const limparInterface = () => {
+                tipoSelect.value = '';
+                painel.querySelectorAll('input[type="date"]').forEach(input => { input.value = ''; });
+                painel.querySelectorAll('select[multiple]').forEach(select => {
+                    Array.from(select.options).forEach(option => { option.selected = false; });
+                    atualizarReportMultiselect(select.id, Array.from(select.options).map(option => ({ value: option.value, label: option.textContent })));
+                });
+                atualizarCampos();
+            };
+
+            if (botaoLimpar) {
+                botaoLimpar.addEventListener('click', () => {
+                    limparInterface();
+                    removerDashboardComparacao({ recarregar: true });
+                    painel.classList.remove('active');
+                });
+            }
+
+            if (botaoRemover) {
+                botaoRemover.addEventListener('click', () => {
+                    limparInterface();
+                    removerDashboardComparacao({ recarregar: true });
+                });
+            }
         }
 
         function registrarEventosFiltrosEspecificos() {
@@ -6919,9 +7474,17 @@
 
             // Dashboard update
             document.getElementById('btn-atualizar-dashboard').addEventListener('click', carregarDashboard);
+            const btnDashboardPdf = document.getElementById('btn-dashboard-pdf');
+            if (btnDashboardPdf) {
+                btnDashboardPdf.addEventListener('click', exportarDashboardPdf);
+            }
 
             // Relatórios
             document.getElementById('btn-gerar-relatorio').addEventListener('click', gerarRelatorio);
+            const btnRelatorioPdf = document.getElementById('btn-relatorio-pdf');
+            if (btnRelatorioPdf) {
+                btnRelatorioPdf.addEventListener('click', exportarRelatorioPdf);
+            }
 
             // Sala/Mês
             document.getElementById('btn-atualizar-sala-mes').addEventListener('click', atualizarSalaMes);
@@ -6972,6 +7535,8 @@
 
             inicializarDashboardDiasEspecificos();
             inicializarDashboardPeriodoDetalhes();
+            inicializarDashboardComparacaoUI();
+            inicializarRelatorioComparacaoUI();
             inicializarExpansaoGraficos();
         }
 
@@ -9734,6 +10299,62 @@
             definirTexto('turnos', dados.turnosAtivos ?? 0);
         }
 
+        function atualizarDashboardComparativoResumo(resumoPrincipal, resumoComparativo) {
+            const banner = document.getElementById('dashboard-comparativo-resumo');
+            if (!banner) return;
+            const ativo = Boolean(estado.dashboardComparacaoAtiva && resumoComparativo && estado.dashboardComparativoInfo);
+            banner.classList.toggle('active', ativo);
+            if (!ativo) {
+                ['dashboard-comparativo-total', 'dashboard-comparativo-ocupacao', 'dashboard-comparativo-aproveitamento'].forEach(id => {
+                    const valorEl = document.getElementById(id);
+                    const diffEl = document.getElementById(`${id}-diff`);
+                    if (valorEl) valorEl.textContent = '--';
+                    if (diffEl) {
+                        diffEl.textContent = 'Sem dados de comparação';
+                        diffEl.className = 'comparison-diff neutral';
+                    }
+                });
+                return;
+            }
+
+            const descricao = estado.dashboardComparativoInfo?.descricao || resumoComparativo.periodoTexto || '-';
+            const descricaoEl = document.getElementById('dashboard-comparativo-periodo');
+            if (descricaoEl) descricaoEl.textContent = descricao;
+
+            const resumoAtual = resumoPrincipal || {};
+            atualizarMetricasComparacao('dashboard-comparativo-total', resumoAtual.totalAgendamentos, resumoComparativo.totalAgendamentos);
+            atualizarMetricasComparacao('dashboard-comparativo-ocupacao', resumoAtual.ocupacaoMedia, resumoComparativo.ocupacaoMedia, { percentual: true });
+            atualizarMetricasComparacao('dashboard-comparativo-aproveitamento', resumoAtual.taxaAproveitamento, resumoComparativo.taxaAproveitamento, { percentual: true });
+        }
+
+        function atualizarRelatorioComparativoResumo(resumoPrincipal, resumoComparativo) {
+            const banner = document.getElementById('relatorio-comparativo-resumo');
+            if (!banner) return;
+            const ativo = Boolean(estado.relatorioComparacaoAtiva && resumoComparativo && estado.relatorioComparativoInfo);
+            banner.classList.toggle('active', ativo);
+            if (!ativo) {
+                ['relatorio-comparativo-total', 'relatorio-comparativo-ocupacao', 'relatorio-comparativo-aproveitamento'].forEach(id => {
+                    const valorEl = document.getElementById(id);
+                    const diffEl = document.getElementById(`${id}-diff`);
+                    if (valorEl) valorEl.textContent = '--';
+                    if (diffEl) {
+                        diffEl.textContent = 'Sem dados de comparação';
+                        diffEl.className = 'comparison-diff neutral';
+                    }
+                });
+                return;
+            }
+
+            const descricao = estado.relatorioComparativoInfo?.descricao || resumoComparativo.periodoTexto || '-';
+            const descricaoEl = document.getElementById('relatorio-comparativo-periodo');
+            if (descricaoEl) descricaoEl.textContent = descricao;
+
+            const resumoAtual = resumoPrincipal || {};
+            atualizarMetricasComparacao('relatorio-comparativo-total', resumoAtual.totalAgendamentos, resumoComparativo.totalAgendamentos);
+            atualizarMetricasComparacao('relatorio-comparativo-ocupacao', resumoAtual.ocupacaoMedia, resumoComparativo.ocupacaoMedia, { percentual: true });
+            atualizarMetricasComparacao('relatorio-comparativo-aproveitamento', resumoAtual.taxaAproveitamento, resumoComparativo.taxaAproveitamento, { percentual: true });
+        }
+
         function formatarDataCurtaGrafico(isoDate) {
             if (!isoDate) return '';
             const partes = isoDate.split('-');
@@ -10056,6 +10677,97 @@
                 return `${Math.round(numero)}%`;
             }
             return `${numero.toFixed(casas)}%`;
+        }
+
+        function executarServidor(nomeFuncao, ...args) {
+            return new Promise((resolve, reject) => {
+                if (!google?.script?.run || typeof google.script.run[nomeFuncao] !== 'function') {
+                    reject(new Error('Serviço indisponível para executar "' + nomeFuncao + '".'));
+                    return;
+                }
+                try {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)[nomeFuncao](...args);
+                } catch (erro) {
+                    reject(erro);
+                }
+            });
+        }
+
+        function baixarArquivoBase64(retorno) {
+            if (!retorno || !retorno.base64) {
+                alert('Não foi possível gerar o arquivo solicitado.');
+                return;
+            }
+            const mimeType = retorno.mimeType || 'application/pdf';
+            const nome = retorno.filename || `relatorio-${Date.now()}.pdf`;
+            const link = document.createElement('a');
+            link.href = `data:${mimeType};base64,${retorno.base64}`;
+            link.download = nome;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function formatarDiferencaNumero(valor) {
+            const absoluto = Math.abs(valor);
+            return absoluto.toLocaleString('pt-BR');
+        }
+
+        function formatarDiferencaPercentual(valor) {
+            const absoluto = Math.abs(valor);
+            const inteiro = Math.round(absoluto * 10) / 10;
+            const texto = Number.isInteger(inteiro) ? inteiro.toFixed(0) : inteiro.toFixed(1);
+            return `${texto.replace('.', ',')} p.p.`;
+        }
+
+        function atualizarMetricasComparacao(prefixo, valorPrincipal, valorComparativo, { percentual = false } = {}) {
+            const valorEl = document.getElementById(`${prefixo}`);
+            const diffEl = document.getElementById(`${prefixo}-diff`);
+            if (!valorEl || !diffEl) {
+                return;
+            }
+
+            if (valorComparativo === undefined || valorComparativo === null || Number.isNaN(Number(valorComparativo))) {
+                valorEl.textContent = '--';
+                diffEl.textContent = 'Sem dados de comparação';
+                diffEl.className = 'comparison-diff neutral';
+                return;
+            }
+
+            if (percentual) {
+                valorEl.textContent = formatarPercentual(valorComparativo, 0);
+            } else {
+                valorEl.textContent = Number(valorComparativo).toLocaleString('pt-BR');
+            }
+
+            const principalNumero = Number(valorPrincipal) || 0;
+            const comparativoNumero = Number(valorComparativo) || 0;
+            const diferenca = principalNumero - comparativoNumero;
+
+            if (Math.abs(diferenca) < 0.0001) {
+                diffEl.textContent = '• Sem variação';
+                diffEl.className = 'comparison-diff neutral';
+                return;
+            }
+
+            const simbolo = diferenca > 0 ? '▲' : '▼';
+            const classe = diferenca > 0 ? 'comparison-diff up' : 'comparison-diff down';
+            const textoDiff = percentual
+                ? formatarDiferencaPercentual(diferenca)
+                : formatarDiferencaNumero(diferenca);
+            diffEl.textContent = `${simbolo} ${textoDiff}`;
+            diffEl.className = classe;
+        }
+
+        function formatarDataCompleta(isoDate) {
+            if (!isoDate) return '';
+            const data = new Date(`${isoDate}T00:00:00`);
+            if (Number.isNaN(data.getTime())) {
+                return isoDate;
+            }
+            return data.toLocaleDateString('pt-BR');
         }
 
         function calcularResumoMedicos(agendamentos) {
@@ -10466,7 +11178,7 @@
             renderAcompanhamentoMedicos();
         }
 
-        function carregarDashboard() {
+        async function carregarDashboard() {
             const periodoSelect = document.getElementById('dashboard-periodo');
             const periodo = periodoSelect ? periodoSelect.value : 'dia';
             const limparLista = lista => (lista || []).map(item => String(item || '').trim()).filter(Boolean);
@@ -10544,13 +11256,41 @@
 
             estado.filtrosDashboard = { ...filtrosDashboard };
 
-            google.script.run
-                .withSuccessHandler(renderCharts)
-                .withFailureHandler(error => console.error('Erro no dashboard:', error))
-                .getDadosAgregados(periodo, JSON.stringify(filtrosDashboard));
+            const comparativoPayload = obterDashboardComparativoPayload(filtrosDashboard);
+
+            try {
+                const principal = await executarServidor('getDadosAgregados', periodo, JSON.stringify(filtrosDashboard));
+                let dadosComparativos = null;
+                let infoComparativo = null;
+
+                if (comparativoPayload) {
+                    try {
+                        const retornoComparativo = await executarServidor(
+                            'getDadosAgregados',
+                            comparativoPayload.periodo,
+                            JSON.stringify(comparativoPayload.filtros)
+                        );
+                        if (retornoComparativo && !retornoComparativo.error) {
+                            dadosComparativos = retornoComparativo;
+                            infoComparativo = { descricao: comparativoPayload.descricao };
+                        } else {
+                            console.warn('Comparativo do dashboard retornou vazio ou com erro.');
+                        }
+                    } catch (erroComparativo) {
+                        console.error('Erro ao carregar comparação do dashboard:', erroComparativo);
+                    }
+                } else if (!estado.dashboardComparacaoAtiva) {
+                    estado.dashboardComparativoDados = null;
+                    estado.dashboardComparativoInfo = null;
+                }
+
+                renderCharts(principal, dadosComparativos, infoComparativo);
+            } catch (erro) {
+                console.error('Erro no dashboard:', erro);
+            }
         }
 
-        function renderCharts(dados) {
+        function renderCharts(dados, dadosComparativos, infoComparativo) {
             if (!dados || dados.error) {
                 console.error('Erro ao carregar dados do dashboard:', dados && dados.error ? dados.error : 'Dados indisponíveis');
             }
@@ -10566,8 +11306,23 @@
             };
 
             estado.dashboardDados = informacoes;
+            estado.dashboardResumoAtual = informacoes.resumo || null;
+
+            const comparativoValido = dadosComparativos && !dadosComparativos.error;
+            if (comparativoValido) {
+                estado.dashboardComparativoDados = dadosComparativos;
+                const descricaoComparativo = (infoComparativo && infoComparativo.descricao)
+                    || (estado.dashboardComparativoConfig && estado.dashboardComparativoConfig.descricao)
+                    || (dadosComparativos.resumo && dadosComparativos.resumo.periodoTexto)
+                    || '';
+                estado.dashboardComparativoInfo = { descricao: descricaoComparativo };
+            } else if (!estado.dashboardComparacaoAtiva) {
+                estado.dashboardComparativoDados = null;
+                estado.dashboardComparativoInfo = null;
+            }
 
             atualizarResumoIndicadores('dashboard-resumo', informacoes.resumo);
+            atualizarDashboardComparativoResumo(informacoes.resumo, comparativoValido ? dadosComparativos.resumo : null);
 
             const ocupacaoTurno = informacoes.ocupacaoTurno || {};
             const ocupacaoIlha = informacoes.ocupacaoIlha || {};
@@ -10708,31 +11463,105 @@
             const labelsEvolucao = evolucaoOrdenada.length
                 ? evolucaoOrdenada.map(([dia]) => formatarDataCurtaGrafico(dia))
                 : ['Sem dados'];
-            const dadosEvolucao = evolucaoOrdenada.length
-                ? evolucaoOrdenada.map(([, valor]) => Number(valor) || 0)
-                : [0];
+            const hojeIso = new Date().toISOString().split('T')[0];
+            const dadosHistoricos = [];
+            const dadosPrevisao = [];
+            const pontosRaio = [];
+            const pontosCor = [];
+            const pontosBorda = [];
+            const pontosBordaLargura = [];
+            let possuiHoje = false;
+            let possuiFuturo = false;
+            const corHistorico = '#60a5fa';
+            const corPrevisao = '#f97316';
+            const corHoje = (styles.getPropertyValue('--warning') || '#fbbf24').trim() || '#fbbf24';
+
+            evolucaoOrdenada.forEach(([dia, valor]) => {
+                const numero = Number(valor) || 0;
+                if (dia > hojeIso) {
+                    possuiFuturo = true;
+                    dadosHistoricos.push(null);
+                    dadosPrevisao.push(numero);
+                    pontosRaio.push(4);
+                    pontosCor.push(corHistorico);
+                    pontosBorda.push(corHistorico);
+                    pontosBordaLargura.push(0);
+                } else {
+                    dadosHistoricos.push(numero);
+                    dadosPrevisao.push(null);
+                    if (dia === hojeIso) {
+                        possuiHoje = true;
+                        pontosRaio.push(6);
+                        pontosCor.push(corHoje);
+                        pontosBorda.push(corHoje);
+                        pontosBordaLargura.push(2);
+                    } else {
+                        pontosRaio.push(4);
+                        pontosCor.push(corHistorico);
+                        pontosBorda.push(corHistorico);
+                        pontosBordaLargura.push(0);
+                    }
+                }
+            });
+
+            const datasetsEvolucao = [{
+                label: 'Evolução de ocupação',
+                data: dadosHistoricos.length ? dadosHistoricos : [0],
+                borderColor: corHistorico,
+                backgroundColor: 'rgba(96, 165, 250, 0.15)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: dadosHistoricos.length ? pontosRaio : 4,
+                pointBackgroundColor: dadosHistoricos.length ? pontosCor : corHistorico,
+                pointBorderWidth: dadosHistoricos.length ? pontosBordaLargura : 0,
+                pointBorderColor: dadosHistoricos.length ? pontosBorda : corHistorico
+            }];
+
+            if (possuiFuturo) {
+                datasetsEvolucao.push({
+                    label: 'Previsão',
+                    data: dadosPrevisao,
+                    borderColor: corPrevisao,
+                    backgroundColor: 'rgba(249, 115, 22, 0.08)',
+                    fill: false,
+                    tension: 0.35,
+                    borderDash: [6, 6],
+                    pointRadius: 4,
+                    pointBackgroundColor: corPrevisao,
+                    pointBorderWidth: 0
+                });
+            }
+
+            const tooltipEvolucao = {
+                ...tooltipConfig,
+                callbacks: {
+                    label(context) {
+                        const valor = Number(context.raw) || 0;
+                        const base = `${context.dataset?.label ? context.dataset.label + ': ' : ''}${valor.toLocaleString('pt-BR')}`;
+                        if (context.dataset?.label === 'Previsão') {
+                            return `${base} (previsão)`;
+                        }
+                        const original = evolucaoOrdenada[context.dataIndex];
+                        if (original && original[0] === hojeIso) {
+                            return `${base} (dados parciais do dia atual)`;
+                        }
+                        return base;
+                    }
+                }
+            };
+
             document.getElementById('chart-evolucao').chart = new Chart(ctxEvolucao, {
                 type: 'line',
                 data: {
                     labels: labelsEvolucao,
-                    datasets: [{
-                        label: 'Evolução de ocupação',
-                        data: dadosEvolucao,
-                        borderColor: '#60a5fa',
-                        backgroundColor: 'rgba(96, 165, 250, 0.15)',
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#60a5fa',
-                        pointBorderWidth: 0
-                    }]
+                    datasets: datasetsEvolucao
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
-                        tooltip: tooltipConfig,
+                        legend: { display: possuiFuturo, labels: { color: legendColor } },
+                        tooltip: tooltipEvolucao,
                         percentagePlugin: { enabled: false }
                     },
                     scales: {
@@ -10741,6 +11570,20 @@
                     }
                 }
             });
+
+            const notaEvolucao = document.getElementById('chart-evolucao-nota');
+            if (notaEvolucao) {
+                const mensagens = [];
+                if (possuiHoje) mensagens.push('O ponto destacado indica o dia atual e os dados ainda podem mudar.');
+                if (possuiFuturo) mensagens.push('A linha tracejada representa projeções para datas futuras.');
+                if (mensagens.length) {
+                    notaEvolucao.textContent = mensagens.join(' ');
+                    notaEvolucao.classList.add('active');
+                } else {
+                    notaEvolucao.textContent = '';
+                    notaEvolucao.classList.remove('active');
+                }
+            }
 
             const ctxEspecialidade = document.getElementById('chart-especialidade').getContext('2d');
             const entradasEspecialidades = Object.entries(especialidades).sort((a, b) => b[1] - a[1]);
@@ -10935,13 +11778,254 @@
             }
         }
 
+        function coletarConfiguracaoComparacaoRelatorio() {
+            const tipoSelect = document.getElementById('relatorio-comparar-tipo');
+            if (!tipoSelect) return null;
+            const tipo = tipoSelect.value;
+            if (!tipo) {
+                alert('Selecione o tipo de período para comparar nos relatórios.');
+                return null;
+            }
+
+            if (tipo === 'dia') {
+                const dia = document.getElementById('relatorio-comparar-dia')?.value;
+                if (!dia) {
+                    alert('Informe o dia que deseja comparar.');
+                    return null;
+                }
+                return { tipo: 'dia', dia, descricao: `Dia ${formatarDataCompleta(dia)}` };
+            }
+
+            if (tipo === 'intervalo') {
+                const inicio = document.getElementById('relatorio-comparar-inicio')?.value;
+                const fim = document.getElementById('relatorio-comparar-fim')?.value;
+                if (!inicio || !fim) {
+                    alert('Informe as duas datas do intervalo para comparação.');
+                    return null;
+                }
+                if (inicio > fim) {
+                    alert('No comparativo do relatório a data inicial não pode ser maior que a final.');
+                    return null;
+                }
+                return {
+                    tipo: 'intervalo',
+                    inicio,
+                    fim,
+                    descricao: `De ${formatarDataCompleta(inicio)} até ${formatarDataCompleta(fim)}`
+                };
+            }
+
+            if (tipo === 'mes') {
+                const meses = obterValoresMultiplo('relatorio-comparar-meses');
+                if (!meses.length) {
+                    alert('Selecione ao menos um mês para comparar.');
+                    return null;
+                }
+                const descricao = meses.map(formatarMesHumano).join(', ');
+                return { tipo: 'mes', meses, descricao: `Meses: ${descricao}` };
+            }
+
+            if (tipo === 'ano') {
+                const anos = obterValoresMultiplo('relatorio-comparar-anos');
+                if (!anos.length) {
+                    alert('Selecione ao menos um ano para comparar.');
+                    return null;
+                }
+                return { tipo: 'ano', anos, descricao: `Ano(s): ${anos.join(', ')}` };
+            }
+
+            alert('Tipo de comparação do relatório não reconhecido.');
+            return null;
+        }
+
+        function obterIntervaloComparativoRelatorio(config) {
+            if (!config) return null;
+            if (config.tipo === 'dia') {
+                return { inicio: config.dia, fim: config.dia, descricao: config.descricao };
+            }
+            if (config.tipo === 'intervalo') {
+                return { inicio: config.inicio, fim: config.fim, descricao: config.descricao };
+            }
+            if (config.tipo === 'mes') {
+                const meses = Array.isArray(config.meses) ? [...config.meses].sort() : [];
+                if (!meses.length) return null;
+                const primeiro = meses[0];
+                const ultimo = meses[meses.length - 1];
+                const [anoInicio, mesInicio] = primeiro.split('-').map(Number);
+                const [anoFim, mesFim] = ultimo.split('-').map(Number);
+                if (!Number.isFinite(anoInicio) || !Number.isFinite(mesInicio) || !Number.isFinite(anoFim) || !Number.isFinite(mesFim)) {
+                    return null;
+                }
+                const inicio = `${anoInicio}-${String(mesInicio).padStart(2, '0')}-01`;
+                const ultimoDia = new Date(anoFim, mesFim, 0);
+                const fim = `${ultimoDia.getFullYear()}-${String(ultimoDia.getMonth() + 1).padStart(2, '0')}-${String(ultimoDia.getDate()).padStart(2, '0')}`;
+                return { inicio, fim, descricao: config.descricao };
+            }
+            if (config.tipo === 'ano') {
+                const anos = Array.isArray(config.anos) ? config.anos.map(ano => parseInt(ano, 10)).filter(Number.isFinite).sort((a, b) => a - b) : [];
+                if (!anos.length) return null;
+                const inicio = `${anos[0]}-01-01`;
+                const fim = `${anos[anos.length - 1]}-12-31`;
+                return { inicio, fim, descricao: config.descricao };
+            }
+            return null;
+        }
+
+        function removerRelatorioComparacao({ recarregar = true } = {}) {
+            estado.relatorioComparacaoAtiva = false;
+            estado.relatorioComparativoConfig = null;
+            estado.relatorioComparativoDados = null;
+            estado.relatorioComparativoInfo = null;
+            const banner = document.getElementById('relatorio-comparativo-resumo');
+            if (banner) {
+                banner.classList.remove('active');
+            }
+            if (recarregar) {
+                gerarRelatorio();
+            } else {
+                atualizarRelatorioComparativoResumo(null, null);
+            }
+        }
+
+        function inicializarRelatorioComparacaoUI() {
+            const painel = document.getElementById('relatorio-comparar-panel');
+            const tipoSelect = document.getElementById('relatorio-comparar-tipo');
+            const botaoToggle = document.getElementById('btn-relatorio-comparar');
+            const botaoAplicar = document.getElementById('relatorio-comparar-aplicar');
+            const botaoLimpar = document.getElementById('relatorio-comparar-limpar');
+            const botaoRemover = document.getElementById('relatorio-comparativo-remover');
+            if (!painel || !tipoSelect || !botaoToggle) {
+                return;
+            }
+
+            const atualizarCampos = () => atualizarCamposComparacaoPainel(painel, tipoSelect.value);
+
+            botaoToggle.addEventListener('click', () => {
+                painel.classList.toggle('active');
+            });
+
+            tipoSelect.addEventListener('change', atualizarCampos);
+            atualizarCampos();
+
+            if (botaoAplicar) {
+                botaoAplicar.addEventListener('click', () => {
+                    const config = coletarConfiguracaoComparacaoRelatorio();
+                    if (!config) return;
+                    estado.relatorioComparacaoAtiva = true;
+                    estado.relatorioComparativoConfig = config;
+                    estado.relatorioComparativoInfo = { descricao: config.descricao };
+                    painel.classList.remove('active');
+                    gerarRelatorio();
+                });
+            }
+
+            const limparInterface = () => {
+                tipoSelect.value = '';
+                painel.querySelectorAll('input[type="date"]').forEach(input => { input.value = ''; });
+                painel.querySelectorAll('select[multiple]').forEach(select => {
+                    Array.from(select.options).forEach(option => { option.selected = false; });
+                    atualizarReportMultiselect(select.id, Array.from(select.options).map(option => ({ value: option.value, label: option.textContent })));
+                });
+                atualizarCampos();
+            };
+
+            if (botaoLimpar) {
+                botaoLimpar.addEventListener('click', () => {
+                    limparInterface();
+                    removerRelatorioComparacao({ recarregar: true });
+                    painel.classList.remove('active');
+                });
+            }
+
+            if (botaoRemover) {
+                botaoRemover.addEventListener('click', () => {
+                    limparInterface();
+                    removerRelatorioComparacao({ recarregar: true });
+                });
+            }
+        }
+
         function obterValoresMultiplo(id) {
             const select = document.getElementById(id);
             if (!select) return [];
             return Array.from(select.selectedOptions || []).map(opt => opt.value);
         }
 
-        function gerarRelatorio() {
+        async function exportarDashboardPdf() {
+            if (!estado.dashboardDados) {
+                alert('Gere o dashboard antes de exportar o PDF.');
+                return;
+            }
+            const periodoSelect = document.getElementById('dashboard-periodo');
+            const periodo = periodoSelect ? periodoSelect.value : 'dia';
+            const filtros = estado.filtrosDashboard || {};
+            const payload = {
+                periodo,
+                filtros,
+                descricaoPrincipal: (estado.dashboardResumoAtual && estado.dashboardResumoAtual.periodoTexto) || '',
+                comparacaoAtiva: Boolean(estado.dashboardComparacaoAtiva && estado.dashboardComparativoConfig),
+                comparativo: null
+            };
+            if (payload.comparacaoAtiva) {
+                const comparativo = obterDashboardComparativoPayload(filtros);
+                if (comparativo) {
+                    payload.comparativo = comparativo;
+                } else {
+                    payload.comparacaoAtiva = false;
+                }
+            }
+            try {
+                const resultado = await executarServidor('gerarDashboardPdf', JSON.stringify(payload));
+                baixarArquivoBase64(resultado);
+            } catch (erro) {
+                console.error('Erro ao exportar PDF do dashboard:', erro);
+                alert('Não foi possível gerar o PDF do dashboard.');
+            }
+        }
+
+        async function exportarRelatorioPdf() {
+            const inicio = document.getElementById('relatorio-data-inicio').value;
+            const fim = document.getElementById('relatorio-data-fim').value;
+            if (!inicio || !fim) {
+                alert('Defina o período do relatório antes de exportar o PDF.');
+                return;
+            }
+
+            const limparLista = lista => lista.map(item => String(item || '').trim()).filter(Boolean);
+            const filtros = {
+                turnos: limparLista(obterValoresMultiplo('relatorio-filtro-turno')),
+                status: limparLista(obterValoresMultiplo('relatorio-filtro-status')),
+                ilhas: limparLista(obterValoresMultiplo('relatorio-filtro-ilha')),
+                salas: limparLista(obterValoresMultiplo('relatorio-filtro-sala')),
+                especialidades: limparLista(obterValoresMultiplo('relatorio-filtro-especialidade')),
+                categorias: limparLista(obterValoresMultiplo('relatorio-filtro-categoria')),
+                profissionais: limparLista(obterValoresMultiplo('relatorio-filtro-profissional')),
+                busca: (document.getElementById('relatorio-filtro-busca').value || '').trim()
+            };
+
+            const comparativoConfig = estado.relatorioComparacaoAtiva
+                ? obterIntervaloComparativoRelatorio(estado.relatorioComparativoConfig)
+                : null;
+
+            const payload = {
+                inicio,
+                fim,
+                filtros,
+                descricaoPrincipal: (estado.relatorioResumoAtual && estado.relatorioResumoAtual.periodoTexto) || '',
+                comparacaoAtiva: Boolean(comparativoConfig),
+                comparativo: comparativoConfig || null
+            };
+
+            try {
+                const resultado = await executarServidor('gerarRelatorioPdf', JSON.stringify(payload));
+                baixarArquivoBase64(resultado);
+            } catch (erro) {
+                console.error('Erro ao exportar PDF do relatório:', erro);
+                alert('Não foi possível gerar o PDF do relatório.');
+            }
+        }
+
+        async function gerarRelatorio() {
             const inicio = document.getElementById('relatorio-data-inicio').value;
             const fim = document.getElementById('relatorio-data-fim').value;
             const limparLista = lista => lista.map(item => String(item || '').trim()).filter(Boolean);
@@ -10955,19 +12039,67 @@
                 profissionais: limparLista(obterValoresMultiplo('relatorio-filtro-profissional')),
                 busca: (document.getElementById('relatorio-filtro-busca').value || '').trim()
             };
-            google.script.run
-                .withSuccessHandler(renderRelatorioTable)
-                .withFailureHandler(error => console.error('Erro no relatório:', error))
-                .getRelatorioPeriodo(inicio, fim, JSON.stringify(filtros));
+
+            const comparativoConfig = estado.relatorioComparacaoAtiva
+                ? obterIntervaloComparativoRelatorio(estado.relatorioComparativoConfig)
+                : null;
+
+            try {
+                const filtrosJson = JSON.stringify(filtros);
+                const principal = await executarServidor('getRelatorioPeriodo', inicio, fim, filtrosJson);
+                let comparativoDados = null;
+                let infoComparativo = null;
+
+                if (comparativoConfig && comparativoConfig.inicio && comparativoConfig.fim) {
+                    try {
+                        const retornoComparativo = await executarServidor('getRelatorioPeriodo', comparativoConfig.inicio, comparativoConfig.fim, filtrosJson);
+                        if (retornoComparativo && !retornoComparativo.error) {
+                            comparativoDados = retornoComparativo;
+                            infoComparativo = { descricao: comparativoConfig.descricao };
+                            estado.relatorioComparativoInfo = infoComparativo;
+                        } else {
+                            console.warn('Comparativo do relatório retornou vazio ou com erro.');
+                        }
+                    } catch (erroComparativo) {
+                        console.error('Erro ao carregar comparação do relatório:', erroComparativo);
+                    }
+                } else if (!estado.relatorioComparacaoAtiva) {
+                    estado.relatorioComparativoDados = null;
+                    estado.relatorioComparativoInfo = null;
+                }
+
+                renderRelatorioTable(principal, comparativoDados, infoComparativo);
+            } catch (erro) {
+                console.error('Erro no relatório:', erro);
+            }
         }
 
-        function renderRelatorioTable(resultado) {
-            if (!resultado || resultado.error) {
-                console.error('Erro ao gerar relatório:', resultado && resultado.error ? resultado.error : 'Dados indisponíveis');
+        function renderRelatorioTable(resultadoPrincipal, resultadoComparativo, infoComparativo) {
+            if (!resultadoPrincipal || resultadoPrincipal.error) {
+                console.error('Erro ao gerar relatório:', resultadoPrincipal && resultadoPrincipal.error ? resultadoPrincipal.error : 'Dados indisponíveis');
             }
 
-            const dados = resultado && !resultado.error ? resultado : { resumo: {}, diario: [], detalhado: [] };
+            const dados = resultadoPrincipal && !resultadoPrincipal.error ? resultadoPrincipal : { resumo: {}, diario: [], detalhado: [] };
+            estado.relatorioResumoAtual = dados.resumo || null;
+            if (resultadoComparativo && resultadoComparativo.error) {
+                console.warn('Relatório comparativo retornou erro:', resultadoComparativo.error);
+            }
+
+            const comparativoValido = resultadoComparativo && !resultadoComparativo.error;
+            if (comparativoValido) {
+                estado.relatorioComparativoDados = resultadoComparativo;
+                const descricao = (infoComparativo && infoComparativo.descricao)
+                    || (estado.relatorioComparativoConfig && estado.relatorioComparativoConfig.descricao)
+                    || (resultadoComparativo.resumo && resultadoComparativo.resumo.periodoTexto)
+                    || '';
+                estado.relatorioComparativoInfo = { descricao };
+            } else if (!estado.relatorioComparacaoAtiva) {
+                estado.relatorioComparativoDados = null;
+                estado.relatorioComparativoInfo = null;
+            }
+
             atualizarResumoIndicadores('relatorio-resumo', dados.resumo);
+            atualizarRelatorioComparativoResumo(dados.resumo, comparativoValido ? resultadoComparativo.resumo : null);
 
             const tbodyResumo = document.querySelector('#relatorio-tabela tbody');
             tbodyResumo.innerHTML = '';

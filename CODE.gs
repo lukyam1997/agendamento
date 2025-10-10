@@ -2608,3 +2608,825 @@ function getLogs(limit, filtroTexto) {
     return [];
   }
 }
+function gerarDashboardPdf(payloadJson) {
+  try {
+    const payload = parseJsonSeguro(payloadJson, {});
+    const periodo = payload && payload.periodo ? payload.periodo : 'dia';
+    const filtros = payload && payload.filtros ? payload.filtros : {};
+    const filtrosJson = JSON.stringify(filtros || {});
+
+    const principal = getDadosAgregados(periodo, filtrosJson);
+    if (!principal || principal.error) {
+      throw new Error('Não foi possível obter os dados principais do dashboard.');
+    }
+
+    let comparativoDados = null;
+    if (payload && payload.comparacaoAtiva && payload.comparativo) {
+      try {
+        const periodoComparativo = payload.comparativo.periodo || periodo;
+        const filtrosComparativoJson = JSON.stringify(payload.comparativo.filtros || {});
+        const respostaComparativo = getDadosAgregados(periodoComparativo, filtrosComparativoJson);
+        if (respostaComparativo && !respostaComparativo.error) {
+          comparativoDados = respostaComparativo;
+        } else if (respostaComparativo && respostaComparativo.error) {
+          console.warn('Comparativo do dashboard retornou erro e será ignorado:', respostaComparativo.error);
+        }
+      } catch (erroComparativo) {
+        console.warn('Falha ao carregar dados comparativos do dashboard:', erroComparativo);
+      }
+    }
+
+    const html = construirHtmlDashboardPdf({
+      payload,
+      filtrosPrincipais: filtros,
+      principal,
+      comparativo: comparativoDados
+    });
+
+    const nomeArquivo = `dashboard-${Utilities.formatDate(new Date(), obterTimeZonePadrao(), 'yyyyMMdd-HHmmss')}`;
+    return converterHtmlParaPdf(html, nomeArquivo);
+  } catch (error) {
+    console.error('Erro ao gerar PDF do dashboard:', error);
+    throw new Error('Falha ao gerar o PDF do dashboard: ' + error.message);
+  }
+}
+
+function gerarRelatorioPdf(payloadJson) {
+  try {
+    const payload = parseJsonSeguro(payloadJson, {});
+    const inicio = payload && payload.inicio ? payload.inicio : null;
+    const fim = payload && payload.fim ? payload.fim : null;
+    if (!inicio || !fim) {
+      throw new Error('Período principal do relatório não foi informado.');
+    }
+
+    const filtros = payload && payload.filtros ? payload.filtros : {};
+    const filtrosJson = JSON.stringify(filtros || {});
+
+    const principal = getRelatorioPeriodo(inicio, fim, filtrosJson);
+    if (!principal || principal.error) {
+      throw new Error('Não foi possível gerar o relatório principal.');
+    }
+
+    let comparativoDados = null;
+    if (payload && payload.comparacaoAtiva && payload.comparativo) {
+      const comp = payload.comparativo;
+      if (comp.inicio && comp.fim) {
+        try {
+          const respostaComparativo = getRelatorioPeriodo(comp.inicio, comp.fim, filtrosJson);
+          if (respostaComparativo && !respostaComparativo.error) {
+            comparativoDados = respostaComparativo;
+          } else if (respostaComparativo && respostaComparativo.error) {
+            console.warn('Comparativo do relatório retornou erro e será ignorado:', respostaComparativo.error);
+          }
+        } catch (erroComparativo) {
+          console.warn('Falha ao carregar dados comparativos do relatório:', erroComparativo);
+        }
+      }
+    }
+
+    const html = construirHtmlRelatorioPdf({
+      payload,
+      filtrosPrincipais: filtros,
+      principal,
+      comparativo: comparativoDados
+    });
+
+    const nomeArquivo = `relatorio-${Utilities.formatDate(new Date(), obterTimeZonePadrao(), 'yyyyMMdd-HHmmss')}`;
+    return converterHtmlParaPdf(html, nomeArquivo);
+  } catch (error) {
+    console.error('Erro ao gerar PDF do relatório:', error);
+    throw new Error('Falha ao gerar o PDF do relatório: ' + error.message);
+  }
+}
+
+function construirHtmlDashboardPdf({ payload, filtrosPrincipais, principal, comparativo }) {
+  const resumoPrincipal = principal && principal.resumo ? principal.resumo : {};
+  const resumoComparativo = comparativo && comparativo.resumo ? comparativo.resumo : null;
+  const comparacaoAtiva = Boolean(payload && payload.comparacaoAtiva && resumoComparativo);
+  const filtrosDescricao = descreverFiltrosSelecionados(filtrosPrincipais);
+  const tz = obterTimeZonePadrao();
+  const geradoEm = Utilities.formatDate(new Date(), tz, 'dd/MM/yyyy HH:mm');
+  const tituloPrincipal = payload && payload.descricaoPrincipal
+    ? `Dashboard - ${escaparHtml(payload.descricaoPrincipal)}`
+    : 'Dashboard - Indicadores';
+
+  const metricasResumo = [
+    { chave: 'totalAgendamentos', rotulo: 'Total de agendamentos', tipo: 'numero' },
+    { chave: 'diasAnalisados', rotulo: 'Dias analisados', tipo: 'numero' },
+    { chave: 'turnosAtivos', rotulo: 'Turnos ativos', tipo: 'numero' },
+    { chave: 'salasAtivas', rotulo: 'Salas ativas', tipo: 'numero' },
+    { chave: 'especialidadesAtivas', rotulo: 'Especialidades ativas', tipo: 'numero' },
+    { chave: 'ocupacaoMedia', rotulo: 'Ocupação média', tipo: 'percentual' },
+    { chave: 'ocupacaoPico', rotulo: 'Pico de ocupação', tipo: 'percentual' },
+    { chave: 'taxaAproveitamento', rotulo: 'Taxa de aproveitamento', tipo: 'percentual' }
+  ];
+
+  const ocupacaoTurnoPrincipal = principal && principal.ocupacaoTurno ? principal.ocupacaoTurno : {};
+  const ocupacaoTurnoComparativo = comparativo && comparativo.ocupacaoTurno ? comparativo.ocupacaoTurno : null;
+  const ocupacaoIlhaPrincipal = principal && principal.ocupacaoIlha ? principal.ocupacaoIlha : {};
+  const ocupacaoIlhaComparativo = comparativo && comparativo.ocupacaoIlha ? comparativo.ocupacaoIlha : null;
+  const especialidadesPrincipal = principal && principal.especialidades ? principal.especialidades : {};
+  const especialidadesComparativo = comparativo && comparativo.especialidades ? comparativo.especialidades : null;
+  const statusPrincipal = principal && principal.statusDistribuicao ? principal.statusDistribuicao : {};
+  const statusComparativo = comparativo && comparativo.statusDistribuicao ? comparativo.statusDistribuicao : null;
+  const evolucaoPrincipal = principal && principal.evolucao ? principal.evolucao : {};
+  const evolucaoComparativo = comparativo && comparativo.evolucao ? comparativo.evolucao : null;
+
+  let html = '<!DOCTYPE html><html><head><meta charset="utf-8"/>';
+  html += `<style>${obterEstilosPdf()}</style>`;
+  html += '</head><body>';
+  html += '<header>';
+  html += `<h1>${tituloPrincipal}</h1>`;
+  if (resumoPrincipal && resumoPrincipal.periodoTexto) {
+    html += `<p class="meta"><strong>Período analisado:</strong> ${escaparHtml(resumoPrincipal.periodoTexto)}</p>`;
+  }
+  html += `<p class="meta"><strong>Gerado em:</strong> ${escaparHtml(geradoEm)}</p>`;
+  if (comparacaoAtiva) {
+    const descricaoComparativo = payload && payload.comparativo && payload.comparativo.descricao
+      ? payload.comparativo.descricao
+      : 'Comparativo';
+    html += `<p class="meta"><strong>Comparativo:</strong> ${escaparHtml(descricaoComparativo)}`;
+    if (resumoComparativo && resumoComparativo.periodoTexto) {
+      html += ` (${escaparHtml(resumoComparativo.periodoTexto)})`;
+    }
+    html += '</p>';
+  }
+  html += '</header>';
+
+  if (filtrosDescricao.length) {
+    html += '<section><h2>Filtros aplicados</h2><ul class="filtros">';
+    filtrosDescricao.forEach(item => {
+      html += `<li>${item}</li>`;
+    });
+    html += '</ul></section>';
+  }
+
+  html += gerarTabelaComparativaHtml('Resumo de indicadores', metricasResumo, resumoPrincipal, resumoComparativo, comparacaoAtiva);
+
+  if (principal && principal.ocupacaoGeral) {
+    const ocupacao = principal.ocupacaoGeral;
+    html += '<section class="grid-duas-colunas">';
+    html += '<div>';
+    html += '<h2>Ocupação geral</h2>';
+    html += '<table><thead><tr><th>Métrica</th><th>Quantidade</th></tr></thead><tbody>';
+    html += `<tr><td>Salas ocupadas (média)</td><td class="numero">${formatarNumeroBrasil(ocupacao.uso)}</td></tr>`;
+    html += `<tr><td>Salas livres (média)</td><td class="numero">${formatarNumeroBrasil(ocupacao.livres)}</td></tr>`;
+    html += `<tr><td>Salas indisponíveis (média)</td><td class="numero">${formatarNumeroBrasil(ocupacao.indisponiveis)}</td></tr>`;
+    html += `<tr><td>Taxa de aproveitamento média</td><td class="numero">${formatarPercentualBrasil(ocupacao.taxaAproveitamento)}</td></tr>`;
+    html += '</tbody></table>';
+    html += '</div>';
+
+    if (comparacaoAtiva && comparativo && comparativo.ocupacaoGeral) {
+      const ocupacaoComp = comparativo.ocupacaoGeral;
+      html += '<div>';
+      html += '<h2>Ocupação geral (comparativo)</h2>';
+      html += '<table><thead><tr><th>Métrica</th><th>Quantidade</th></tr></thead><tbody>';
+      html += `<tr><td>Salas ocupadas (média)</td><td class="numero">${formatarNumeroBrasil(ocupacaoComp.uso)}</td></tr>`;
+      html += `<tr><td>Salas livres (média)</td><td class="numero">${formatarNumeroBrasil(ocupacaoComp.livres)}</td></tr>`;
+      html += `<tr><td>Salas indisponíveis (média)</td><td class="numero">${formatarNumeroBrasil(ocupacaoComp.indisponiveis)}</td></tr>`;
+      html += `<tr><td>Taxa de aproveitamento média</td><td class="numero">${formatarPercentualBrasil(ocupacaoComp.taxaAproveitamento)}</td></tr>`;
+      html += '</tbody></table>';
+      html += '</div>';
+    }
+    html += '</section>';
+  }
+
+  html += gerarTabelaDistribuicaoHtml('Distribuição por turno', combinarDistribuicoes(ocupacaoTurnoPrincipal, ocupacaoTurnoComparativo, valor => formatarTurnoRelatorio(valor)), comparacaoAtiva);
+
+  html += gerarTabelaDistribuicaoHtml('Distribuição por ilha (top 20)', combinarDistribuicoes(ocupacaoIlhaPrincipal, ocupacaoIlhaComparativo, valor => valor || 'Não informada'), comparacaoAtiva, { limite: 20 });
+
+  html += gerarTabelaDistribuicaoHtml('Especialidades mais frequentes (top 20)', combinarDistribuicoes(especialidadesPrincipal, especialidadesComparativo, valor => valor || 'Não informada'), comparacaoAtiva, { limite: 20 });
+
+  html += gerarTabelaDistribuicaoHtml('Status das salas', combinarDistribuicoes(statusPrincipal, statusComparativo, valor => formatarStatusRelatorio(valor)), comparacaoAtiva);
+
+  html += gerarTabelaDistribuicaoHtml('Evolução diária', combinarSeriesTemporais(evolucaoPrincipal, evolucaoComparativo), comparacaoAtiva, { ordenarPorLabel: true });
+
+  html += '</body></html>';
+  return html;
+}
+
+function construirHtmlRelatorioPdf({ payload, filtrosPrincipais, principal, comparativo }) {
+  const resumoPrincipal = principal && principal.resumo ? principal.resumo : {};
+  const resumoComparativo = comparativo && comparativo.resumo ? comparativo.resumo : null;
+  const comparacaoAtiva = Boolean(payload && payload.comparacaoAtiva && resumoComparativo);
+  const filtrosDescricao = descreverFiltrosSelecionados(filtrosPrincipais);
+  const tz = obterTimeZonePadrao();
+  const geradoEm = Utilities.formatDate(new Date(), tz, 'dd/MM/yyyy HH:mm');
+  const tituloPrincipal = payload && payload.descricaoPrincipal
+    ? `Relatório - ${escaparHtml(payload.descricaoPrincipal)}`
+    : 'Relatório de agendamentos';
+
+  const metricasResumo = [
+    { chave: 'totalAgendamentos', rotulo: 'Total de agendamentos', tipo: 'numero' },
+    { chave: 'diasAnalisados', rotulo: 'Dias analisados', tipo: 'numero' },
+    { chave: 'turnosAtivos', rotulo: 'Turnos ativos', tipo: 'numero' },
+    { chave: 'salasAtivas', rotulo: 'Salas ativas', tipo: 'numero' },
+    { chave: 'especialidadesAtivas', rotulo: 'Especialidades ativas', tipo: 'numero' },
+    { chave: 'ocupacaoMedia', rotulo: 'Ocupação média', tipo: 'percentual' },
+    { chave: 'ocupacaoPico', rotulo: 'Pico de ocupação', tipo: 'percentual' },
+    { chave: 'taxaAproveitamento', rotulo: 'Taxa de aproveitamento', tipo: 'percentual' }
+  ];
+
+  let html = '<!DOCTYPE html><html><head><meta charset="utf-8"/>';
+  html += `<style>${obterEstilosPdf()}</style>`;
+  html += '</head><body>';
+  html += '<header>';
+  html += `<h1>${tituloPrincipal}</h1>`;
+  if (resumoPrincipal && resumoPrincipal.periodoTexto) {
+    html += `<p class="meta"><strong>Período analisado:</strong> ${escaparHtml(resumoPrincipal.periodoTexto)}</p>`;
+  }
+  html += `<p class="meta"><strong>Gerado em:</strong> ${escaparHtml(geradoEm)}</p>`;
+  if (comparacaoAtiva) {
+    const descricaoComparativo = payload && payload.comparativo && payload.comparativo.descricao
+      ? payload.comparativo.descricao
+      : 'Comparativo';
+    html += `<p class="meta"><strong>Comparativo:</strong> ${escaparHtml(descricaoComparativo)}`;
+    if (resumoComparativo && resumoComparativo.periodoTexto) {
+      html += ` (${escaparHtml(resumoComparativo.periodoTexto)})`;
+    }
+    html += '</p>';
+  }
+  html += '</header>';
+
+  if (filtrosDescricao.length) {
+    html += '<section><h2>Filtros aplicados</h2><ul class="filtros">';
+    filtrosDescricao.forEach(item => {
+      html += `<li>${item}</li>`;
+    });
+    html += '</ul></section>';
+  }
+
+  html += gerarTabelaComparativaHtml('Resumo de indicadores', metricasResumo, resumoPrincipal, resumoComparativo, comparacaoAtiva);
+
+  const diarioPrincipal = Array.isArray(principal && principal.diario) ? principal.diario : [];
+  const diarioComparativo = comparacaoAtiva && Array.isArray(comparativo && comparativo.diario) ? comparativo.diario : [];
+
+  html += gerarTabelaResumoDiario('Resumo diário (seleção principal)', diarioPrincipal);
+  if (comparacaoAtiva && diarioComparativo.length) {
+    html += gerarTabelaResumoDiario('Resumo diário (comparativo)', diarioComparativo);
+  }
+
+  const detalhadoPrincipal = Array.isArray(principal && principal.detalhado) ? principal.detalhado : [];
+  html += gerarTabelaDetalhado('Agendamentos detalhados (seleção principal)', detalhadoPrincipal);
+
+  if (comparacaoAtiva) {
+    const detalhadoComparativo = Array.isArray(comparativo && comparativo.detalhado) ? comparativo.detalhado : [];
+    if (detalhadoComparativo.length) {
+      html += gerarTabelaDetalhado('Agendamentos detalhados (comparativo)', detalhadoComparativo);
+    }
+  }
+
+  html += '</body></html>';
+  return html;
+}
+
+function gerarTabelaComparativaHtml(titulo, metricas, resumoPrincipal, resumoComparativo, comparacaoAtiva) {
+  if (!resumoPrincipal) {
+    return '';
+  }
+
+  let html = `<section><h2>${escaparHtml(titulo)}</h2>`;
+  html += '<table><thead><tr><th>Métrica</th><th>Seleção principal</th>';
+  if (comparacaoAtiva) {
+    html += '<th>Comparativo</th><th>Diferença</th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  metricas.forEach(metrica => {
+    const valorPrincipal = resumoPrincipal && Object.prototype.hasOwnProperty.call(resumoPrincipal, metrica.chave)
+      ? resumoPrincipal[metrica.chave]
+      : null;
+    const valorComparativo = comparacaoAtiva && resumoComparativo && Object.prototype.hasOwnProperty.call(resumoComparativo, metrica.chave)
+      ? resumoComparativo[metrica.chave]
+      : null;
+
+    const textoPrincipal = formatarValorMetrica(valorPrincipal, metrica);
+    const textoComparativo = comparacaoAtiva ? formatarValorMetrica(valorComparativo, metrica) : '';
+
+    let textoDiferenca = '';
+    let classeDiferenca = '';
+    if (comparacaoAtiva) {
+      const diff = calcularDiferencaNumerica(valorPrincipal, valorComparativo);
+      if (diff === null) {
+        textoDiferenca = '--';
+        classeDiferenca = 'diff-neutro';
+      } else {
+        textoDiferenca = formatarDiferenca(diff, metrica);
+        if (diff > 0) {
+          classeDiferenca = 'diff-positivo';
+        } else if (diff < 0) {
+          classeDiferenca = 'diff-negativo';
+        } else {
+          classeDiferenca = 'diff-neutro';
+        }
+      }
+    }
+
+    html += '<tr>';
+    html += `<td>${escaparHtml(metrica.rotulo)}</td>`;
+    html += `<td class="numero">${textoPrincipal}</td>`;
+    if (comparacaoAtiva) {
+      html += `<td class="numero">${textoComparativo}</td>`;
+      html += `<td class="numero ${classeDiferenca}">${textoDiferenca}</td>`;
+    }
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></section>';
+  return html;
+}
+
+function gerarTabelaDistribuicaoHtml(titulo, linhas, comparacaoAtiva, opcoes) {
+  const config = opcoes || {};
+  if (!Array.isArray(linhas) || !linhas.length) {
+    return '';
+  }
+
+  let linhasRender = linhas;
+  let truncado = false;
+  if (config.limite && linhasRender.length > config.limite) {
+    linhasRender = linhasRender.slice(0, config.limite);
+    truncado = true;
+  }
+
+  if (config.ordenarPorLabel) {
+    linhasRender = [...linhasRender].sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+  }
+
+  let html = `<section><h2>${escaparHtml(titulo)}</h2>`;
+  html += '<table><thead><tr><th>Categoria</th><th>Seleção principal</th>';
+  if (comparacaoAtiva) {
+    html += '<th>Comparativo</th><th>Diferença</th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  linhasRender.forEach(linha => {
+    const textoPrincipal = formatarValorMetrica(linha.principal, { tipo: 'numero' });
+    const textoComparativo = comparacaoAtiva ? formatarValorMetrica(linha.comparativo, { tipo: 'numero' }) : '';
+    let textoDiferenca = '';
+    let classeDiferenca = '';
+    if (comparacaoAtiva) {
+      const diff = calcularDiferencaNumerica(linha.principal, linha.comparativo);
+      if (diff === null) {
+        textoDiferenca = '--';
+        classeDiferenca = 'diff-neutro';
+      } else {
+        textoDiferenca = formatarDiferenca(diff, { tipo: 'numero' });
+        if (diff > 0) {
+          classeDiferenca = 'diff-positivo';
+        } else if (diff < 0) {
+          classeDiferenca = 'diff-negativo';
+        } else {
+          classeDiferenca = 'diff-neutro';
+        }
+      }
+    }
+
+    html += '<tr>';
+    html += `<td>${escaparHtml(linha.label)}</td>`;
+    html += `<td class="numero">${textoPrincipal}</td>`;
+    if (comparacaoAtiva) {
+      html += `<td class="numero">${textoComparativo}</td>`;
+      html += `<td class="numero ${classeDiferenca}">${textoDiferenca}</td>`;
+    }
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  if (truncado) {
+    html += `<p class="nota-truncamento">Exibindo apenas as ${linhasRender.length} principais categorias de ${linhas.length} totais.</p>`;
+  }
+  html += '</section>';
+  return html;
+}
+
+function gerarTabelaResumoDiario(titulo, diario) {
+  if (!Array.isArray(diario) || !diario.length) {
+    return '';
+  }
+
+  let html = `<section><h2>${escaparHtml(titulo)}</h2>`;
+  html += '<table><thead><tr><th>Data</th><th>Salas ocupadas</th><th>Ocupação média</th><th>Taxa de aproveitamento</th><th>Especialidades</th></tr></thead><tbody>';
+
+  diario.forEach(item => {
+    const data = item && item.data ? escaparHtml(item.data) : '--';
+    const salas = formatarValorMetrica(item ? item.salasOcupadas : null, { tipo: 'numero' });
+    const ocupacao = formatarValorMetrica(item ? item.taxaMedia : null, { tipo: 'percentual' });
+    const aproveitamento = formatarValorMetrica(item ? item.taxaAproveitamento : null, { tipo: 'percentual' });
+    const especialidades = Array.isArray(item && item.especialidades) && item.especialidades.length
+      ? escaparHtml(item.especialidades.join(', '))
+      : '--';
+
+    html += '<tr>';
+    html += `<td>${data}</td>`;
+    html += `<td class="numero">${salas}</td>`;
+    html += `<td class="numero">${ocupacao}</td>`;
+    html += `<td class="numero">${aproveitamento}</td>`;
+    html += `<td>${especialidades}</td>`;
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></section>';
+  return html;
+}
+
+function gerarTabelaDetalhado(titulo, linhas) {
+  if (!Array.isArray(linhas) || !linhas.length) {
+    return '';
+  }
+
+  const limite = 500;
+  const truncado = linhas.length > limite;
+  const linhasRender = truncado ? linhas.slice(0, limite) : linhas;
+
+  let html = `<section><h2>${escaparHtml(titulo)}</h2>`;
+  html += '<table class="tabela-detalhada"><thead><tr>' +
+    '<th>Data</th><th>Sala</th><th>Ilha</th><th>Turno</th><th>Horário</th><th>Especialidade</th><th>Categoria</th><th>Profissional</th><th>Status</th>' +
+    '</tr></thead><tbody>';
+
+  linhasRender.forEach(item => {
+    const horario = [item && item.horaInicio, item && item.horaFim].filter(Boolean).join(' - ');
+    html += '<tr>';
+    html += `<td>${escaparHtml(item && item.data ? item.data : '--')}</td>`;
+    html += `<td>${escaparHtml(item && item.sala ? item.sala : '--')}</td>`;
+    html += `<td>${escaparHtml(item && item.ilha ? item.ilha : '--')}</td>`;
+    html += `<td>${escaparHtml(item && item.turno ? item.turno : '--')}</td>`;
+    html += `<td>${escaparHtml(horario || '--')}</td>`;
+    html += `<td>${escaparHtml(item && item.especialidade ? item.especialidade : '--')}</td>`;
+    html += `<td>${escaparHtml(item && item.categoria ? item.categoria : '--')}</td>`;
+    html += `<td>${escaparHtml(item && item.profissional ? item.profissional : '--')}</td>`;
+    html += `<td>${escaparHtml(item && item.status ? item.status : '--')}</td>`;
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  if (truncado) {
+    html += `<p class="nota-truncamento">Exibindo apenas ${linhasRender.length} de ${linhas.length} registros detalhados.</p>`;
+  }
+  html += '</section>';
+  return html;
+}
+
+function combinarDistribuicoes(principal, comparativo, formatadorLabel) {
+  const principalObj = principal || {};
+  const comparativoObj = comparativo || {};
+  const chaves = new Set();
+  Object.keys(principalObj).forEach(chave => chaves.add(chave));
+  Object.keys(comparativoObj).forEach(chave => chaves.add(chave));
+  const labelFn = typeof formatadorLabel === 'function' ? formatadorLabel : valor => valor;
+
+  const linhas = Array.from(chaves).map(chave => {
+    const rotulo = labelFn(chave);
+    return {
+      chave,
+      label: rotulo ? String(rotulo) : String(chave || ''),
+      principal: Object.prototype.hasOwnProperty.call(principalObj, chave) ? Number(principalObj[chave]) : null,
+      comparativo: Object.prototype.hasOwnProperty.call(comparativoObj, chave) ? Number(comparativoObj[chave]) : null
+    };
+  });
+
+  return linhas.sort((a, b) => {
+    const valorA = Number.isFinite(a.principal) ? a.principal : -Infinity;
+    const valorB = Number.isFinite(b.principal) ? b.principal : -Infinity;
+    return valorB - valorA;
+  });
+}
+
+function combinarSeriesTemporais(principal, comparativo) {
+  const principalObj = principal || {};
+  const comparativoObj = comparativo || {};
+  const chaves = new Set();
+  Object.keys(principalObj).forEach(chave => chaves.add(chave));
+  Object.keys(comparativoObj).forEach(chave => chaves.add(chave));
+
+  const linhas = Array.from(chaves).map(chave => ({
+    chave,
+    label: formatarIsoParaDataBrasil(chave),
+    principal: Object.prototype.hasOwnProperty.call(principalObj, chave) ? Number(principalObj[chave]) : null,
+    comparativo: Object.prototype.hasOwnProperty.call(comparativoObj, chave) ? Number(comparativoObj[chave]) : null
+  }));
+
+  return linhas.sort((a, b) => {
+    if (a.chave && b.chave) {
+      return String(a.chave).localeCompare(String(b.chave));
+    }
+    return a.label.localeCompare(b.label, 'pt-BR');
+  });
+}
+
+function formatarTurnoRelatorio(turno) {
+  if (!turno) return 'Não informado';
+  const chave = String(turno).toLowerCase();
+  if (chave === 'manha') return 'Manhã';
+  if (chave === 'tarde') return 'Tarde';
+  if (chave === 'noite') return 'Noite';
+  if (chave === 'todos') return 'Todos os turnos';
+  return turno;
+}
+
+function formatarStatusRelatorio(status) {
+  if (!status) return 'Não informado';
+  const chave = String(status).toLowerCase();
+  if (chave === 'ocupado') return 'Ocupado';
+  if (chave === 'livre') return 'Livre';
+  if (chave === 'reservado') return 'Reservado';
+  if (chave === 'bloqueado') return 'Bloqueado';
+  if (chave === 'manutencao') return 'Manutenção';
+  return status;
+}
+
+function formatarValorMetrica(valor, metrica) {
+  if (valor === null || valor === undefined || valor === '') {
+    return '--';
+  }
+
+  const tipo = metrica && metrica.tipo ? metrica.tipo : 'numero';
+  const casas = metrica && typeof metrica.decimais === 'number' ? metrica.decimais : (tipo === 'percentual' ? 0 : 0);
+
+  if (tipo === 'percentual') {
+    return formatarPercentualBrasil(valor, casas);
+  }
+
+  if (tipo === 'texto') {
+    return escaparHtml(String(valor));
+  }
+
+  return formatarNumeroBrasil(valor, casas);
+}
+
+function calcularDiferencaNumerica(principal, comparativo) {
+  const numeroPrincipal = Number(principal);
+  const numeroComparativo = Number(comparativo);
+  if (!Number.isFinite(numeroPrincipal) || !Number.isFinite(numeroComparativo)) {
+    return null;
+  }
+  return numeroPrincipal - numeroComparativo;
+}
+
+function formatarDiferenca(valor, metrica) {
+  if (valor === null || valor === undefined || Number.isNaN(valor)) {
+    return '--';
+  }
+  const tipo = metrica && metrica.tipo ? metrica.tipo : 'numero';
+  const casas = metrica && typeof metrica.decimais === 'number' ? metrica.decimais : (tipo === 'percentual' ? 0 : 0);
+  const textoBase = formatarNumeroBrasil(Math.abs(valor), casas);
+  if (textoBase === '--') {
+    return '--';
+  }
+  const sinal = valor > 0 ? '+' : valor < 0 ? '-' : '';
+  if (tipo === 'percentual') {
+    return `${sinal}${textoBase} p.p.`;
+  }
+  return `${sinal}${textoBase}`;
+}
+
+function descreverFiltrosSelecionados(filtros) {
+  if (!filtros || typeof filtros !== 'object') {
+    return [];
+  }
+
+  const itens = [];
+  const adicionarLista = (rotulo, lista, formatador) => {
+    if (!Array.isArray(lista) || !lista.length) return;
+    const valores = lista.map(item => {
+      const texto = typeof formatador === 'function' ? formatador(item) : item;
+      return escaparHtml(String(texto));
+    }).filter(Boolean);
+    if (valores.length) {
+      itens.push(`<strong>${escaparHtml(rotulo)}:</strong> ${valores.join(', ')}`);
+    }
+  };
+
+  adicionarLista('Turnos', filtros.turnos, formatarTurnoRelatorio);
+  adicionarLista('Status', filtros.status || filtros.statusLista, formatarStatusRelatorio);
+  adicionarLista('Ilhas', filtros.ilhas);
+  adicionarLista('Salas', filtros.salas);
+  adicionarLista('Especialidades', filtros.especialidades);
+  adicionarLista('Categorias', filtros.categorias);
+  adicionarLista('Profissionais', filtros.profissionais);
+
+  if (filtros.intervaloDias && filtros.intervaloDias.inicio && filtros.intervaloDias.fim) {
+    itens.push(`<strong>Intervalo específico:</strong> ${escaparHtml(formatarIsoParaDataBrasil(filtros.intervaloDias.inicio))} a ${escaparHtml(formatarIsoParaDataBrasil(filtros.intervaloDias.fim))}`);
+  }
+
+  if (Array.isArray(filtros.diasEspecificos) && filtros.diasEspecificos.length) {
+    const dias = filtros.diasEspecificos.map(formatarIsoParaDataBrasil).map(valor => escaparHtml(valor));
+    itens.push(`<strong>Dias específicos:</strong> ${dias.join(', ')}`);
+  }
+
+  if (Array.isArray(filtros.meses) && filtros.meses.length) {
+    const meses = filtros.meses.map(formatarMesReferencia).map(valor => escaparHtml(valor));
+    itens.push(`<strong>Meses:</strong> ${meses.join(', ')}`);
+  }
+
+  if (Array.isArray(filtros.anos) && filtros.anos.length) {
+    const anos = filtros.anos.map(ano => escaparHtml(String(ano)));
+    itens.push(`<strong>Anos:</strong> ${anos.join(', ')}`);
+  }
+
+  if (Array.isArray(filtros.semanas) && filtros.semanas.length) {
+    const semanas = filtros.semanas.map(semana => escaparHtml(`Semana ${semana}`));
+    itens.push(`<strong>Semanas do mês:</strong> ${semanas.join(', ')}`);
+  }
+
+  if (filtros.busca) {
+    itens.push(`<strong>Busca:</strong> ${escaparHtml(String(filtros.busca))}`);
+  }
+
+  return itens;
+}
+
+function formatarMesReferencia(valor) {
+  if (typeof valor !== 'string' || !/^\d{4}-\d{2}$/.test(valor)) {
+    return valor;
+  }
+  const [ano, mes] = valor.split('-');
+  const indiceMes = Number(mes) - 1;
+  const nomeMes = indiceMes >= 0 && indiceMes < NOMES_MESES_PT.length ? NOMES_MESES_PT[indiceMes] : mes;
+  return `${nomeMes} de ${ano}`;
+}
+
+function formatarIsoParaDataBrasil(iso) {
+  if (!iso || typeof iso !== 'string') {
+    return '--';
+  }
+  const data = new Date(`${iso}T12:00:00`);
+  if (isNaN(data.getTime())) {
+    return iso;
+  }
+  return Utilities.formatDate(data, obterTimeZonePadrao(), 'dd/MM/yyyy');
+}
+
+function obterTimeZonePadrao() {
+  return Session.getScriptTimeZone() || 'America/Sao_Paulo';
+}
+
+function parseJsonSeguro(valor, padrao) {
+  if (valor === null || valor === undefined) {
+    return padrao;
+  }
+  if (typeof valor === 'string') {
+    try {
+      return JSON.parse(valor);
+    } catch (error) {
+      console.warn('JSON inválido recebido, usando padrão:', error);
+      return padrao;
+    }
+  }
+  if (typeof valor === 'object') {
+    return valor;
+  }
+  return padrao;
+}
+
+function escaparHtml(texto) {
+  if (texto === null || texto === undefined) {
+    return '';
+  }
+  return String(texto)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatarNumeroBrasil(valor, casasDecimais) {
+  if (valor === null || valor === undefined || valor === '') {
+    return '--';
+  }
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) {
+    return '--';
+  }
+  const casas = typeof casasDecimais === 'number' && casasDecimais >= 0 ? casasDecimais : 0;
+  if (typeof Intl !== 'undefined' && Intl.NumberFormat) {
+    try {
+      return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: casas,
+        maximumFractionDigits: casas
+      }).format(numero);
+    } catch (error) {
+      console.warn('Intl.NumberFormat não disponível, usando fallback:', error);
+    }
+  }
+  const fator = Math.pow(10, casas);
+  const arredondado = Math.round(numero * fator) / fator;
+  let texto = casas > 0 ? arredondado.toFixed(casas) : String(Math.round(arredondado));
+  const partes = texto.split('.');
+  partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  if (partes.length > 1) {
+    return `${partes[0]},${partes[1]}`;
+  }
+  return partes[0];
+}
+
+function formatarPercentualBrasil(valor, casasDecimais) {
+  const casas = typeof casasDecimais === 'number' && casasDecimais >= 0 ? casasDecimais : 0;
+  const numero = formatarNumeroBrasil(valor, casas);
+  if (numero === '--') {
+    return '--';
+  }
+  return `${numero} %`;
+}
+
+function obterEstilosPdf() {
+  return `
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #111827;
+      margin: 0;
+      padding: 28px 36px;
+      font-size: 12px;
+      background: #ffffff;
+    }
+    header {
+      border-bottom: 2px solid #1f2937;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      color: #111827;
+    }
+    h2 {
+      margin: 24px 0 10px;
+      font-size: 16px;
+      color: #1f2937;
+    }
+    p.meta {
+      margin: 4px 0;
+      color: #4b5563;
+    }
+    ul.filtros {
+      margin: 6px 0 0 18px;
+      padding: 0;
+      color: #1f2937;
+    }
+    ul.filtros li {
+      margin-bottom: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      page-break-inside: auto;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+    }
+    td.numero {
+      text-align: right;
+    }
+    .diff-positivo {
+      color: #16a34a;
+      font-weight: 600;
+    }
+    .diff-negativo {
+      color: #dc2626;
+      font-weight: 600;
+    }
+    .diff-neutro {
+      color: #4b5563;
+    }
+    .nota-truncamento {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .grid-duas-colunas {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .grid-duas-colunas > div {
+      flex: 1;
+      min-width: 240px;
+    }
+    table.tabela-detalhada th,
+    table.tabela-detalhada td {
+      font-size: 11px;
+    }
+  `;
+}
+
+function converterHtmlParaPdf(html, nomeArquivoBase) {
+  const blobHtml = Utilities.newBlob(html, 'text/html', `${nomeArquivoBase}.html`);
+  const pdf = blobHtml.getAs('application/pdf');
+  const base64 = Utilities.base64Encode(pdf.getBytes());
+  return {
+    base64,
+    mimeType: 'application/pdf',
+    filename: `${nomeArquivoBase}.pdf`
+  };
+}
