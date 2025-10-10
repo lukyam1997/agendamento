@@ -1986,6 +1986,224 @@ function getAgendamentosSalaMes(sala, mes, filtrosJson) {
   }
 }
 
+function avaliarStatusSalaNoDia(statusDesejado, statusConjunto, statusBase) {
+  const alvo = normalizarStatusServidor(statusDesejado || 'livre') || 'livre';
+  const conjunto = new Set();
+
+  if (statusConjunto instanceof Set) {
+    statusConjunto.forEach(valor => {
+      const normalizado = normalizarStatusServidor(valor);
+      if (normalizado) conjunto.add(normalizado);
+    });
+  } else if (Array.isArray(statusConjunto)) {
+    statusConjunto.forEach(valor => {
+      const normalizado = normalizarStatusServidor(valor);
+      if (normalizado) conjunto.add(normalizado);
+    });
+  } else if (statusConjunto) {
+    const normalizado = normalizarStatusServidor(statusConjunto);
+    if (normalizado) conjunto.add(normalizado);
+  }
+
+  const baseNormalizado = normalizarStatusServidor(statusBase);
+  if (baseNormalizado) {
+    conjunto.add(baseNormalizado);
+  }
+
+  const possui = valor => conjunto.has(valor);
+  const temOcupado = possui('ocupado') || possui('reservado');
+  const temBloqueado = possui('bloqueado') || possui('manutencao');
+
+  switch (alvo) {
+    case 'livre':
+      return !temBloqueado && !temOcupado;
+    case 'ocupado':
+      return temOcupado;
+    case 'reservado':
+      return possui('reservado');
+    case 'bloqueado':
+      return possui('bloqueado');
+    case 'manutencao':
+      return possui('manutencao');
+    default:
+      return possui(alvo);
+  }
+}
+
+function getMapaStatusSalasMes(statusDesejado, mes, filtrosJson) {
+  try {
+    const statusAlvo = normalizarStatusServidor(statusDesejado || 'livre') || 'livre';
+    if (!mes || typeof mes !== 'string' || !/^\d{4}-\d{2}$/.test(mes)) {
+      throw new Error('Mês inválido informado.');
+    }
+
+    const [anoStr, mesStr] = mes.split('-');
+    const ano = parseInt(anoStr, 10);
+    const mesNumero = parseInt(mesStr, 10);
+    if (!Number.isInteger(ano) || !Number.isInteger(mesNumero)) {
+      throw new Error('Não foi possível interpretar o período solicitado.');
+    }
+
+    const primeiroDia = new Date(ano, mesNumero - 1, 1, 12);
+    const ultimoDia = new Date(ano, mesNumero, 0, 12);
+
+    const filtros = parseRelatorioFiltros(filtrosJson);
+    const salasOrigem = getSalas();
+    const salasInfo = new Map();
+
+    salasOrigem.forEach(sala => {
+      if (!sala) return;
+      const numero = String(sala.numero || '').trim();
+      if (!numero) return;
+      salasInfo.set(numero, {
+        numero,
+        ilha: sala.ilha || '',
+        statusBase: normalizarStatusServidor(sala.status || sala.statusGeral)
+      });
+    });
+
+    const ilhasMapa = new Map();
+    const diasPeriodo = [];
+    const tz = obterTimeZonePadrao();
+
+    for (let cursor = new Date(primeiroDia); cursor.getTime() <= ultimoDia.getTime(); cursor.setDate(cursor.getDate() + 1)) {
+      const diaAtual = new Date(cursor);
+      diasPeriodo.push(Utilities.formatDate(diaAtual, tz, 'yyyy-MM-dd'));
+      const agendamentosDia = getAgendamentos(diaAtual).filter(ag => agendamentoCorrespondeFiltros(ag, filtros));
+
+      const statusPorSala = new Map();
+      const detalhesPorSala = new Map();
+
+      agendamentosDia.forEach(ag => {
+        const numeroSala = String(ag.sala || '').trim();
+        if (!numeroSala) return;
+
+        if (!salasInfo.has(numeroSala)) {
+          salasInfo.set(numeroSala, {
+            numero: numeroSala,
+            ilha: ag.ilha || '',
+            statusBase: normalizarStatusServidor(ag.status || ag.statusNormalizado)
+          });
+        }
+
+        const statusNormalizado = normalizarStatusServidor(ag.status || ag.statusNormalizado) || 'ocupado';
+        const statusSet = statusPorSala.get(numeroSala) || new Set();
+        statusSet.add(statusNormalizado);
+        statusPorSala.set(numeroSala, statusSet);
+
+        const detalhes = detalhesPorSala.get(numeroSala) || [];
+        detalhes.push({
+          horaInicio: ag.horaInicio || '',
+          horaFim: ag.horaFim || '',
+          profissional: ag.profissional || '',
+          especialidade: ag.especialidade || '',
+          categoria: ag.categoria || '',
+          status: statusNormalizado,
+          statusLabel: formatarStatusRelatorio(statusNormalizado),
+          turno: ag.turno || ''
+        });
+        detalhesPorSala.set(numeroSala, detalhes);
+      });
+
+      salasInfo.forEach(infoSala => {
+        const numeroSala = infoSala.numero;
+        const statusSet = statusPorSala.get(numeroSala) || new Set();
+        const corresponde = avaliarStatusSalaNoDia(statusAlvo, statusSet, infoSala.statusBase);
+        if (!corresponde) {
+          return;
+        }
+
+        const chaveIlha = infoSala.ilha || 'Sem ilha';
+        if (!ilhasMapa.has(chaveIlha)) {
+          ilhasMapa.set(chaveIlha, {
+            ilha: chaveIlha,
+            dias: new Map(),
+            salasUnicas: new Set()
+          });
+        }
+
+        const ilhaInfo = ilhasMapa.get(chaveIlha);
+        ilhaInfo.salasUnicas.add(numeroSala);
+
+        const diaIso = Utilities.formatDate(diaAtual, tz, 'yyyy-MM-dd');
+        if (!ilhaInfo.dias.has(diaIso)) {
+          ilhaInfo.dias.set(diaIso, []);
+        }
+
+        const detalhes = detalhesPorSala.get(numeroSala) || [];
+        ilhaInfo.dias.get(diaIso).push({
+          sala: numeroSala,
+          status: statusAlvo,
+          statusBase: infoSala.statusBase || 'livre',
+          statusBaseLabel: formatarStatusRelatorio(infoSala.statusBase || 'livre'),
+          eventos: detalhes
+        });
+      });
+    }
+
+    const diasOrdenados = diasPeriodo;
+    const ilhas = Array.from(ilhasMapa.values()).map(info => {
+      const dias = diasOrdenados.map(diaIso => {
+        const salasDia = info.dias.get(diaIso) || [];
+        const salasOrdenadas = [...salasDia].sort((a, b) => a.sala.localeCompare(b.sala, undefined, { numeric: true }));
+        return {
+          data: diaIso,
+          label: formatarIsoParaDataBrasil(diaIso),
+          total: salasOrdenadas.length,
+          salas: salasOrdenadas
+        };
+      });
+
+      const totalOcorrencias = dias.reduce((soma, dia) => soma + (dia.total || 0), 0);
+      const diasComSalas = dias.filter(dia => dia.total > 0).length;
+
+      return {
+        ilha: info.ilha,
+        label: info.ilha && info.ilha !== 'Sem ilha' ? `Ilha ${info.ilha}` : 'Sem ilha definida',
+        totalSalas: info.salasUnicas.size,
+        dias,
+        totalOcorrencias,
+        diasComSalas
+      };
+    }).sort((a, b) => {
+      const numeroA = parseFloat(a.ilha);
+      const numeroB = parseFloat(b.ilha);
+      const ehNumeroA = !Number.isNaN(numeroA);
+      const ehNumeroB = !Number.isNaN(numeroB);
+      if (ehNumeroA && ehNumeroB) {
+        return numeroA - numeroB;
+      }
+      if (ehNumeroA) return -1;
+      if (ehNumeroB) return 1;
+      return (a.ilha || '').localeCompare(b.ilha || '', 'pt-BR');
+    });
+
+    const salasTotaisUnicas = new Set();
+    ilhas.forEach(ilha => {
+      ilha.dias.forEach(dia => {
+        dia.salas.forEach(item => salasTotaisUnicas.add(item.sala));
+      });
+    });
+
+    return {
+      status: statusAlvo,
+      statusLabel: formatarStatusRelatorio(statusAlvo),
+      periodo: {
+        inicio: Utilities.formatDate(primeiroDia, tz, 'yyyy-MM-dd'),
+        fim: Utilities.formatDate(ultimoDia, tz, 'yyyy-MM-dd'),
+        texto: formatarPeriodo(primeiroDia, ultimoDia)
+      },
+      totalIlhas: ilhas.length,
+      totalSalas: salasTotaisUnicas.size,
+      diasNoPeriodo: diasOrdenados.length,
+      ilhas
+    };
+  } catch (error) {
+    console.error('Erro em getMapaStatusSalasMes:', error);
+    return { error: error.toString() };
+  }
+}
+
 /**
  * Obtém relatório por período
  */
@@ -2735,13 +2953,13 @@ function construirHtmlDashboardPdf({ payload, filtrosPrincipais, principal, comp
 
   let html = '<!DOCTYPE html><html><head><meta charset="utf-8"/>';
   html += `<style>${obterEstilosPdf()}</style>`;
-  html += '</head><body>';
+  html += '</head><body><div class="pdf-wrapper">';
   html += '<header>';
+  html += '<span class="tag">Dashboard</span>';
   html += `<h1>${tituloPrincipal}</h1>`;
   if (resumoPrincipal && resumoPrincipal.periodoTexto) {
     html += `<p class="meta"><strong>Período analisado:</strong> ${escaparHtml(resumoPrincipal.periodoTexto)}</p>`;
   }
-  html += `<p class="meta"><strong>Gerado em:</strong> ${escaparHtml(geradoEm)}</p>`;
   if (comparacaoAtiva) {
     const descricaoComparativo = payload && payload.comparativo && payload.comparativo.descricao
       ? payload.comparativo.descricao
@@ -2752,10 +2970,11 @@ function construirHtmlDashboardPdf({ payload, filtrosPrincipais, principal, comp
     }
     html += '</p>';
   }
+  html += `<p class="meta"><strong>Gerado em:</strong> ${escaparHtml(geradoEm)}</p>`;
   html += '</header>';
 
   if (filtrosDescricao.length) {
-    html += '<section><h2>Filtros aplicados</h2><ul class="filtros">';
+    html += '<section><h2>Filtros aplicados</h2><ul class="filtros-lista">';
     filtrosDescricao.forEach(item => {
       html += `<li>${item}</li>`;
     });
@@ -2802,7 +3021,7 @@ function construirHtmlDashboardPdf({ payload, filtrosPrincipais, principal, comp
 
   html += gerarTabelaDistribuicaoHtml('Evolução diária', combinarSeriesTemporais(evolucaoPrincipal, evolucaoComparativo), comparacaoAtiva, { ordenarPorLabel: true });
 
-  html += '</body></html>';
+  html += '</div></body></html>';
   return html;
 }
 
@@ -2830,13 +3049,14 @@ function construirHtmlRelatorioPdf({ payload, filtrosPrincipais, principal, comp
 
   let html = '<!DOCTYPE html><html><head><meta charset="utf-8"/>';
   html += `<style>${obterEstilosPdf()}</style>`;
-  html += '</head><body>';
+  html += '</head><body><div class="pdf-wrapper">';
   html += '<header>';
+  html += '<span class="tag">Relatório</span>';
   html += `<h1>${tituloPrincipal}</h1>`;
-  if (resumoPrincipal && resumoPrincipal.periodoTexto) {
-    html += `<p class="meta"><strong>Período analisado:</strong> ${escaparHtml(resumoPrincipal.periodoTexto)}</p>`;
-  }
-  html += `<p class="meta"><strong>Gerado em:</strong> ${escaparHtml(geradoEm)}</p>`;
+  const periodoTexto = resumoPrincipal && resumoPrincipal.periodoTexto
+    ? resumoPrincipal.periodoTexto
+    : `${payload.inicio} a ${payload.fim}`;
+  html += `<p class="meta"><strong>Período analisado:</strong> ${escaparHtml(periodoTexto)}</p>`;
   if (comparacaoAtiva) {
     const descricaoComparativo = payload && payload.comparativo && payload.comparativo.descricao
       ? payload.comparativo.descricao
@@ -2847,10 +3067,11 @@ function construirHtmlRelatorioPdf({ payload, filtrosPrincipais, principal, comp
     }
     html += '</p>';
   }
+  html += `<p class="meta"><strong>Gerado em:</strong> ${escaparHtml(geradoEm)}</p>`;
   html += '</header>';
 
   if (filtrosDescricao.length) {
-    html += '<section><h2>Filtros aplicados</h2><ul class="filtros">';
+    html += '<section><h2>Filtros aplicados</h2><ul class="filtros-lista">';
     filtrosDescricao.forEach(item => {
       html += `<li>${item}</li>`;
     });
@@ -2877,7 +3098,7 @@ function construirHtmlRelatorioPdf({ payload, filtrosPrincipais, principal, comp
     }
   }
 
-  html += '</body></html>';
+  html += '</div></body></html>';
   return html;
 }
 
@@ -2887,11 +3108,7 @@ function gerarTabelaComparativaHtml(titulo, metricas, resumoPrincipal, resumoCom
   }
 
   let html = `<section><h2>${escaparHtml(titulo)}</h2>`;
-  html += '<table><thead><tr><th>Métrica</th><th>Seleção principal</th>';
-  if (comparacaoAtiva) {
-    html += '<th>Comparativo</th><th>Diferença</th>';
-  }
-  html += '</tr></thead><tbody>';
+  html += '<div class="summary-grid">';
 
   metricas.forEach(metrica => {
     const valorPrincipal = resumoPrincipal && Object.prototype.hasOwnProperty.call(resumoPrincipal, metrica.chave)
@@ -2905,35 +3122,34 @@ function gerarTabelaComparativaHtml(titulo, metricas, resumoPrincipal, resumoCom
     const textoComparativo = comparacaoAtiva ? formatarValorMetrica(valorComparativo, metrica) : '';
 
     let textoDiferenca = '';
-    let classeDiferenca = '';
+    let classeDiferenca = 'diff-neutro';
     if (comparacaoAtiva) {
       const diff = calcularDiferencaNumerica(valorPrincipal, valorComparativo);
       if (diff === null) {
         textoDiferenca = '--';
-        classeDiferenca = 'diff-neutro';
       } else {
         textoDiferenca = formatarDiferenca(diff, metrica);
         if (diff > 0) {
           classeDiferenca = 'diff-positivo';
         } else if (diff < 0) {
           classeDiferenca = 'diff-negativo';
-        } else {
-          classeDiferenca = 'diff-neutro';
         }
       }
     }
 
-    html += '<tr>';
-    html += `<td>${escaparHtml(metrica.rotulo)}</td>`;
-    html += `<td class="numero">${textoPrincipal}</td>`;
+    html += '<div class="summary-card">';
+    html += `<span class="summary-label">${escaparHtml(metrica.rotulo)}</span>`;
+    html += `<span class="summary-value">${textoPrincipal}</span>`;
     if (comparacaoAtiva) {
-      html += `<td class="numero">${textoComparativo}</td>`;
-      html += `<td class="numero ${classeDiferenca}">${textoDiferenca}</td>`;
+      html += '<div class="summary-comparativo">';
+      html += `<span>Comparativo: ${textoComparativo}</span>`;
+      html += `<span class="diff-chip ${classeDiferenca}">${textoDiferenca}</span>`;
+      html += '</div>';
     }
-    html += '</tr>';
+    html += '</div>';
   });
 
-  html += '</tbody></table></section>';
+  html += '</div></section>';
   return html;
 }
 
@@ -2954,48 +3170,63 @@ function gerarTabelaDistribuicaoHtml(titulo, linhas, comparacaoAtiva, opcoes) {
     linhasRender = [...linhasRender].sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
   }
 
+  const maxPrincipal = linhasRender.reduce((maior, linha) => {
+    const valor = Number(linha.principal) || 0;
+    return valor > maior ? valor : maior;
+  }, 0);
+  const totalPrincipal = linhasRender.reduce((total, linha) => total + (Number(linha.principal) || 0), 0);
+
   let html = `<section><h2>${escaparHtml(titulo)}</h2>`;
-  html += '<table><thead><tr><th>Categoria</th><th>Seleção principal</th>';
-  if (comparacaoAtiva) {
-    html += '<th>Comparativo</th><th>Diferença</th>';
-  }
-  html += '</tr></thead><tbody>';
+  html += '<div class="distribution-list">';
 
   linhasRender.forEach(linha => {
+    const valorPrincipal = Number(linha.principal) || 0;
     const textoPrincipal = formatarValorMetrica(linha.principal, { tipo: 'numero' });
     const textoComparativo = comparacaoAtiva ? formatarValorMetrica(linha.comparativo, { tipo: 'numero' }) : '';
+
     let textoDiferenca = '';
-    let classeDiferenca = '';
+    let classeDiferenca = 'diff-neutro';
     if (comparacaoAtiva) {
       const diff = calcularDiferencaNumerica(linha.principal, linha.comparativo);
       if (diff === null) {
         textoDiferenca = '--';
-        classeDiferenca = 'diff-neutro';
       } else {
         textoDiferenca = formatarDiferenca(diff, { tipo: 'numero' });
         if (diff > 0) {
           classeDiferenca = 'diff-positivo';
         } else if (diff < 0) {
           classeDiferenca = 'diff-negativo';
-        } else {
-          classeDiferenca = 'diff-neutro';
         }
       }
     }
 
-    html += '<tr>';
-    html += `<td>${escaparHtml(linha.label)}</td>`;
-    html += `<td class="numero">${textoPrincipal}</td>`;
+    const proporcao = maxPrincipal > 0 ? Math.max(2, Math.round((valorPrincipal / maxPrincipal) * 100)) : 0;
+    const sharePercent = totalPrincipal > 0 ? (valorPrincipal / totalPrincipal) * 100 : null;
+    const shareTexto = sharePercent === null ? '--' : formatarPercentualBrasil(sharePercent, 1);
+
+    html += '<div class="distribution-item">';
+    html += '<div class="distribution-header">';
+    html += `<span class="distribution-label">${escaparHtml(linha.label)}</span>`;
+    html += '<div class="distribution-values">';
+    html += `<span class="distribution-value">${textoPrincipal}</span>`;
     if (comparacaoAtiva) {
-      html += `<td class="numero">${textoComparativo}</td>`;
-      html += `<td class="numero ${classeDiferenca}">${textoDiferenca}</td>`;
+      html += `<span class="distribution-compare">${textoComparativo}</span>`;
     }
-    html += '</tr>';
+    html += '</div></div>';
+    html += '<div class="distribution-progress">';
+    html += `<div class="distribution-progress-fill" style="width:${Math.min(100, Math.max(0, proporcao))}%"></div>`;
+    html += '</div>';
+    if (comparacaoAtiva) {
+      html += `<div class="distribution-meta"><span>Participação: ${shareTexto}</span><span class="diff-chip ${classeDiferenca}">${textoDiferenca}</span></div>`;
+    } else {
+      html += `<div class="distribution-meta"><span>Participação</span><span>${shareTexto}</span></div>`;
+    }
+    html += '</div>';
   });
 
-  html += '</tbody></table>';
+  html += '</div>';
   if (truncado) {
-    html += `<p class="nota-truncamento">Exibindo apenas as ${linhasRender.length} principais categorias de ${linhas.length} totais.</p>`;
+    html += `<p class="nota-truncamento">Exibindo ${linhasRender.length} de ${linhas.length} categorias.</p>`;
   }
   html += '</section>';
   return html;
@@ -3010,7 +3241,8 @@ function gerarTabelaResumoDiario(titulo, diario) {
   html += '<table><thead><tr><th>Data</th><th>Salas ocupadas</th><th>Ocupação média</th><th>Taxa de aproveitamento</th><th>Especialidades</th></tr></thead><tbody>';
 
   diario.forEach(item => {
-    const data = item && item.data ? escaparHtml(item.data) : '--';
+    const dataBruta = item && item.data ? String(item.data) : '';
+    const dataFormatada = dataBruta.includes('-') ? formatarIsoParaDataBrasil(dataBruta) : dataBruta || '--';
     const salas = formatarValorMetrica(item ? item.salasOcupadas : null, { tipo: 'numero' });
     const ocupacao = formatarValorMetrica(item ? item.taxaMedia : null, { tipo: 'percentual' });
     const aproveitamento = formatarValorMetrica(item ? item.taxaAproveitamento : null, { tipo: 'percentual' });
@@ -3019,7 +3251,7 @@ function gerarTabelaResumoDiario(titulo, diario) {
       : '--';
 
     html += '<tr>';
-    html += `<td>${data}</td>`;
+    html += `<td>${escaparHtml(dataFormatada)}</td>`;
     html += `<td class="numero">${salas}</td>`;
     html += `<td class="numero">${ocupacao}</td>`;
     html += `<td class="numero">${aproveitamento}</td>`;
@@ -3046,23 +3278,28 @@ function gerarTabelaDetalhado(titulo, linhas) {
     '</tr></thead><tbody>';
 
   linhasRender.forEach(item => {
+    const dataBruta = item && item.data ? String(item.data) : '';
+    const dataFormatada = dataBruta.includes('-') ? formatarIsoParaDataBrasil(dataBruta) : dataBruta || '--';
     const horario = [item && item.horaInicio, item && item.horaFim].filter(Boolean).join(' - ');
+    const turno = item && item.turno ? formatarTurnoRelatorio(item.turno) : '--';
+    const status = item && item.status ? formatarStatusRelatorio(item.status) : '--';
+
     html += '<tr>';
-    html += `<td>${escaparHtml(item && item.data ? item.data : '--')}</td>`;
+    html += `<td>${escaparHtml(dataFormatada)}</td>`;
     html += `<td>${escaparHtml(item && item.sala ? item.sala : '--')}</td>`;
     html += `<td>${escaparHtml(item && item.ilha ? item.ilha : '--')}</td>`;
-    html += `<td>${escaparHtml(item && item.turno ? item.turno : '--')}</td>`;
+    html += `<td>${escaparHtml(turno)}</td>`;
     html += `<td>${escaparHtml(horario || '--')}</td>`;
     html += `<td>${escaparHtml(item && item.especialidade ? item.especialidade : '--')}</td>`;
     html += `<td>${escaparHtml(item && item.categoria ? item.categoria : '--')}</td>`;
     html += `<td>${escaparHtml(item && item.profissional ? item.profissional : '--')}</td>`;
-    html += `<td>${escaparHtml(item && item.status ? item.status : '--')}</td>`;
+    html += `<td>${escaparHtml(status)}</td>`;
     html += '</tr>';
   });
 
   html += '</tbody></table>';
   if (truncado) {
-    html += `<p class="nota-truncamento">Exibindo apenas ${linhasRender.length} de ${linhas.length} registros detalhados.</p>`;
+    html += `<p class="nota-truncamento">Exibindo ${linhasRender.length} de ${linhas.length} registros detalhados.</p>`;
   }
   html += '</section>';
   return html;
@@ -3333,89 +3570,245 @@ function formatarPercentualBrasil(valor, casasDecimais) {
 
 function obterEstilosPdf() {
   return `
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      color: #111827;
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      color: #0f172a;
       margin: 0;
-      padding: 28px 36px;
+      padding: 32px;
       font-size: 12px;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    }
+    .pdf-wrapper {
       background: #ffffff;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      padding: 28px 32px;
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
     }
     header {
-      border-bottom: 2px solid #1f2937;
-      margin-bottom: 18px;
-      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(148, 163, 184, 0.35);
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
-    h1 {
+    header h1 {
       margin: 0;
-      font-size: 22px;
+      font-size: 24px;
       color: #111827;
+      letter-spacing: -0.01em;
     }
-    h2 {
-      margin: 24px 0 10px;
+    header p.meta {
+      margin: 0;
+      color: #64748b;
+      font-size: 12px;
+    }
+    header .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eef2ff;
+      color: #4338ca;
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 2px 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    section {
+      margin-bottom: 26px;
+    }
+    section h2 {
+      margin: 0 0 14px;
       font-size: 16px;
-      color: #1f2937;
+      color: #0f172a;
+      letter-spacing: -0.01em;
     }
-    p.meta {
-      margin: 4px 0;
-      color: #4b5563;
+    .summary-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
-    ul.filtros {
-      margin: 6px 0 0 18px;
-      padding: 0;
-      color: #1f2937;
+    .summary-card {
+      background: linear-gradient(135deg, rgba(238, 242, 255, 0.85), #ffffff);
+      border-radius: 14px;
+      border: 1px solid rgba(79, 70, 229, 0.12);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 110px;
     }
-    ul.filtros li {
-      margin-bottom: 4px;
+    .summary-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6366f1;
+      font-weight: 600;
+    }
+    .summary-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1e1b4b;
+      margin: 0;
+    }
+    .summary-comparativo {
+      font-size: 11px;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .diff-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .diff-positivo {
+      color: #166534;
+      background: rgba(22, 197, 129, 0.16);
+    }
+    .diff-negativo {
+      color: #b91c1c;
+      background: rgba(248, 113, 113, 0.22);
+    }
+    .diff-neutro {
+      color: #475569;
+      background: rgba(148, 163, 184, 0.25);
+    }
+    .distribution-list {
+      display: grid;
+      gap: 12px;
+    }
+    .distribution-item {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.26);
+      background: linear-gradient(135deg, #ffffff, #f8fafc);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .distribution-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .distribution-label {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 13px;
+    }
+    .distribution-values {
+      text-align: right;
+    }
+    .distribution-value {
+      font-weight: 700;
+      color: #312e81;
+      font-size: 13px;
+      display: block;
+    }
+    .distribution-compare {
+      font-size: 11px;
+      color: #475569;
+      display: block;
+    }
+    .distribution-progress {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.35);
+      overflow: hidden;
+    }
+    .distribution-progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+    }
+    .distribution-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10.5px;
+      color: #64748b;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 12px;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      font-size: 11.5px;
       page-break-inside: auto;
     }
-    th, td {
-      border: 1px solid #d1d5db;
-      padding: 6px 8px;
-      text-align: left;
-      vertical-align: top;
+    thead th {
+      background: #f1f5f9;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 11px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2e8f0;
     }
-    th {
-      background: #f3f4f6;
-      font-weight: 600;
+    tbody td {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 12px;
+      color: #1f2937;
+    }
+    tbody tr:nth-child(even) td {
+      background: #f8fafc;
     }
     td.numero {
       text-align: right;
-    }
-    .diff-positivo {
-      color: #16a34a;
-      font-weight: 600;
-    }
-    .diff-negativo {
-      color: #dc2626;
-      font-weight: 600;
-    }
-    .diff-neutro {
-      color: #4b5563;
+      font-variant-numeric: tabular-nums;
     }
     .nota-truncamento {
-      font-size: 11px;
-      color: #6b7280;
-      margin-top: 4px;
+      font-size: 10.5px;
+      color: #64748b;
+      margin-top: 6px;
       font-style: italic;
     }
-    .grid-duas-colunas {
+    .filtros-lista {
+      list-style: none;
+      margin: 0;
+      padding: 0;
       display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11.5px;
+      color: #334155;
+    }
+    .filtros-lista li {
+      background: rgba(99, 102, 241, 0.12);
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+    .grid-duas-colunas {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
     }
     .grid-duas-colunas > div {
-      flex: 1;
-      min-width: 240px;
+      background: #ffffff;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
-    table.tabela-detalhada th,
-    table.tabela-detalhada td {
-      font-size: 11px;
+    .grid-duas-colunas h2 {
+      margin-top: 0;
     }
   `;
 }
