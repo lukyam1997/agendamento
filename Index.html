@@ -2214,10 +2214,9 @@
 
       .status-map-header {
           display: flex;
-          flex-wrap: wrap;
+          flex-direction: column;
           align-items: flex-start;
-          justify-content: space-between;
-          gap: 16px;
+          gap: 18px;
       }
 
       .status-map-title {
@@ -2239,11 +2238,84 @@
           line-height: 1.4;
       }
 
-      .status-map-controls {
+      .status-map-legend {
           display: flex;
           flex-wrap: wrap;
-          align-items: flex-end;
-          gap: 16px;
+          gap: 12px;
+          align-items: center;
+      }
+
+      .status-map-legend-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: var(--radius-sm);
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          border: 1px solid var(--border-soft);
+          background: rgba(148, 163, 184, 0.12);
+          color: var(--text-muted);
+      }
+
+      .status-map-legend-bullet {
+          display: inline-block;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: currentColor;
+          box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.15);
+      }
+
+      .status-map-legend-livre {
+          color: var(--success);
+          background: rgba(74, 222, 128, 0.12);
+          border-color: rgba(74, 222, 128, 0.35);
+      }
+
+      .status-map-legend-ocupado {
+          color: var(--info);
+          background: rgba(96, 165, 250, 0.12);
+          border-color: rgba(96, 165, 250, 0.35);
+      }
+
+      .status-map-legend-reservado {
+          color: var(--warning);
+          background: rgba(251, 191, 36, 0.12);
+          border-color: rgba(251, 191, 36, 0.35);
+      }
+
+      .status-map-legend-bloqueado {
+          color: var(--danger);
+          background: rgba(248, 113, 113, 0.12);
+          border-color: rgba(248, 113, 113, 0.35);
+      }
+
+      body.light-theme .status-map-legend-item {
+          background: rgba(226, 232, 240, 0.6);
+          border-color: rgba(148, 163, 184, 0.35);
+          color: var(--text-secondary);
+      }
+
+      body.light-theme .status-map-legend-bullet {
+          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+      }
+
+      .status-map-toolbar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+          width: 100%;
+          align-items: flex-start;
+      }
+
+      .status-map-period {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          flex: 1 1 320px;
       }
 
       .status-map-control {
@@ -2259,6 +2331,10 @@
           text-transform: uppercase;
           letter-spacing: 0.04em;
           color: var(--text-muted);
+      }
+
+      .status-map-control-status {
+          min-width: 220px;
       }
 
       .status-map-select,
@@ -2279,6 +2355,108 @@
           outline: none;
           border-color: var(--primary);
           box-shadow: 0 0 0 3px var(--primary-soft);
+      }
+
+      .status-map-periodo-detalhes {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 14px;
+          align-items: flex-end;
+      }
+
+      .status-map-periodo-field {
+          display: none;
+          flex-direction: column;
+          gap: 8px;
+          min-width: 200px;
+      }
+
+      .status-map-periodo-field.active {
+          display: flex;
+      }
+
+      .status-map-periodo-field label,
+      .status-map-periodo-label {
+          font-size: 0.78rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: var(--text-muted);
+      }
+
+      .status-map-periodo-hint {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+      }
+
+      .status-map-day-selector {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+      }
+
+      .status-map-day-option {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 10px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-filter);
+          color: var(--text-secondary);
+          font-size: 0.82rem;
+          cursor: pointer;
+      }
+
+      body.light-theme .status-map-day-option {
+          background: rgba(226, 232, 240, 0.7);
+      }
+
+      .status-map-day-option input[type="radio"] {
+          accent-color: var(--primary);
+          cursor: pointer;
+      }
+
+      .status-map-day-option-data input[type="date"] {
+          border: none;
+          background: transparent;
+          color: inherit;
+          padding: 0;
+          min-width: 140px;
+      }
+
+      .status-map-day-option-data input[type="date"]:disabled {
+          opacity: 0.5;
+      }
+
+      .status-map-day-range {
+          display: none;
+          gap: 12px;
+          flex-wrap: wrap;
+      }
+
+      .status-map-day-range.active {
+          display: flex;
+      }
+
+      .status-map-day-range label {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          font-size: 0.78rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: var(--text-muted);
+      }
+
+      .status-map-day-range input {
+          min-width: 150px;
+          padding: 8px 10px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-input);
+          color: var(--text-primary);
       }
 
       .status-map-feedback {
@@ -2357,7 +2535,7 @@
       }
 
       .status-tree summary::after {
-          content: '\\f107';
+          content: '\f107';
           font-family: 'Font Awesome 6 Free';
           font-weight: 900;
           font-size: 0.85rem;
@@ -2425,16 +2603,17 @@
       }
 
       .status-island-count-number {
-          font-size: 1.6rem;
-          font-weight: 700;
+          font-size: 1.9rem;
+          font-weight: 800;
           color: var(--primary);
       }
 
       .status-island-count-label {
-          font-size: 0.8rem;
+          font-size: 0.9rem;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--text-muted);
+          letter-spacing: 0.08em;
+          color: var(--text-secondary);
+          font-weight: 700;
       }
 
       .status-tree-children {
@@ -2472,20 +2651,21 @@
       }
 
       .status-day-title {
-          font-size: 0.95rem;
-          font-weight: 600;
+          font-size: 1.05rem;
+          font-weight: 700;
           color: var(--text-primary);
       }
 
       .status-day-meta {
-          font-size: 0.8rem;
-          color: var(--text-muted);
+          font-size: 0.92rem;
+          color: var(--text-secondary);
+          font-weight: 600;
       }
 
       .status-tree-count {
-          font-size: 0.8rem;
-          color: var(--text-muted);
-          font-weight: 600;
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          font-weight: 700;
       }
 
       .status-room-list {
@@ -2523,8 +2703,9 @@
           display: flex;
           align-items: center;
           gap: 10px;
-          font-weight: 700;
+          font-weight: 800;
           color: var(--text-primary);
+          font-size: 1.05rem;
       }
 
       .status-room-title i {
@@ -2534,11 +2715,11 @@
       .status-room-badge {
           background: rgba(79, 70, 229, 0.22);
           color: #ede9fe;
-          padding: 4px 12px;
+          padding: 4px 14px;
           border-radius: 999px;
-          font-size: 0.72rem;
+          font-size: 0.8rem;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.1em;
           font-weight: 700;
       }
 
@@ -2573,8 +2754,8 @@
       .status-room-time {
           font-weight: 700;
           color: var(--primary);
-          font-size: 0.85rem;
-          min-width: 90px;
+          font-size: 0.95rem;
+          min-width: 96px;
       }
 
       .status-room-info {
@@ -4967,12 +5148,109 @@
                                 <h3>Salas por status no período</h3>
                                 <p class="status-map-description">Clique em uma ilha para visualizar os dias disponíveis e, em seguida, explore as salas em cada dia.</p>
                             </div>
-                            <div class="status-map-controls">
-                                <div class="status-map-control">
-                                    <label for="sala-mes-periodo">Período</label>
-                                    <input type="month" id="sala-mes-periodo" class="status-map-input">
+                            <div class="status-map-legend" aria-label="Legenda de status">
+                                <span class="status-map-legend-item status-map-legend-livre">
+                                    <span class="status-map-legend-bullet"></span>
+                                    Livre
+                                </span>
+                                <span class="status-map-legend-item status-map-legend-ocupado">
+                                    <span class="status-map-legend-bullet"></span>
+                                    Ocupado
+                                </span>
+                                <span class="status-map-legend-item status-map-legend-reservado">
+                                    <span class="status-map-legend-bullet"></span>
+                                    Reservado
+                                </span>
+                                <span class="status-map-legend-item status-map-legend-bloqueado">
+                                    <span class="status-map-legend-bullet"></span>
+                                    Bloqueado
+                                </span>
+                            </div>
+                            <div class="status-map-toolbar">
+                                <div class="status-map-period">
+                                    <div class="status-map-control">
+                                        <label for="sala-mes-periodo-tipo">Período</label>
+                                        <select id="sala-mes-periodo-tipo" class="status-map-select">
+                                            <option value="mes">Mês</option>
+                                            <option value="semana">Semana</option>
+                                            <option value="dia">Dia</option>
+                                        </select>
+                                    </div>
+                                    <div class="status-map-periodo-detalhes" id="sala-mes-periodo-detalhes">
+                                        <div class="status-map-periodo-field" data-periodo="mes">
+                                            <label for="sala-mes-periodo-meses">Meses</label>
+                                            <div class="report-multiselect" data-select-id="sala-mes-periodo-meses" data-placeholder="Selecione os meses">
+                                                <button type="button" class="report-multiselect-btn">Selecionar meses</button>
+                                                <div class="report-multiselect-panel">
+                                                    <div class="report-multiselect-actions">
+                                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                                        <button type="button" data-action="clear">Limpar</button>
+                                                    </div>
+                                                    <div class="report-multiselect-options"></div>
+                                                </div>
+                                            </div>
+                                            <select id="sala-mes-periodo-meses" multiple class="sr-only-input"></select>
+                                        </div>
+                                        <div class="status-map-periodo-field" data-periodo="semana" data-field="meses">
+                                            <label for="sala-mes-periodo-semana-meses">Meses</label>
+                                            <div class="report-multiselect" data-select-id="sala-mes-periodo-semana-meses" data-placeholder="Selecione os meses">
+                                                <button type="button" class="report-multiselect-btn">Meses</button>
+                                                <div class="report-multiselect-panel">
+                                                    <div class="report-multiselect-actions">
+                                                        <button type="button" data-action="select-all">Selecionar todos</button>
+                                                        <button type="button" data-action="clear">Limpar</button>
+                                                    </div>
+                                                    <div class="report-multiselect-options"></div>
+                                                </div>
+                                            </div>
+                                            <select id="sala-mes-periodo-semana-meses" multiple class="sr-only-input"></select>
+                                        </div>
+                                        <div class="status-map-periodo-field" data-periodo="semana" data-field="semanas">
+                                            <label for="sala-mes-periodo-semanas">Semanas do mês</label>
+                                            <div class="report-multiselect" data-select-id="sala-mes-periodo-semanas" data-placeholder="Selecione as semanas">
+                                                <button type="button" class="report-multiselect-btn">Semanas</button>
+                                                <div class="report-multiselect-panel">
+                                                    <div class="report-multiselect-actions">
+                                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                                        <button type="button" data-action="clear">Limpar</button>
+                                                    </div>
+                                                    <div class="report-multiselect-options"></div>
+                                                </div>
+                                            </div>
+                                            <select id="sala-mes-periodo-semanas" multiple class="sr-only-input"></select>
+                                            <span class="status-map-periodo-hint">Combine semanas e meses para refinar a busca.</span>
+                                        </div>
+                                        <div class="status-map-periodo-field" data-periodo="dia">
+                                            <span class="status-map-periodo-label">Selecione o intervalo</span>
+                                            <div class="status-map-day-selector" id="sala-mes-dia-selector">
+                                                <label class="status-map-day-option">
+                                                    <input type="radio" name="sala-mes-dia-modo" value="hoje" checked>
+                                                    Hoje
+                                                </label>
+                                                <label class="status-map-day-option status-map-day-option-data">
+                                                    <input type="radio" name="sala-mes-dia-modo" value="data">
+                                                    <span>Escolher dia</span>
+                                                    <input type="date" id="sala-mes-dia-unico" aria-label="Escolher dia específico">
+                                                </label>
+                                                <label class="status-map-day-option">
+                                                    <input type="radio" name="sala-mes-dia-modo" value="intervalo">
+                                                    Intervalo
+                                                </label>
+                                            </div>
+                                            <div class="status-map-day-range" id="sala-mes-dia-range">
+                                                <label>
+                                                    Início
+                                                    <input type="date" id="sala-mes-dia-inicio" aria-label="Data inicial do intervalo">
+                                                </label>
+                                                <label>
+                                                    Fim
+                                                    <input type="date" id="sala-mes-dia-fim" aria-label="Data final do intervalo">
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="status-map-control">
+                                <div class="status-map-control status-map-control-status">
                                     <label for="sala-mes-status-visualizacao">Status</label>
                                     <select id="sala-mes-status-visualizacao" class="status-map-select">
                                         <option value="livre">Livre</option>
@@ -5539,6 +5817,15 @@
             dashboardSemanaMesesSelecionados: [],
             dashboardSemanasSelecionadas: [],
             dashboardAnosSelecionados: [],
+            salaMesPeriodo: {
+                tipo: 'mes',
+                meses: [],
+                semanaMeses: [],
+                semanas: [],
+                diaModo: 'hoje',
+                diaUnico: '',
+                intervalo: { inicio: '', fim: '' }
+            },
             medicosResumo: [],
             acompanhamentoMedicos: {
                 busca: '',
@@ -5571,6 +5858,10 @@
 
         const CACHE_SALA_MES_TTL_MS = 5 * 60 * 1000; // 5 minutos
         const cacheSalaMes = new Map();
+
+        let salaMesAtualizacaoTimer = null;
+        let salaMesRequestAtual = null;
+        let salaMesLoadingPendencias = 0;
 
         function obterInfoCacheDia(diaIso) {
             const registro = cacheDadosPorDia.get(diaIso);
@@ -7323,10 +7614,7 @@
             if (salaMesFiltros && salaMesFiltros.dataset.listenersAttached !== 'true') {
                 salaMesFiltros.querySelectorAll('select').forEach(select => {
                     select.addEventListener('change', () => {
-                        const periodoSelecionado = document.getElementById('sala-mes-periodo');
-                        if (periodoSelecionado && periodoSelecionado.value) {
-                            atualizarSalaMesStatus();
-                        }
+                        agendarSalaMesAtualizacao();
                     });
                 });
                 salaMesFiltros.dataset.listenersAttached = 'true';
@@ -7842,25 +8130,24 @@
             }
 
             // Sala/Mês
-            const salaMesPeriodo = document.getElementById('sala-mes-periodo');
-            if (salaMesPeriodo) {
-                salaMesPeriodo.addEventListener('change', () => {
-                    if (salaMesPeriodo.value) {
-                        atualizarSalaMesStatus();
-                    } else {
-                        mostrarSalaMesStatusMapa('Selecione um mês para visualizar o status das salas.', 'info');
-                    }
-                });
-            }
+            const salaMesTipoSelect = document.getElementById('sala-mes-periodo-tipo');
+            if (salaMesTipoSelect) {
+                const prepararSalaMes = () => {
+                    const tipoAtual = salaMesTipoSelect.value
+                        || (estado.salaMesPeriodo && estado.salaMesPeriodo.tipo)
+                        || 'mes';
+                    atualizarSalaMesPeriodoOpcoes();
+                    garantirPadroesSalaMes(tipoAtual);
+                    sincronizarSalaMesPeriodoValores();
+                    inicializarSalaMesPeriodoDetalhes();
+                };
 
-            const salaMesStatusSelect = document.getElementById('sala-mes-status-visualizacao');
-            if (salaMesStatusSelect) {
-                salaMesStatusSelect.addEventListener('change', () => {
-                    const periodo = document.getElementById('sala-mes-periodo');
-                    if (periodo && periodo.value) {
-                        atualizarSalaMesStatus();
-                    }
-                });
+                const salaMesSection = document.getElementById('sala-mes-section');
+                if (salaMesSection && salaMesSection.classList.contains('active')) {
+                    carregarSalaMesOptions();
+                } else {
+                    prepararSalaMes();
+                }
             }
 
 
@@ -12621,34 +12908,369 @@
             }
         }
 
-        function carregarSalaMesOptions() {
-            const mesInput = document.getElementById('sala-mes-periodo');
-            if (mesInput && !mesInput.value) {
-                const mesAtual = obterMesAtualValor();
-                if (mesAtual) {
-                    mesInput.value = mesAtual;
+        function agendarSalaMesAtualizacao() {
+            if (salaMesAtualizacaoTimer) {
+                clearTimeout(salaMesAtualizacaoTimer);
+            }
+            salaMesAtualizacaoTimer = setTimeout(() => {
+                salaMesAtualizacaoTimer = null;
+                atualizarSalaMesStatus();
+            }, 350);
+        }
+
+        function atualizarSalaMesDiaCampos() {
+            const modoSelecionado = document.querySelector('input[name="sala-mes-dia-modo"]:checked');
+            const modo = modoSelecionado ? modoSelecionado.value : 'hoje';
+            const range = document.getElementById('sala-mes-dia-range');
+            const inputDia = document.getElementById('sala-mes-dia-unico');
+            if (range) {
+                range.classList.toggle('active', modo === 'intervalo');
+            }
+            if (inputDia) {
+                inputDia.disabled = modo !== 'data';
+            }
+        }
+
+        function garantirPadroesSalaMes(tipoAtual) {
+            const periodo = estado.salaMesPeriodo || (estado.salaMesPeriodo = {
+                tipo: 'mes',
+                meses: [],
+                semanaMeses: [],
+                semanas: [],
+                diaModo: 'hoje',
+                diaUnico: '',
+                intervalo: { inicio: '', fim: '' }
+            });
+
+            if (tipoAtual) {
+                periodo.tipo = tipoAtual;
+            } else {
+                periodo.tipo = periodo.tipo || 'mes';
+            }
+
+            const idsPendentes = [
+                'sala-mes-periodo-meses',
+                'sala-mes-periodo-semana-meses',
+                'sala-mes-periodo-semanas'
+            ];
+            const pendentes = idsPendentes.filter(id => {
+                const select = document.getElementById(id);
+                return !select || !select.options || !select.options.length;
+            });
+
+            if (pendentes.length) {
+                if (garantirPadroesSalaMes._retryTimer) {
+                    clearTimeout(garantirPadroesSalaMes._retryTimer);
                 }
+                const tentativa = (garantirPadroesSalaMes._retryAttempts || 0) + 1;
+                garantirPadroesSalaMes._retryAttempts = tentativa;
+                if (tentativa <= 6) {
+                    garantirPadroesSalaMes._retryTimer = setTimeout(() => {
+                        garantirPadroesSalaMes._retryTimer = null;
+                        garantirPadroesSalaMes(tipoAtual);
+                    }, Math.min(200, 40 * tentativa));
+                } else {
+                    garantirPadroesSalaMes._retryAttempts = 0;
+                    garantirPadroesSalaMes._retryTimer = null;
+                }
+                return periodo;
             }
 
-            registrarEventosFiltrosEspecificos();
+            if (garantirPadroesSalaMes._retryTimer) {
+                clearTimeout(garantirPadroesSalaMes._retryTimer);
+                garantirPadroesSalaMes._retryTimer = null;
+            }
+            garantirPadroesSalaMes._retryAttempts = 0;
 
-            const container = document.getElementById('sala-mes-status-lista');
-            if (container && !container.children.length) {
-                container.innerHTML = '<div class="status-room-empty">Selecione os filtros desejados para visualizar as salas.</div>';
+            const obterOpcoes = id => Array.from(document.getElementById(id)?.options || []).map(opt => opt.value);
+
+            if (!Array.isArray(periodo.meses)) periodo.meses = [];
+            if (!Array.isArray(periodo.semanaMeses)) periodo.semanaMeses = [];
+            if (!Array.isArray(periodo.semanas)) periodo.semanas = [];
+
+            const mesesOpcoes = obterOpcoes('sala-mes-periodo-meses');
+            if (!periodo.meses.length && mesesOpcoes.length) {
+                const mesAtual = obterMesAtualValor();
+                const padrao = mesesOpcoes.includes(mesAtual) ? mesAtual : mesesOpcoes[mesesOpcoes.length - 1];
+                if (padrao) periodo.meses = [padrao];
             }
 
-            const mesSelecionado = mesInput ? mesInput.value : '';
-            if (!mesSelecionado) {
-                mostrarSalaMesStatusMapa('Selecione um mês para visualizar o status das salas.', 'info');
-                setSalaMesLoading(false);
+            const mesesSemanas = obterOpcoes('sala-mes-periodo-semana-meses');
+            if (!periodo.semanaMeses.length && mesesSemanas.length) {
+                const mesAtual = obterMesAtualValor();
+                const padrao = mesesSemanas.includes(mesAtual) ? mesAtual : mesesSemanas[mesesSemanas.length - 1];
+                if (padrao) periodo.semanaMeses = [padrao];
+            }
+
+            const semanasOpcoes = obterOpcoes('sala-mes-periodo-semanas');
+            if (!periodo.semanas.length && semanasOpcoes.length) {
+                const base = estado.dataAtual instanceof Date ? estado.dataAtual : new Date();
+                const semanaAtual = Math.min(Math.max(Math.ceil(base.getDate() / 7), 1), 5);
+                const padrao = semanasOpcoes.includes(String(semanaAtual)) ? String(semanaAtual) : semanasOpcoes[0];
+                periodo.semanas = padrao ? [padrao] : [];
+            }
+
+            if (!periodo.diaUnico) {
+                const base = estado.dataAtual instanceof Date ? estado.dataAtual : new Date();
+                periodo.diaUnico = base.toISOString().split('T')[0];
+            }
+
+            if (!periodo.intervalo || typeof periodo.intervalo !== 'object') {
+                periodo.intervalo = { inicio: '', fim: '' };
+            } else {
+                periodo.intervalo.inicio = periodo.intervalo.inicio || '';
+                periodo.intervalo.fim = periodo.intervalo.fim || '';
+            }
+
+            return periodo;
+        }
+
+        function sincronizarSalaMesPeriodoValores() {
+            const periodo = estado.salaMesPeriodo || {};
+            const tipoSelect = document.getElementById('sala-mes-periodo-tipo');
+            if (tipoSelect) {
+                tipoSelect.value = periodo.tipo || 'mes';
+            }
+
+            aplicarSelecaoReportMultiselect('sala-mes-periodo-meses', periodo.meses || []);
+            aplicarSelecaoReportMultiselect('sala-mes-periodo-semana-meses', periodo.semanaMeses || []);
+            aplicarSelecaoReportMultiselect('sala-mes-periodo-semanas', periodo.semanas || []);
+
+            const modoAtual = periodo.diaModo || 'hoje';
+            document.querySelectorAll('input[name="sala-mes-dia-modo"]').forEach(radio => {
+                radio.checked = radio.value === modoAtual;
+            });
+
+            const inputDia = document.getElementById('sala-mes-dia-unico');
+            if (inputDia) {
+                inputDia.value = periodo.diaUnico || '';
+            }
+
+            const inputInicio = document.getElementById('sala-mes-dia-inicio');
+            if (inputInicio) {
+                inputInicio.value = (periodo.intervalo && periodo.intervalo.inicio) || '';
+            }
+
+            const inputFim = document.getElementById('sala-mes-dia-fim');
+            if (inputFim) {
+                inputFim.value = (periodo.intervalo && periodo.intervalo.fim) || '';
+            }
+
+            atualizarSalaMesDiaCampos();
+        }
+
+        function atualizarSalaMesPeriodoOpcoes() {
+            const meses = gerarOpcoesMeses();
+            const semanas = gerarOpcoesSemanas();
+            definirRelatorioOpcoes('sala-mes-periodo-meses', meses);
+            definirRelatorioOpcoes('sala-mes-periodo-semana-meses', meses);
+            definirRelatorioOpcoes('sala-mes-periodo-semanas', semanas);
+        }
+
+        function inicializarSalaMesPeriodoDetalhes() {
+            const tipoSelect = document.getElementById('sala-mes-periodo-tipo');
+            const container = document.getElementById('sala-mes-periodo-detalhes');
+            if (!tipoSelect || !container) {
                 return;
             }
 
-            mostrarSalaMesStatusMapa('Carregando salas por status...', 'info');
-            atualizarSalaMesStatus();
+            const atualizarVisibilidade = () => {
+                const periodoAtual = tipoSelect.value || 'mes';
+                container.querySelectorAll('.status-map-periodo-field').forEach(field => {
+                    const alvo = (field.dataset.periodo || '').split(',').map(item => item.trim()).filter(Boolean);
+                    if (alvo.includes(periodoAtual)) {
+                        field.classList.add('active');
+                    } else {
+                        field.classList.remove('active');
+                    }
+                });
+                atualizarSalaMesDiaCampos();
+            };
+
+            if (tipoSelect.dataset.salaMesPeriodoListeners !== 'true') {
+                tipoSelect.addEventListener('change', () => {
+                    estado.salaMesPeriodo.tipo = tipoSelect.value || 'mes';
+                    garantirPadroesSalaMes(estado.salaMesPeriodo.tipo);
+                    sincronizarSalaMesPeriodoValores();
+                    atualizarVisibilidade();
+                    agendarSalaMesAtualizacao();
+                });
+                tipoSelect.dataset.salaMesPeriodoListeners = 'true';
+            }
+
+            const registrar = (id, atualizador) => {
+                const select = document.getElementById(id);
+                if (!select || select.dataset.salaMesPeriodoListeners === 'true') {
+                    return;
+                }
+                select.addEventListener('change', () => {
+                    atualizador();
+                });
+                select.dataset.salaMesPeriodoListeners = 'true';
+            };
+
+            registrar('sala-mes-periodo-meses', () => {
+                estado.salaMesPeriodo.meses = obterValoresMultiplo('sala-mes-periodo-meses');
+                if ((estado.salaMesPeriodo.tipo || 'mes') === 'mes') {
+                    agendarSalaMesAtualizacao();
+                }
+            });
+
+            registrar('sala-mes-periodo-semana-meses', () => {
+                estado.salaMesPeriodo.semanaMeses = obterValoresMultiplo('sala-mes-periodo-semana-meses');
+                if ((estado.salaMesPeriodo.tipo || 'mes') === 'semana') {
+                    agendarSalaMesAtualizacao();
+                }
+            });
+
+            registrar('sala-mes-periodo-semanas', () => {
+                estado.salaMesPeriodo.semanas = obterValoresMultiplo('sala-mes-periodo-semanas');
+                if ((estado.salaMesPeriodo.tipo || 'mes') === 'semana') {
+                    agendarSalaMesAtualizacao();
+                }
+            });
+
+            document.querySelectorAll('input[name="sala-mes-dia-modo"]').forEach(radio => {
+                if (radio.dataset.salaMesPeriodoListeners === 'true') {
+                    return;
+                }
+                radio.addEventListener('change', () => {
+                    estado.salaMesPeriodo.diaModo = radio.value;
+                    atualizarSalaMesDiaCampos();
+                    agendarSalaMesAtualizacao();
+                });
+                radio.dataset.salaMesPeriodoListeners = 'true';
+            });
+
+            const inputDia = document.getElementById('sala-mes-dia-unico');
+            if (inputDia && inputDia.dataset.salaMesPeriodoListeners !== 'true') {
+                inputDia.addEventListener('change', () => {
+                    estado.salaMesPeriodo.diaUnico = inputDia.value || '';
+                    const modoAtual = document.querySelector('input[name="sala-mes-dia-modo"]:checked');
+                    if (modoAtual && modoAtual.value === 'data') {
+                        agendarSalaMesAtualizacao();
+                    }
+                });
+                inputDia.dataset.salaMesPeriodoListeners = 'true';
+            }
+
+            const inputInicio = document.getElementById('sala-mes-dia-inicio');
+            if (inputInicio && inputInicio.dataset.salaMesPeriodoListeners !== 'true') {
+                inputInicio.addEventListener('change', () => {
+                    estado.salaMesPeriodo.intervalo = estado.salaMesPeriodo.intervalo || { inicio: '', fim: '' };
+                    estado.salaMesPeriodo.intervalo.inicio = inputInicio.value || '';
+                    const modoAtual = document.querySelector('input[name="sala-mes-dia-modo"]:checked');
+                    if (modoAtual && modoAtual.value === 'intervalo') {
+                        agendarSalaMesAtualizacao();
+                    }
+                });
+                inputInicio.dataset.salaMesPeriodoListeners = 'true';
+            }
+
+            const inputFim = document.getElementById('sala-mes-dia-fim');
+            if (inputFim && inputFim.dataset.salaMesPeriodoListeners !== 'true') {
+                inputFim.addEventListener('change', () => {
+                    estado.salaMesPeriodo.intervalo = estado.salaMesPeriodo.intervalo || { inicio: '', fim: '' };
+                    estado.salaMesPeriodo.intervalo.fim = inputFim.value || '';
+                    const modoAtual = document.querySelector('input[name="sala-mes-dia-modo"]:checked');
+                    if (modoAtual && modoAtual.value === 'intervalo') {
+                        agendarSalaMesAtualizacao();
+                    }
+                });
+                inputFim.dataset.salaMesPeriodoListeners = 'true';
+            }
+
+            atualizarVisibilidade();
         }
 
-        let salaMesLoadingPendencias = 0;
+        function obterSalaMesPeriodoConfig() {
+            const tipoSelect = document.getElementById('sala-mes-periodo-tipo');
+            const tipo = (tipoSelect ? tipoSelect.value : estado.salaMesPeriodo.tipo) || 'mes';
+            const limparLista = lista => (lista || []).map(item => String(item || '').trim()).filter(Boolean);
+            const config = { tipo };
+            estado.salaMesPeriodo.tipo = tipo;
+
+            if (tipo === 'mes') {
+                const meses = limparLista(obterValoresMultiplo('sala-mes-periodo-meses'));
+                if (!meses.length) {
+                    return null;
+                }
+                const unicos = Array.from(new Set(meses)).sort();
+                estado.salaMesPeriodo.meses = [...unicos];
+                config.meses = [...unicos];
+            } else if (tipo === 'semana') {
+                const meses = limparLista(obterValoresMultiplo('sala-mes-periodo-semana-meses'));
+                const semanas = limparLista(obterValoresMultiplo('sala-mes-periodo-semanas'))
+                    .map(valor => parseInt(valor, 10))
+                    .filter(numero => Number.isInteger(numero));
+                if (!meses.length || !semanas.length) {
+                    return null;
+                }
+                const mesesOrdenados = Array.from(new Set(meses)).sort();
+                const semanasOrdenadas = Array.from(new Set(semanas)).sort((a, b) => a - b);
+                estado.salaMesPeriodo.semanaMeses = [...mesesOrdenados];
+                estado.salaMesPeriodo.semanas = semanasOrdenadas.map(String);
+                config.meses = [...mesesOrdenados];
+                config.semanas = [...semanasOrdenadas];
+            } else if (tipo === 'dia') {
+                const modoSelecionado = document.querySelector('input[name="sala-mes-dia-modo"]:checked');
+                const modo = modoSelecionado ? modoSelecionado.value : 'hoje';
+                estado.salaMesPeriodo.diaModo = modo;
+                config.diaModo = modo;
+
+                if (modo === 'intervalo') {
+                    const inicio = document.getElementById('sala-mes-dia-inicio')?.value || '';
+                    const fim = document.getElementById('sala-mes-dia-fim')?.value || '';
+                    estado.salaMesPeriodo.intervalo = {
+                        inicio: inicio || '',
+                        fim: fim || ''
+                    };
+                    if (!inicio || !fim) {
+                        return null;
+                    }
+                    config.intervalo = { inicio, fim };
+                } else if (modo === 'data') {
+                    const diaUnico = document.getElementById('sala-mes-dia-unico')?.value || '';
+                    estado.salaMesPeriodo.diaUnico = diaUnico;
+                    if (!diaUnico) {
+                        return null;
+                    }
+                    config.dias = [diaUnico];
+                } else {
+                    const base = estado.dataAtual instanceof Date ? estado.dataAtual : new Date();
+                    const hojeIso = base.toISOString().split('T')[0];
+                    estado.salaMesPeriodo.diaUnico = hojeIso;
+                    config.dias = [hojeIso];
+                }
+            }
+
+            return config;
+        }
+
+        function carregarSalaMesOptions() {
+            registrarEventosFiltrosEspecificos();
+
+            atualizarSalaMesPeriodoOpcoes();
+            garantirPadroesSalaMes((estado.salaMesPeriodo && estado.salaMesPeriodo.tipo) || 'mes');
+            sincronizarSalaMesPeriodoValores();
+            inicializarSalaMesPeriodoDetalhes();
+
+            const statusSelect = document.getElementById('sala-mes-status-visualizacao');
+            if (statusSelect && statusSelect.dataset.listenersAttached !== 'true') {
+                statusSelect.addEventListener('change', () => {
+                    agendarSalaMesAtualizacao();
+                });
+                statusSelect.dataset.listenersAttached = 'true';
+            }
+
+            const container = document.getElementById('sala-mes-status-lista');
+            if (container && !container.children.length) {
+                container.innerHTML = '<div class="status-room-empty">Ajuste os filtros e escolha um período para visualizar as salas.</div>';
+            }
+
+            mostrarSalaMesStatusMapa('Preparando filtros de período...', 'info');
+            agendarSalaMesAtualizacao();
+        }
 
         function setSalaMesLoading(ativo) {
             if (ativo) {
@@ -12955,22 +13577,22 @@
         }
 
         function atualizarSalaMesStatus() {
-            const periodoInput = document.getElementById('sala-mes-periodo');
-            const mes = periodoInput ? periodoInput.value : '';
             const statusSelect = document.getElementById('sala-mes-status-visualizacao');
             const status = statusSelect ? statusSelect.value : '';
-            if (!mes) {
+            const periodoConfig = obterSalaMesPeriodoConfig();
+
+            if (!periodoConfig) {
                 const containerVazio = document.getElementById('sala-mes-status-lista');
                 if (containerVazio) {
-                    containerVazio.innerHTML = '<div class="status-room-empty">Selecione um mês para continuar.</div>';
+                    containerVazio.innerHTML = '<div class="status-room-empty">Selecione um período válido para continuar.</div>';
                 }
-                mostrarSalaMesStatusMapa('Selecione um mês para visualizar o status das salas.', 'info');
+                mostrarSalaMesStatusMapa('Selecione um período válido para visualizar as salas.', 'info');
                 setSalaMesLoading(false);
                 return;
             }
 
             const filtros = coletarFiltrosSalaMes({ incluirStatus: false });
-            const chaveCache = JSON.stringify({ status: status || 'livre', mes, filtros });
+            const chaveCache = JSON.stringify({ status: status || 'livre', periodo: periodoConfig, filtros });
             const dadosCache = obterCacheSalaMes(chaveCache);
             if (dadosCache) {
                 renderSalaMesStatus(dadosCache);
@@ -12980,6 +13602,9 @@
 
             mostrarSalaMesStatusMapa('Carregando salas por status...', 'info');
             setSalaMesLoading(true);
+            const requisicaoId = Symbol('salaMes');
+            salaMesRequestAtual = requisicaoId;
+
             try {
                 const runner = typeof google !== 'undefined' && google.script ? google.script.run : null;
                 if (!runner) {
@@ -12987,10 +13612,18 @@
                 }
                 runner
                     .withSuccessHandler(dados => {
+                        if (salaMesRequestAtual !== requisicaoId) {
+                            setSalaMesLoading(false);
+                            return;
+                        }
                         salvarCacheSalaMes(chaveCache, dados);
                         renderSalaMesStatus(dados);
                     })
                     .withFailureHandler(error => {
+                        if (salaMesRequestAtual !== requisicaoId) {
+                            setSalaMesLoading(false);
+                            return;
+                        }
                         console.error('Erro ao carregar o mapa de status:', error);
                         setSalaMesLoading(false);
                         mostrarSalaMesStatusMapa('Erro ao carregar a visão por status. Tente novamente.', 'erro');
@@ -12999,7 +13632,7 @@
                             fallback.innerHTML = '<div class="status-room-empty">Não foi possível carregar os dados.</div>';
                         }
                     })
-                    .getMapaStatusSalasMes(status || 'livre', mes, JSON.stringify(filtros));
+                    .getMapaStatusSalasMes(status || 'livre', JSON.stringify(periodoConfig), JSON.stringify(filtros));
             } catch (error) {
                 console.error('Erro ao iniciar atualização do mapa de status:', error);
                 setSalaMesLoading(false);
