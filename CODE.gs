@@ -2030,22 +2030,199 @@ function avaliarStatusSalaNoDia(statusDesejado, statusConjunto, statusBase) {
   }
 }
 
-function getMapaStatusSalasMes(statusDesejado, mes, filtrosJson) {
+function interpretarSalaMesPeriodo(periodoEntrada) {
+  const tz = obterTimeZonePadrao();
+  const agora = new Date();
+  const mesAtual = Utilities.formatDate(agora, tz, 'yyyy-MM');
+
+  let config = periodoEntrada;
+  if (typeof periodoEntrada === 'string') {
+    if (/^\d{4}-\d{2}$/.test(periodoEntrada)) {
+      config = { tipo: 'mes', meses: [periodoEntrada] };
+    } else {
+      try {
+        config = JSON.parse(periodoEntrada);
+      } catch (erro) {
+        config = null;
+      }
+    }
+  }
+
+  if (!config || typeof config !== 'object') {
+    config = { tipo: 'mes', meses: [mesAtual] };
+  }
+
+  const tipo = String(config.tipo || 'mes').toLowerCase();
+  const diasSet = new Set();
+  const mesesSet = new Set();
+  const semanasSet = new Set();
+
+  const adicionarDia = valor => {
+    if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) return;
+    diasSet.add(valor);
+  };
+
+  const interpretarMesReferencia = valor => {
+    if (typeof valor !== 'string' || !/^\d{4}-\d{2}$/.test(valor)) return null;
+    const [anoStr, mesStr] = valor.split('-');
+    const anoNum = parseInt(anoStr, 10);
+    const mesNum = parseInt(mesStr, 10);
+    if (!Number.isInteger(anoNum) || !Number.isInteger(mesNum) || mesNum < 1 || mesNum > 12) {
+      return null;
+    }
+    return { ano: anoNum, mes: mesNum };
+  };
+
+  if (tipo === 'dia') {
+    const modo = typeof config.diaModo === 'string' ? config.diaModo.toLowerCase() : '';
+    const diasConfig = Array.isArray(config.dias) ? config.dias : [];
+    diasConfig.forEach(adicionarDia);
+
+    if (config.intervalo && config.intervalo.inicio && config.intervalo.fim) {
+      const inicioIso = String(config.intervalo.inicio);
+      const fimIso = String(config.intervalo.fim);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(inicioIso) && /^\d{4}-\d{2}-\d{2}$/.test(fimIso)) {
+        const inicioData = new Date(`${inicioIso}T00:00:00`);
+        const fimData = new Date(`${fimIso}T00:00:00`);
+        if (!isNaN(inicioData.getTime()) && !isNaN(fimData.getTime())) {
+          const menor = Math.min(inicioData.getTime(), fimData.getTime());
+          const maior = Math.max(inicioData.getTime(), fimData.getTime());
+          for (let cursor = new Date(menor); cursor.getTime() <= maior; cursor.setDate(cursor.getDate() + 1)) {
+            adicionarDia(Utilities.formatDate(cursor, tz, 'yyyy-MM-dd'));
+          }
+        }
+      }
+    }
+
+    if (!diasSet.size) {
+      const diaUnico = typeof config.diaUnico === 'string' ? config.diaUnico : config.dia;
+      if (typeof diaUnico === 'string') {
+        adicionarDia(diaUnico);
+      }
+    }
+
+    if (!diasSet.size || modo === 'hoje') {
+      adicionarDia(Utilities.formatDate(agora, tz, 'yyyy-MM-dd'));
+    }
+  } else if (tipo === 'semana') {
+    const mesesEntrada = Array.isArray(config.meses) && config.meses.length ? config.meses : [mesAtual];
+    const semanasEntrada = Array.isArray(config.semanas) ? config.semanas : [];
+    const semanasValidas = semanasEntrada
+      .map(numero => parseInt(numero, 10))
+      .filter(numero => Number.isInteger(numero) && numero >= 1 && numero <= 5);
+    if (!semanasValidas.length) {
+      const semanaAtual = Math.min(Math.max(Math.ceil(agora.getDate() / 7), 1), 5);
+      semanasValidas.push(semanaAtual);
+    }
+
+    mesesEntrada.forEach(valor => {
+      const info = interpretarMesReferencia(valor);
+      if (!info) return;
+      const mesReferencia = `${info.ano}-${String(info.mes).padStart(2, '0')}`;
+      mesesSet.add(mesReferencia);
+      const diasMes = new Date(info.ano, info.mes, 0).getDate();
+      semanasValidas.forEach(semana => {
+        semanasSet.add(semana);
+        const inicioDia = (semana - 1) * 7 + 1;
+        const fimDia = Math.min(semana * 7, diasMes);
+        if (fimDia < inicioDia) return;
+        for (let dia = inicioDia; dia <= fimDia; dia++) {
+          const data = new Date(info.ano, info.mes - 1, dia, 12);
+          adicionarDia(Utilities.formatDate(data, tz, 'yyyy-MM-dd'));
+        }
+      });
+    });
+  } else {
+    const mesesEntrada = Array.isArray(config.meses) && config.meses.length ? config.meses : [mesAtual];
+    mesesEntrada.forEach(valor => {
+      const info = interpretarMesReferencia(valor);
+      if (!info) return;
+      const mesReferencia = `${info.ano}-${String(info.mes).padStart(2, '0')}`;
+      mesesSet.add(mesReferencia);
+      const ultimoDiaMes = new Date(info.ano, info.mes, 0).getDate();
+      for (let dia = 1; dia <= ultimoDiaMes; dia++) {
+        const data = new Date(info.ano, info.mes - 1, dia, 12);
+        adicionarDia(Utilities.formatDate(data, tz, 'yyyy-MM-dd'));
+      }
+    });
+  }
+
+  if (!diasSet.size) {
+    const info = interpretarMesReferencia(mesAtual);
+    if (info) {
+      const mesReferencia = `${info.ano}-${String(info.mes).padStart(2, '0')}`;
+      mesesSet.add(mesReferencia);
+      const ultimoDiaMes = new Date(info.ano, info.mes, 0).getDate();
+      for (let dia = 1; dia <= ultimoDiaMes; dia++) {
+        const data = new Date(info.ano, info.mes - 1, dia, 12);
+        adicionarDia(Utilities.formatDate(data, tz, 'yyyy-MM-dd'));
+      }
+    }
+  }
+
+  const diasOrdenados = Array.from(diasSet).sort();
+  const mesesOrdenados = Array.from(mesesSet).sort();
+  const semanasOrdenadas = Array.from(semanasSet).sort((a, b) => a - b);
+
+  let inicio = null;
+  let fim = null;
+  if (diasOrdenados.length) {
+    inicio = new Date(`${diasOrdenados[0]}T12:00:00`);
+    fim = new Date(`${diasOrdenados[diasOrdenados.length - 1]}T12:00:00`);
+  }
+
+  const formatarMesReferencia = valor => {
+    const info = interpretarMesReferencia(valor);
+    if (!info) return null;
+    const indice = Math.max(Math.min(info.mes - 1, NOMES_MESES_PT.length - 1), 0);
+    const nome = NOMES_MESES_PT[indice] || `Mês ${String(info.mes).padStart(2, '0')}`;
+    return `${nome} ${info.ano}`;
+  };
+
+  let descricao = '';
+  if (tipo === 'mes' && mesesOrdenados.length) {
+    const nomes = mesesOrdenados.map(formatarMesReferencia).filter(Boolean);
+    if (nomes.length) {
+      descricao = `Meses: ${nomes.join(', ')}`;
+    }
+  } else if (tipo === 'semana' && mesesOrdenados.length && semanasOrdenadas.length) {
+    const nomesMeses = mesesOrdenados.map(formatarMesReferencia).filter(Boolean);
+    const nomesSemanas = semanasOrdenadas.map(numero => `Semana ${numero}`);
+    if (nomesMeses.length) {
+      descricao = `Semanas ${nomesSemanas.join(', ')} de ${nomesMeses.join(', ')}`;
+    }
+  } else if (tipo === 'dia') {
+    if (diasOrdenados.length === 1) {
+      const dataUnica = new Date(`${diasOrdenados[0]}T12:00:00`);
+      descricao = `Dia ${formatarDataCurta(dataUnica)}`;
+    } else if (inicio && fim) {
+      descricao = formatarPeriodo(inicio, fim);
+    }
+  }
+
+  if (!descricao && inicio && fim) {
+    descricao = formatarPeriodo(inicio, fim);
+  }
+
+  return {
+    tipo,
+    dias: diasOrdenados,
+    inicio,
+    fim,
+    descricao,
+    meses: mesesOrdenados,
+    semanas: semanasOrdenadas
+  };
+}
+
+function getMapaStatusSalasMes(statusDesejado, periodoEntrada, filtrosJson) {
   try {
     const statusAlvo = normalizarStatusServidor(statusDesejado || 'livre') || 'livre';
-    if (!mes || typeof mes !== 'string' || !/^\d{4}-\d{2}$/.test(mes)) {
-      throw new Error('Mês inválido informado.');
+    const periodoInfo = interpretarSalaMesPeriodo(periodoEntrada);
+    const diasPeriodo = periodoInfo.dias;
+    if (!diasPeriodo.length) {
+      throw new Error('Não foi possível determinar o período solicitado.');
     }
-
-    const [anoStr, mesStr] = mes.split('-');
-    const ano = parseInt(anoStr, 10);
-    const mesNumero = parseInt(mesStr, 10);
-    if (!Number.isInteger(ano) || !Number.isInteger(mesNumero)) {
-      throw new Error('Não foi possível interpretar o período solicitado.');
-    }
-
-    const primeiroDia = new Date(ano, mesNumero - 1, 1, 12);
-    const ultimoDia = new Date(ano, mesNumero, 0, 12);
 
     const filtros = parseRelatorioFiltros(filtrosJson);
     const salasOrigem = getSalas();
@@ -2063,12 +2240,17 @@ function getMapaStatusSalasMes(statusDesejado, mes, filtrosJson) {
     });
 
     const ilhasMapa = new Map();
-    const diasPeriodo = [];
     const tz = obterTimeZonePadrao();
 
-    for (let cursor = new Date(primeiroDia); cursor.getTime() <= ultimoDia.getTime(); cursor.setDate(cursor.getDate() + 1)) {
-      const diaAtual = new Date(cursor);
-      diasPeriodo.push(Utilities.formatDate(diaAtual, tz, 'yyyy-MM-dd'));
+    diasPeriodo.forEach(diaReferencia => {
+      const partes = diaReferencia.split('-');
+      if (partes.length < 3) return;
+      const anoDia = parseInt(partes[0], 10);
+      const mesDia = parseInt(partes[1], 10);
+      const diaNumero = parseInt(partes[2], 10);
+      if (!Number.isInteger(anoDia) || !Number.isInteger(mesDia) || !Number.isInteger(diaNumero)) return;
+
+      const diaAtual = new Date(anoDia, mesDia - 1, diaNumero, 12);
       const agendamentosDia = getAgendamentos(diaAtual).filter(ag => agendamentoCorrespondeFiltros(ag, filtros));
 
       const statusPorSala = new Map();
@@ -2139,7 +2321,7 @@ function getMapaStatusSalasMes(statusDesejado, mes, filtrosJson) {
           eventos: detalhes
         });
       });
-    }
+    });
 
     const diasOrdenados = diasPeriodo;
     const ilhas = Array.from(ilhasMapa.values()).map(info => {
@@ -2189,9 +2371,9 @@ function getMapaStatusSalasMes(statusDesejado, mes, filtrosJson) {
       status: statusAlvo,
       statusLabel: formatarStatusRelatorio(statusAlvo),
       periodo: {
-        inicio: Utilities.formatDate(primeiroDia, tz, 'yyyy-MM-dd'),
-        fim: Utilities.formatDate(ultimoDia, tz, 'yyyy-MM-dd'),
-        texto: formatarPeriodo(primeiroDia, ultimoDia)
+        inicio: periodoInfo.inicio ? Utilities.formatDate(periodoInfo.inicio, tz, 'yyyy-MM-dd') : (diasOrdenados[0] || ''),
+        fim: periodoInfo.fim ? Utilities.formatDate(periodoInfo.fim, tz, 'yyyy-MM-dd') : (diasOrdenados[diasOrdenados.length - 1] || ''),
+        texto: periodoInfo.descricao || (periodoInfo.inicio && periodoInfo.fim ? formatarPeriodo(periodoInfo.inicio, periodoInfo.fim) : '')
       },
       totalIlhas: ilhas.length,
       totalSalas: salasTotaisUnicas.size,
