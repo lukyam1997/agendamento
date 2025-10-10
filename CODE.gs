@@ -70,6 +70,10 @@ const CACHE_KEYS_MAX = 200;
 
 // Total estimado de salas para cálculos de ocupação
 const TOTAL_SALAS_ESTIMADO = 56;
+const NOMES_MESES_PT = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
 
 // Email do administrador (substitua pelo email real)
 const ADMIN_EMAIL = 'lukyam.lmm@isgh.org.br';
@@ -260,7 +264,20 @@ function agendamentoCorrespondeFiltros(agendamento, filtros) {
 }
 
 function parseDashboardFiltros(filtrosJson) {
-  const vazio = { turnos: [], ilhas: [], especialidades: [], status: [], diasEspecificos: [], intervaloDias: null };
+  const vazio = {
+    turnos: [],
+    ilhas: [],
+    especialidades: [],
+    status: [],
+    categorias: [],
+    profissionais: [],
+    salas: [],
+    diasEspecificos: [],
+    intervaloDias: null,
+    meses: [],
+    semanas: [],
+    anos: []
+  };
   if (!filtrosJson) return vazio;
   try {
     const bruto = JSON.parse(filtrosJson) || {};
@@ -291,6 +308,23 @@ function parseDashboardFiltros(filtrosJson) {
       return valor;
     }).filter(Boolean);
 
+    const normalizarMes = valor => {
+      const texto = String(valor || '').trim();
+      return /^\d{4}-\d{2}$/.test(texto) ? texto : null;
+    };
+    const normalizarSemana = valor => {
+      const numero = parseInt(valor, 10);
+      return Number.isInteger(numero) && numero >= 1 && numero <= 6 ? numero : null;
+    };
+    const normalizarAno = valor => {
+      const numero = parseInt(valor, 10);
+      return Number.isInteger(numero) ? numero : null;
+    };
+
+    const mesesValidos = (bruto.meses || []).map(normalizarMes).filter(Boolean);
+    const semanasValidas = (bruto.semanas || []).map(normalizarSemana).filter(valor => valor !== null);
+    const anosValidos = (bruto.anos || []).map(normalizarAno).filter(valor => valor !== null);
+
     return {
       turnos: normalizarLista(bruto.turnos, normalizarTurnoServidor),
       ilhas: normalizarLista(bruto.ilhas, valor => String(valor || '').trim()),
@@ -300,7 +334,10 @@ function parseDashboardFiltros(filtrosJson) {
       profissionais: normalizarLista(bruto.profissionais, normalizarTextoServidor),
       salas: normalizarLista(bruto.salas, valor => String(valor || '').trim()),
       diasEspecificos: diasValidos,
-      intervaloDias
+      intervaloDias,
+      meses: mesesValidos,
+      semanas: semanasValidas,
+      anos: anosValidos
     };
   } catch (error) {
     console.warn('Não foi possível interpretar filtros do dashboard:', error);
@@ -1468,7 +1505,35 @@ function getDadosAgregados(periodo, filtrosJson) {
       ? { inicio: filtros.intervaloDias.inicio, fim: filtros.intervaloDias.fim }
       : null;
     const diasEspecificosSet = !intervaloDias && diasEspecificos.length ? new Set(diasEspecificos) : null;
+    const mesesFiltro = Array.isArray(filtros.meses) ? filtros.meses.filter(valor => typeof valor === 'string') : [];
+    const semanasFiltro = Array.isArray(filtros.semanas) ? filtros.semanas.filter(valor => Number.isInteger(valor)) : [];
+    const anosFiltro = Array.isArray(filtros.anos) ? filtros.anos.filter(valor => Number.isInteger(valor)) : [];
+    const mesesSet = new Set(mesesFiltro);
+    const semanasSet = new Set(semanasFiltro);
+    const anosSet = new Set(anosFiltro);
+
     let { inicio, fim } = obterIntervaloPeriodo(periodo);
+    const interpretarMesReferencia = valor => {
+      if (typeof valor !== 'string' || !/^\d{4}-\d{2}$/.test(valor)) return null;
+      const [anoStr, mesStr] = valor.split('-');
+      const anoNum = parseInt(anoStr, 10);
+      const mesNum = parseInt(mesStr, 10);
+      if (!Number.isInteger(anoNum) || !Number.isInteger(mesNum) || mesNum < 1 || mesNum > 12) {
+        return null;
+      }
+      return { ano: anoNum, mes: mesNum };
+    };
+    const ajustarIntervaloMeses = listaMeses => {
+      const ordenados = Array.from(new Set(listaMeses || [])).sort();
+      if (!ordenados.length) return false;
+      const primeiro = interpretarMesReferencia(ordenados[0]);
+      const ultimo = interpretarMesReferencia(ordenados[ordenados.length - 1]);
+      if (!primeiro || !ultimo) return false;
+      inicio = new Date(primeiro.ano, primeiro.mes - 1, 1, 12);
+      fim = new Date(ultimo.ano, ultimo.mes, 0, 12);
+      return true;
+    };
+
     if (intervaloDias) {
       const ordenadas = [intervaloDias.inicio, intervaloDias.fim].filter(Boolean).sort();
       const primeira = ordenadas[0];
@@ -1488,6 +1553,18 @@ function getDadosAgregados(periodo, filtrosJson) {
       }
       if (ultima) {
         fim = new Date(`${ultima}T23:59:59`);
+      }
+    } else if (String(periodo || '').toLowerCase() === 'mes' && ajustarIntervaloMeses(mesesFiltro)) {
+      // intervalo ajustado pelos meses selecionados
+    } else if (String(periodo || '').toLowerCase() === 'semana' && ajustarIntervaloMeses(mesesFiltro)) {
+      // intervalo ajustado para cobrir as semanas selecionadas
+    } else if (String(periodo || '').toLowerCase() === 'ano' && anosFiltro.length) {
+      const ordenadosAnos = Array.from(new Set(anosFiltro)).sort((a, b) => a - b);
+      const primeiroAno = ordenadosAnos[0];
+      const ultimoAno = ordenadosAnos[ordenadosAnos.length - 1];
+      if (Number.isInteger(primeiroAno) && Number.isInteger(ultimoAno)) {
+        inicio = new Date(primeiroAno, 0, 1, 12);
+        fim = new Date(ultimoAno, 11, 31, 12);
       }
     }
 
@@ -1532,16 +1609,45 @@ function getDadosAgregados(periodo, filtrosJson) {
       : Math.max((salasDados.length || 0) - salasIndisponiveisBase.size, 0) || TOTAL_SALAS_ESTIMADO;
     const totalSalasConsideradas = totalSalasDisponiveis + salasIndisponiveisBase.size;
 
-    const periodoTexto = intervaloDias
-      ? formatarPeriodo(inicio, fim)
-      : diasEspecificos.length
-        ? `Dias: ${diasEspecificos
-            .map(dia => {
-              const data = new Date(`${dia}T00:00:00`);
-              return isNaN(data.getTime()) ? dia : formatarDataCurta(data);
-            })
-            .join(', ')}`
-        : formatarPeriodo(inicio, fim);
+    const mesesOrdenados = Array.from(mesesSet).sort();
+    const semanasOrdenadas = Array.from(semanasSet).sort((a, b) => a - b);
+    const anosOrdenados = Array.from(anosSet).sort((a, b) => a - b);
+    const formatarMesReferencia = valor => {
+      const info = interpretarMesReferencia(valor);
+      if (!info) return null;
+      const indice = Math.max(Math.min(info.mes - 1, 11), 0);
+      const nome = NOMES_MESES_PT[indice] || `Mês ${String(info.mes).padStart(2, '0')}`;
+      return `${nome} ${info.ano}`;
+    };
+
+    let periodoTexto;
+    if (String(periodo || '').toLowerCase() === 'mes' && mesesOrdenados.length) {
+      const nomes = mesesOrdenados.map(formatarMesReferencia).filter(Boolean);
+      if (nomes.length) {
+        periodoTexto = `Meses: ${nomes.join(', ')}`;
+      }
+    } else if (String(periodo || '').toLowerCase() === 'semana' && mesesOrdenados.length && semanasOrdenadas.length) {
+      const nomesMeses = mesesOrdenados.map(formatarMesReferencia).filter(Boolean);
+      const nomesSemanas = semanasOrdenadas.map(numero => `Semana ${numero}`);
+      if (nomesMeses.length) {
+        periodoTexto = `Semanas ${nomesSemanas.join(', ')} de ${nomesMeses.join(', ')}`;
+      }
+    } else if (String(periodo || '').toLowerCase() === 'ano' && anosOrdenados.length) {
+      periodoTexto = `Anos: ${anosOrdenados.join(', ')}`;
+    }
+
+    if (!periodoTexto) {
+      periodoTexto = intervaloDias
+        ? formatarPeriodo(inicio, fim)
+        : diasEspecificos.length
+          ? `Dias: ${diasEspecificos
+              .map(dia => {
+                const data = new Date(`${dia}T00:00:00`);
+                return isNaN(data.getTime()) ? dia : formatarDataCurta(data);
+              })
+              .join(', ')}`
+          : formatarPeriodo(inicio, fim);
+    }
 
     const resumoBase = {
       totalAgendamentos: 0,
@@ -1609,6 +1715,8 @@ function getDadosAgregados(periodo, filtrosJson) {
         const especialidadeNormalizada = normalizarTextoServidor(especialidadeOriginal);
         const statusOriginal = String(row[BASE_COLUMNS.STATUS - 1] || 'ocupado');
         const statusNormalizado = normalizarStatusServidor(statusOriginal);
+        const categoriaOriginal = String(row[BASE_COLUMNS.CATEGORIA - 1] || '').trim();
+        const categoriaNormalizada = normalizarTextoServidor(categoriaOriginal);
 
         if (filtros.turnos.length) {
           if (turnoNormalizado !== 'todos' && (!turnoNormalizado || !filtros.turnos.includes(turnoNormalizado))) {
@@ -1633,6 +1741,28 @@ function getDadosAgregados(periodo, filtrosJson) {
           if (diasEspecificosSet && diasEspecificosSet.size && !diasEspecificosSet.has(diaIso)) {
             cursor.setDate(cursor.getDate() + 1);
             continue;
+          }
+
+          const mesChave = diaIso.slice(0, 7);
+          if (mesesSet.size && !mesesSet.has(mesChave)) {
+            cursor.setDate(cursor.getDate() + 1);
+            continue;
+          }
+
+          if (anosSet.size) {
+            const anoCursor = cursor.getFullYear();
+            if (!anosSet.has(anoCursor)) {
+              cursor.setDate(cursor.getDate() + 1);
+              continue;
+            }
+          }
+
+          if (semanasSet.size) {
+            const semanaMes = Math.min(Math.max(Math.ceil(cursor.getDate() / 7), 1), 5);
+            if (!semanasSet.has(semanaMes)) {
+              cursor.setDate(cursor.getDate() + 1);
+              continue;
+            }
           }
 
           totalEventos++;
