@@ -1179,6 +1179,45 @@
           overflow: hidden;
       }
 
+      .monitor-error {
+          margin: auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+          width: min(100%, 420px);
+          padding: 32px 24px;
+          background: var(--surface-elevated);
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-soft);
+          box-shadow: var(--shadow-soft);
+          text-align: center;
+          color: var(--text-secondary);
+      }
+
+      .monitor-error i {
+          font-size: 2.4rem;
+          color: var(--warning);
+      }
+
+      .monitor-error strong {
+          font-size: 1.1rem;
+          color: var(--text-primary);
+      }
+
+      .monitor-error p {
+          margin: 0;
+          color: var(--text-muted);
+      }
+
+      .monitor-error-actions {
+          display: flex;
+          justify-content: center;
+          gap: 12px;
+          width: 100%;
+      }
+
       .monitor > .bloco {
           flex: 0 0 clamp(280px, 26vw, 340px);
           max-width: clamp(280px, 32vw, 380px);
@@ -6638,6 +6677,33 @@
 
         let isLoading = false;
         let pendingReload = false;
+        const CARREGAMENTO_TIMEOUT_MS = 15000;
+        let loadingTimeoutHandle = null;
+
+        function limparLoadingTimeout() {
+            if (loadingTimeoutHandle !== null) {
+                clearTimeout(loadingTimeoutHandle);
+                loadingTimeoutHandle = null;
+            }
+        }
+
+        function iniciarLoadingTimeout() {
+            limparLoadingTimeout();
+            loadingTimeoutHandle = setTimeout(() => {
+                if (!isLoading) {
+                    loadingTimeoutHandle = null;
+                    return;
+                }
+                console.warn('Tempo limite de carregamento do monitor atingido.');
+                isLoading = false;
+                pendingReload = false;
+                loadingTimeoutHandle = null;
+                exibirErroCarregamento('O carregamento está demorando mais que o esperado.', {
+                    detalhe: 'Verifique sua conexão ou clique em "Tentar novamente" para atualizar.',
+                    permitirTentativa: true
+                });
+            }, CARREGAMENTO_TIMEOUT_MS);
+        }
 
         function togglePlanejamentoLoading(visivel) {
             const loader = document.getElementById('planejamento-loading');
@@ -6651,8 +6717,61 @@
             }
         }
 
+        function limparErroCarregamento() {
+            const monitor = document.getElementById('monitor-content');
+            if (!monitor) return;
+            const erroAtual = monitor.querySelector('.monitor-error');
+            if (erroAtual) {
+                erroAtual.remove();
+            }
+        }
+
+        function exibirErroCarregamento(mensagem, { detalhe = '', permitirTentativa = true } = {}) {
+            esconderLoading();
+            const monitor = document.getElementById('monitor-content');
+            if (!monitor) return;
+            monitor.innerHTML = '';
+
+            const erroWrapper = document.createElement('div');
+            erroWrapper.className = 'monitor-error';
+            erroWrapper.setAttribute('role', 'alert');
+            erroWrapper.innerHTML = `
+                <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                <div class="monitor-error-text">
+                    <strong>${mensagem}</strong>
+                    ${detalhe ? `<p>${detalhe}</p>` : ''}
+                </div>
+                ${permitirTentativa ? `
+                    <div class="monitor-error-actions">
+                        <button type="button" class="btn btn-primary monitor-retry-btn">
+                            <i class="fas fa-sync-alt"></i> Tentar novamente
+                        </button>
+                    </div>
+                ` : ''}
+            `;
+
+            monitor.appendChild(erroWrapper);
+
+            if (permitirTentativa) {
+                const retryBtn = erroWrapper.querySelector('.monitor-retry-btn');
+                if (retryBtn) {
+                    retryBtn.addEventListener('click', () => {
+                        carregarDados({ forcarAtualizacao: true });
+                    });
+                }
+            }
+        }
+
         function aplicarDadosCarregados(dados, { manterIndicadorCarregamento = false } = {}) {
-            if (!dados) return;
+            if (!dados) {
+                console.warn('Nenhum dado disponível para aplicar ao monitor.');
+                if (!manterIndicadorCarregamento) {
+                    esconderLoading();
+                }
+                return;
+            }
+
+            limparErroCarregamento();
 
             estado.salas = (dados.salas || []).map(sala => ({
                 ...sala,
@@ -6732,26 +6851,70 @@
                 .withSuccessHandler(function(dados) {
                     console.log('Dados recebidos do server:', dados);
                     salvarCacheDia(diaSolicitado, dados);
-                    // Libera o estado de carregamento antes de atualizar as views para garantir
-                    // que componentes como o planejamento sejam renderizados com os dados recebidos.
-                    isLoading = false;
-                    aplicarDadosCarregados(dados);
-                    console.log('Loading escondido - Verificando se monitor está visível');
-                    prefetchDiasAdjacentes(diaSolicitado);
-                    if (pendingReload) {
+
+                    if (!dados) {
+                        console.warn('Resposta vazia do servidor para', diaSolicitado);
+                        if (!tinhaDadosEmCache) {
+                            exibirErroCarregamento('Nenhum dado foi retornado pelo servidor.', {
+                                detalhe: 'Tente atualizar a página ou aguarde alguns instantes antes de tentar novamente.',
+                                permitirTentativa: true
+                            });
+                        } else {
+                            esconderLoading();
+                        }
+                        isLoading = false;
                         pendingReload = false;
-                        carregarDados();
+                        limparLoadingTimeout();
+                        return;
+                    }
+
+                    let dadosAplicados = false;
+                    try {
+                        aplicarDadosCarregados(dados);
+                        dadosAplicados = true;
+                        console.log('Loading escondido - Verificando se monitor está visível');
+                        prefetchDiasAdjacentes(diaSolicitado);
+                    } catch (processError) {
+                        console.error('Erro ao processar dados recebidos:', processError);
+                        if (!tinhaDadosEmCache) {
+                            exibirErroCarregamento('Erro ao processar os dados recebidos.', {
+                                detalhe: 'Clique em "Tentar novamente" para tentar carregar novamente.',
+                                permitirTentativa: true
+                            });
+                        } else {
+                            esconderLoading();
+                        }
+                    } finally {
+                        isLoading = false;
+                        limparLoadingTimeout();
+                    }
+
+                    if (dadosAplicados) {
+                        if (pendingReload) {
+                            pendingReload = false;
+                            carregarDados();
+                        }
+                    } else {
+                        pendingReload = false;
                     }
                 })
                 .withFailureHandler(function(error) {
                     console.error('Erro ao carregar dados:', error);
                     if (!tinhaDadosEmCache) {
-                        alert('Erro ao carregar dados do sistema.');
+                        exibirErroCarregamento('Não foi possível carregar os dados do sistema.', {
+                            detalhe: 'Verifique sua conexão ou tente novamente em instantes.',
+                            permitirTentativa: true
+                        });
+                    } else {
+                        esconderLoading();
                     }
-                    esconderLoading();
+
                     const deveRecarregar = pendingReload;
                     pendingReload = false;
                     isLoading = false;
+                    limparLoadingTimeout();
+                    togglePlanejamentoLoading(false);
+
                     if (deveRecarregar) {
                         carregarDados();
                     }
@@ -6760,14 +6923,28 @@
         }
 
         function mostrarLoading() {
-            document.getElementById('loading-monitor').style.display = 'block';
-            document.getElementById('monitor-content').style.display = 'none';
+            const loadingMonitor = document.getElementById('loading-monitor');
+            const monitorContent = document.getElementById('monitor-content');
+            if (loadingMonitor) {
+                loadingMonitor.style.display = 'block';
+            }
+            if (monitorContent) {
+                monitorContent.style.display = 'none';
+            }
             togglePlanejamentoLoading(true);
+            iniciarLoadingTimeout();
         }
 
         function esconderLoading() {
-            document.getElementById('loading-monitor').style.display = 'none';
-            document.getElementById('monitor-content').style.display = 'flex';
+            limparLoadingTimeout();
+            const loadingMonitor = document.getElementById('loading-monitor');
+            const monitorContent = document.getElementById('monitor-content');
+            if (loadingMonitor) {
+                loadingMonitor.style.display = 'none';
+            }
+            if (monitorContent) {
+                monitorContent.style.display = 'flex';
+            }
             togglePlanejamentoLoading(false);
         }
 
