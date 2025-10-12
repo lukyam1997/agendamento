@@ -68,6 +68,9 @@ const CACHE_DURATION = 30;
 const CACHE_KEYS_PROPERTY = 'CACHE_KEYS_LIST';
 const CACHE_KEYS_MAX = 200;
 
+// Timezone utilizado em toda a aplicação (evita chamadas repetidas ao Session)
+const SCRIPT_TIMEZONE = Session.getScriptTimeZone();
+
 // Total estimado de salas para cálculos de ocupação
 const TOTAL_SALAS_ESTIMADO = 56;
 const NOMES_MESES_PT = [
@@ -108,11 +111,24 @@ function normalizarStatusServidor(valor) {
 }
 
 function formatarDataCurta(date) {
-  return Utilities.formatDate(date, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+  return Utilities.formatDate(date, SCRIPT_TIMEZONE, 'dd/MM/yyyy');
 }
 
 function formatarPeriodo(inicio, fim) {
   return `${formatarDataCurta(inicio)} a ${formatarDataCurta(fim)}`;
+}
+
+function formatarDataIsoSeguro(data) {
+  return Utilities.formatDate(data, SCRIPT_TIMEZONE, 'yyyy-MM-dd');
+}
+
+function normalizarDataParaComparacao(valor) {
+  const data = valor instanceof Date ? new Date(valor.getTime()) : new Date(valor);
+  if (isNaN(data.getTime())) {
+    return null;
+  }
+  data.setHours(12, 0, 0, 0);
+  return data;
 }
 
 function mapearRowParaAgendamento(row) {
@@ -288,7 +304,7 @@ function parseDashboardFiltros(filtrosJson) {
       }
       const data = new Date(valor);
       if (!isNaN(data.getTime())) {
-        return Utilities.formatDate(data, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        return Utilities.formatDate(data, SCRIPT_TIMEZONE, 'yyyy-MM-dd');
       }
       return null;
     };
@@ -686,46 +702,70 @@ function getAgendamentos(data) {
       console.error('Planilha não encontrada');
       return [];
     }
-    
+
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
     if (!sheet) {
       console.error('Aba BASE não encontrada');
       return [];
     }
-    
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
-    
-    if (values.length <= 1) {
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
       console.log('Nenhum agendamento encontrado na aba BASE');
       return [];
     }
-    
-    // Remover cabeçalho
-    values.shift();
 
-    const dataFormatada = Utilities.formatDate(data, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-    console.log(`Processando ${values.length} linhas para data: ${dataFormatada}`);
-    
-    const agendamentos = values.filter(row => {
-      // Pular linhas vazias
-      if (row.every(cell => !cell)) return false;
+    const lastColumn = sheet.getLastColumn();
+    const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
 
-      const dataInicio = new Date(row[BASE_COLUMNS.DATA1 - 1]);
-      const dataFim = new Date(row[BASE_COLUMNS.DATA2 - 1]);
-      
-      if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) return false;
-      
-      const dataInicioStr = Utilities.formatDate(dataInicio, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-      const dataFimStr = Utilities.formatDate(dataFim, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-      
-      return dataFormatada >= dataInicioStr && dataFormatada <= dataFimStr;
-    }).map(row => {
-      return {
+    const dataReferencia = normalizarDataParaComparacao(data);
+    if (!dataReferencia) {
+      console.error('Não foi possível normalizar a data de referência:', data);
+      return [];
+    }
+    const dataReferenciaMs = dataReferencia.getTime();
+
+    console.log(`Processando ${values.length} linhas para data: ${formatarDataIsoSeguro(dataReferencia)}`);
+
+    const agendamentos = [];
+
+    for (let i = 0; i < values.length; i++) {
+      const row = values[i];
+
+      if (!row || row.length === 0) {
+        continue;
+      }
+
+      let possuiDados = false;
+      for (let j = 0; j < row.length; j++) {
+        if (row[j]) {
+          possuiDados = true;
+          break;
+        }
+      }
+      if (!possuiDados) {
+        continue;
+      }
+
+      const dataInicioNormalizada = normalizarDataParaComparacao(row[BASE_COLUMNS.DATA1 - 1]);
+      const dataFimNormalizada = normalizarDataParaComparacao(row[BASE_COLUMNS.DATA2 - 1]);
+
+      if (!dataInicioNormalizada || !dataFimNormalizada) {
+        continue;
+      }
+
+      const dataInicioMs = dataInicioNormalizada.getTime();
+      const dataFimMs = dataFimNormalizada.getTime();
+
+      if (dataReferenciaMs < dataInicioMs || dataReferenciaMs > dataFimMs) {
+        continue;
+      }
+
+      agendamentos.push({
         id: row[BASE_COLUMNS.ID - 1] || '',
         sala: String(row[BASE_COLUMNS.SALA - 1] || '').trim(),
-        dataInicio: Utilities.formatDate(new Date(row[BASE_COLUMNS.DATA1 - 1]), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
-        dataFim: Utilities.formatDate(new Date(row[BASE_COLUMNS.DATA2 - 1]), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+        dataInicio: formatarDataIsoSeguro(dataInicioNormalizada),
+        dataFim: formatarDataIsoSeguro(dataFimNormalizada),
         turno: String(row[BASE_COLUMNS.TURNO - 1] || '').trim(),
         horaInicio: formatarHora(row[BASE_COLUMNS.HORA1 - 1]),
         horaFim: formatarHora(row[BASE_COLUMNS.HORA2 - 1]),
@@ -737,9 +777,9 @@ function getAgendamentos(data) {
         observacoes: String(row[BASE_COLUMNS.OBSERVACOES - 1] || '').trim(),
         horaChegadaReal: formatarHora(row[BASE_COLUMNS.HORA_CHEGADA_REAL - 1]),
         horaSaidaReal: formatarHora(row[BASE_COLUMNS.HORA_SAIDA_REAL - 1])
-      };
-    });
-    
+      });
+    }
+
     console.log(`Agendamentos encontrados: ${agendamentos.length}`);
     return agendamentos;
   } catch (error) {
@@ -756,7 +796,7 @@ function formatarHora(hora) {
   
   try {
     if (hora instanceof Date) {
-      return Utilities.formatDate(hora, Session.getScriptTimeZone(), 'HH:mm');
+      return Utilities.formatDate(hora, SCRIPT_TIMEZONE, 'HH:mm');
     }
     
     if (typeof hora === 'string') {
@@ -1737,7 +1777,7 @@ function getDadosAgregados(periodo, filtrosJson) {
 
         const cursor = new Date(vigenciaInicio);
         while (cursor.getTime() <= vigenciaFim) {
-          const diaIso = Utilities.formatDate(cursor, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+          const diaIso = Utilities.formatDate(cursor, SCRIPT_TIMEZONE, 'yyyy-MM-dd');
           if (diasEspecificosSet && diasEspecificosSet.size && !diasEspecificosSet.has(diaIso)) {
             cursor.setDate(cursor.getDate() + 1);
             continue;
@@ -2578,7 +2618,7 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
 
         const cursor = new Date(vigenciaInicio);
         while (cursor.getTime() <= vigenciaFim) {
-          const diaIso = Utilities.formatDate(cursor, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+          const diaIso = Utilities.formatDate(cursor, SCRIPT_TIMEZONE, 'yyyy-MM-dd');
 
           totalEventos++;
           if (sala) salasAtivasSet.add(sala);
@@ -3678,7 +3718,7 @@ function formatarIsoParaDataBrasil(iso) {
 }
 
 function obterTimeZonePadrao() {
-  return Session.getScriptTimeZone() || 'America/Sao_Paulo';
+  return SCRIPT_TIMEZONE || 'America/Sao_Paulo';
 }
 
 function parseJsonSeguro(valor, padrao) {
