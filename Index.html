@@ -8319,11 +8319,12 @@
                     inicializarSalaMesPeriodoDetalhes();
                 };
 
-                const salaMesSection = document.getElementById('sala-mes-section');
-                if (salaMesSection && salaMesSection.classList.contains('active')) {
+                prepararSalaMes();
+
+                const activeNavBtn = document.querySelector('.nav-btn.active');
+                const shouldAutoCarregarSalaMes = activeNavBtn && activeNavBtn.getAttribute('data-tab') === 'sala-mes';
+                if (shouldAutoCarregarSalaMes) {
                     carregarSalaMesOptions();
-                } else {
-                    prepararSalaMes();
                 }
             }
 
