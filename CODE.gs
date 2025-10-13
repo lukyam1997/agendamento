@@ -188,9 +188,15 @@ function registrarLog(acao, detalhes, dadosExtras) {
 function agendamentoCorrespondeFiltros(agendamento, filtros) {
   if (!agendamento || !filtros) return true;
 
-  const turnosFiltro = Array.isArray(filtros.turnos) && filtros.turnos.length
+  let turnosFiltro = Array.isArray(filtros.turnos) && filtros.turnos.length
     ? filtros.turnos
     : filtros.turno ? [filtros.turno] : [];
+  if (turnosFiltro.includes('todos')) {
+    const somenteTodos = turnosFiltro.length === 1;
+    turnosFiltro = somenteTodos
+      ? []
+      : turnosFiltro.filter(turno => turno !== 'todos');
+  }
   const statusFiltro = Array.isArray(filtros.statusLista) && filtros.statusLista.length
     ? filtros.statusLista
     : filtros.status ? [filtros.status] : [];
@@ -377,7 +383,10 @@ function parseRelatorioFiltros(filtrosJson) {
         .filter(Boolean);
     };
 
-    const turnos = normalizarArray(bruto.turnos || bruto.turno, normalizarTurnoServidor);
+    let turnos = normalizarArray(bruto.turnos || bruto.turno, normalizarTurnoServidor);
+    if (turnos.includes('todos')) {
+      turnos = turnos.length === 1 ? [] : turnos.filter(turno => turno !== 'todos');
+    }
     const ilhas = normalizarArray(bruto.ilhas || bruto.ilha, valor => String(valor || '').trim());
     const especialidades = normalizarArray(bruto.especialidades || bruto.especialidade, normalizarTextoServidor);
     const statusLista = normalizarArray(bruto.status || bruto.statusLista, normalizarStatusServidor);

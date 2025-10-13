@@ -13495,7 +13495,12 @@
             const incluirStatus = opcoes.incluirStatus !== false;
             const limparLista = lista => (lista || []).map(item => String(item || '').trim()).filter(Boolean);
 
-            const turnos = limparLista(obterValoresMultiplo('sala-mes-filtro-turno'));
+            const turnosSelecionados = limparLista(obterValoresMultiplo('sala-mes-filtro-turno'));
+            const turnos = turnosSelecionados.includes('todos')
+                ? (turnosSelecionados.length === 1
+                    ? []
+                    : turnosSelecionados.filter(turno => turno !== 'todos'))
+                : turnosSelecionados;
             const statusLista = incluirStatus ? limparLista(obterValoresMultiplo('sala-mes-filtro-status')) : [];
             const especialidades = limparLista(obterValoresMultiplo('sala-mes-filtro-especialidade'));
             const categorias = limparLista(obterValoresMultiplo('sala-mes-filtro-categoria'));
