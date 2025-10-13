@@ -204,6 +204,76 @@ function registrarLog(acao, detalhes, dadosExtras) {
   }
 }
 
+function safeExec(fn, options) {
+  const config = options || {};
+  const acao = config.action || 'OPERACAO_DESCONHECIDA';
+  const fallback = config.fallback;
+  try {
+    return fn();
+  } catch (error) {
+    const mensagem = `Erro em ${acao}: ${error}`;
+    console.error(mensagem, error);
+    if (config.log !== false) {
+      try {
+        registrarLog(
+          `ERRO_${acao.toString().toUpperCase()}`,
+          mensagem,
+          {
+            erro: String(error),
+            stack: error && error.stack ? String(error.stack) : '',
+            contexto: config.context || null
+          }
+        );
+      } catch (logError) {
+        console.warn('Falha ao registrar log de erro:', logError);
+      }
+    }
+
+    if (typeof fallback === 'function') {
+      return fallback(error);
+    }
+    if (fallback !== undefined) {
+      return fallback;
+    }
+    return { success: false, message: mensagem };
+  }
+}
+
+function getCached_(key, fetchFn, ttlSeconds, options) {
+  const cache = CacheService.getScriptCache();
+  const config = options || {};
+  const ttl = typeof ttlSeconds === 'number' && ttlSeconds > 0
+    ? Math.max(5, Math.floor(ttlSeconds))
+    : CACHE_DURATION;
+
+  if (cache) {
+    const cached = cache.get(key);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (error) {
+        console.warn('Falha ao desserializar cache, removendo chave:', key, error);
+        cache.remove(key);
+      }
+    }
+  }
+
+  const resultado = fetchFn();
+
+  if (cache && resultado !== undefined) {
+    try {
+      cache.put(key, JSON.stringify(resultado), ttl);
+      if (config.registerKey !== false) {
+        registrarCacheKey(key);
+      }
+    } catch (error) {
+      console.warn('Falha ao armazenar cache para chave:', key, error);
+    }
+  }
+
+  return resultado;
+}
+
 function agendamentoCorrespondeFiltros(agendamento, filtros) {
   if (!agendamento || !filtros) return true;
 
@@ -465,16 +535,16 @@ function obterIntervaloPeriodo(periodo) {
  * Função principal para servir a interface web
  */
 function doGet() {
-  try {
+  return safeExec(() => {
     const html = HtmlService.createTemplateFromFile('Index');
     return html.evaluate()
       .setTitle('Sistema de Agendamento - Salas')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
-  } catch (error) {
-    console.error('Erro em doGet:', error);
-    return HtmlService.createHtmlOutput('<h1>Erro ao carregar a aplicação</h1><p>' + error.toString() + '</p>');
-  }
+  }, {
+    action: 'doGet',
+    fallback: error => HtmlService.createHtmlOutput('<h1>Erro ao carregar a aplicação</h1><p>' + error.toString() + '</p>')
+  });
 }
 
 /**
@@ -488,56 +558,42 @@ function include(filename) {
  * Obtém todos os dados necessários para a aplicação com tratamento de erro robusto
  */
 function getDadosCompletos(data) {
-  try {
-    // Verificar cache primeiro
+  return safeExec(() => {
     const cacheKey = `dados_${data}`;
-    const cache = CacheService.getScriptCache();
-    const cached = cache.get(cacheKey);
-    
-    if (cached != null) {
-      console.log('Retornando dados do cache para data:', data);
-      return JSON.parse(cached);
-    }
+    const resultado = getCached_(cacheKey, () => {
+      const dataValida = new Date(`${data}T12:00:00`);
+      if (isNaN(dataValida.getTime())) {
+        throw new Error('Data inválida fornecida: ' + data);
+      }
 
-    // Converter para Date válido no Apps Script e validar (com ajuste para meio-dia para evitar issues de timezone)
-    const dataValida = new Date(`${data}T12:00:00`);
-    if (isNaN(dataValida.getTime())) {
-      console.error('Data inválida fornecida:', data);
-      throw new Error('Data inválida fornecida fornecida: ' + data);
-    }
+      const salas = getSalas();
+      const agendamentos = getAgendamentos(dataValida);
+      console.log(`Dados carregados com sucesso: ${salas.length} salas, ${agendamentos.length} agendamentos`);
 
-    const salas = getSalas();
-    const agendamentos = getAgendamentos(dataValida);
+      return {
+        success: true,
+        salas,
+        agendamentos,
+        timestamp: new Date().toISOString(),
+        totalSalas: salas.length,
+        totalAgendamentos: agendamentos.length
+      };
+    }, CACHE_DURATION);
 
-    const resultado = {
-      success: true,
-      salas: salas,
-      agendamentos: agendamentos,
-      timestamp: new Date().toISOString(),
-      totalSalas: salas.length,
-      totalAgendamentos: agendamentos.length
-    };
-    
-    // Armazenar em cache
-    cache.put(cacheKey, JSON.stringify(resultado), CACHE_DURATION);
-    registrarCacheKey(cacheKey);
-    console.log(`Dados carregados com sucesso: ${salas.length} salas, ${agendamentos.length} agendamentos`);
-    
     return resultado;
-  } catch (error) {
-    console.error('Erro em getDadosCompletos:', error);
-    
-    // Retornar dados básicos em caso de erro
-    return {
+  }, {
+    action: 'getDadosCompletos',
+    context: { data },
+    fallback: () => ({
       success: false,
       salas: getSalasBasicas(),
       agendamentos: [],
-      error: error.toString(),
+      error: 'Falha ao carregar dados para a data solicitada',
       timestamp: new Date().toISOString(),
-      totalSalas: 56, // Total fixo de salas
+      totalSalas: TOTAL_SALAS_ESTIMADO,
       totalAgendamentos: 0
-    };
-  }
+    })
+  });
 }
 
 /**
@@ -587,95 +643,97 @@ function getSalasBasicas() {
  * Obtém todas as salas do sistema com seus status
  */
 function getSalas() {
-  try {
+  return safeExec(() => getCached_('salas_catalogo_v1', () => {
     const salas = [];
-    const statusSalas = getStatusSalas();
-    
+    const statusSalas = getStatusSalas() || {};
+
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.CADASTRO);
+    const sheet = spreadsheet && spreadsheet.getSheetByName(SHEET_NAMES.CADASTRO);
     if (!sheet) {
       console.warn('Aba CADASTRO não encontrada, usando fallback');
       return getSalasBasicas();
     }
 
     const values = sheet.getDataRange().getValues();
-    values.shift(); // header
+    if (!values || values.length <= 1) {
+      console.warn('Nenhum registro encontrado na aba CADASTRO, usando fallback');
+      return getSalasBasicas();
+    }
+    values.shift();
 
     const salasMap = new Map();
 
     values.forEach(row => {
-      const salaId = String(row[3]).trim(); // D
-      const ilha = String(row[4]).trim(); // E
+      const salaId = String(row[3]).trim();
+      const ilha = String(row[4]).trim();
       if (salaId) {
-        salasMap.set(salaId, {numero: salaId, ilha});
+        salasMap.set(salaId, { numero: salaId, ilha });
       }
     });
 
     let blocoCounter = 1;
     let salaCounter = 0;
-    salasMap.forEach((val, salaId) => {
+    salasMap.forEach((val) => {
       if (salaCounter % 20 === 0 && salaCounter > 0) {
         blocoCounter++;
       }
+      const infoStatus = statusSalas[val.numero] || {};
       salas.push({
         numero: val.numero,
         bloco: blocoCounter,
-        statusGeral: statusSalas[val.numero]?.status || 'livre',
-        motivo: statusSalas[val.numero]?.motivo || '',
+        statusGeral: infoStatus.status || 'livre',
+        motivo: infoStatus.motivo || '',
         ilha: val.ilha,
-        status: statusSalas[val.numero]?.status || 'livre'
+        status: infoStatus.status || 'livre'
       });
       salaCounter++;
     });
 
-    salas.sort((a,b) => a.numero.localeCompare(b.numero, undefined, {numeric: true}));
+    salas.sort((a, b) => a.numero.localeCompare(b.numero, undefined, { numeric: true }));
     console.log(`Salas carregadas: ${salas.length} salas`);
     return salas;
-  } catch (error) {
-    console.error('Erro em getSalas, retornando salas básicas:', error);
-    return getSalasBasicas();
-  }
+  }, CACHE_DURATION, { registerKey: false }), {
+    action: 'getSalas',
+    fallback: () => getSalasBasicas()
+  });
 }
 
 /**
  * Obtém os status das salas
  */
 function getStatusSalas() {
-  try {
+  return safeExec(() => getCached_('status_salas_v1', () => {
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     if (!spreadsheet) {
       console.warn('Planilha não encontrada, retornando status vazio');
       return {};
     }
-    
+
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.STATUS_SALAS);
     if (!sheet) {
       console.warn('Aba STATUS_SALAS não encontrada, retornando status vazio');
       return {};
     }
-    
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
-    
-    if (values.length <= 1) {
+
+    const values = sheet.getDataRange().getValues();
+    if (!values || values.length <= 1) {
       console.log('Nenhum status encontrado');
       return {};
     }
-    
-    // Remover cabeçalho
+
     values.shift();
-    
+
     const statusSalas = {};
     let count = 0;
-    
+
     values.forEach((row, index) => {
       try {
         const sala = String(row[STATUS_COLUMNS.SALA - 1]).trim();
         const status = String(row[STATUS_COLUMNS.STATUS - 1]).trim().toLowerCase();
-        
+
         if (sala && status) {
           statusSalas[sala] = {
-            status: status,
+            status,
             motivo: String(row[STATUS_COLUMNS.MOTIVO - 1] || '').trim()
           };
           count++;
@@ -684,13 +742,13 @@ function getStatusSalas() {
         console.warn(`Erro ao processar linha ${index + 2} de status:`, e);
       }
     });
-    
+
     console.log(`Status carregados: ${count} salas com status definido`);
     return statusSalas;
-  } catch (error) {
-    console.error('Erro ao carregar status das salas:', error);
-    return {};
-  }
+  }, CACHE_DURATION, { registerKey: false }), {
+    action: 'getStatusSalas',
+    fallback: {}
+  });
 }
 
 /**
@@ -1046,6 +1104,8 @@ function salvarAgendamento(agendamento) {
           cache.remove(key);
         }
       });
+      cache.remove('status_salas_v1');
+      cache.remove('salas_catalogo_v1');
 
       limparLockerOverviewCache_();
 
@@ -1121,6 +1181,8 @@ function salvarAgendamento(agendamento) {
           cache.remove(key);
         }
       });
+      cache.remove('status_salas_v1');
+      cache.remove('salas_catalogo_v1');
 
       limparLockerOverviewCache_();
 
@@ -1270,6 +1332,8 @@ function atualizarStatusMultiplasSalas(salas, status, motivo) {
         cache.remove(key);
       }
     });
+    cache.remove('status_salas_v1');
+    cache.remove('salas_catalogo_v1');
 
     limparLockerOverviewCache_();
 
@@ -1481,6 +1545,9 @@ function limparCache() {
         });
       }
     }
+
+    cache.remove('status_salas_v1');
+    cache.remove('salas_catalogo_v1');
 
     props.deleteProperty(CACHE_KEYS_PROPERTY);
     return { success: true, message: 'Cache limpo com sucesso!' };
