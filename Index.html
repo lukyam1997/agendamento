@@ -5983,6 +5983,16 @@
         // Utilidades de normalização
         const removerAcentos = texto => String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+        function escapeHtml(texto) {
+            if (texto === null || texto === undefined) return '';
+            return String(texto)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function normalizarTexto(valor) {
             if (valor === null || valor === undefined) return '';
             return removerAcentos(valor).trim().toLowerCase();
@@ -13314,209 +13324,91 @@
                     return `${quantidade} sala${quantidade === 1 ? '' : 's'} ${statusResumo}`;
                 };
 
-                const fragment = document.createDocumentFragment();
-                ilhas.forEach(ilha => {
-                    const detailsIlha = document.createElement('details');
-                    detailsIlha.className = 'status-tree-node';
-                    detailsIlha.open = false;
+                const formatarNumero = valor => {
+                    const numero = Number(valor);
+                    return Number.isFinite(numero) ? numero.toLocaleString('pt-BR') : '0';
+                };
 
-                    const summaryIlha = document.createElement('summary');
-                    summaryIlha.className = 'status-island-summary';
-
-                    const infoIlha = document.createElement('div');
-                    infoIlha.className = 'status-island-info';
-
-                    const iconIlha = document.createElement('span');
-                    iconIlha.className = 'status-island-icon';
-                    const iconIlhaInner = document.createElement('i');
-                    iconIlhaInner.className = 'fas fa-umbrella-beach';
-                    iconIlha.appendChild(iconIlhaInner);
-
-                    const textoIlha = document.createElement('div');
-                    textoIlha.className = 'status-island-text';
-
-                    const nomeIlha = document.createElement('span');
-                    nomeIlha.className = 'status-island-name';
-                    nomeIlha.textContent = ilha.label || 'Sem ilha definida';
-
-                    const dias = Array.isArray(ilha.dias) ? ilha.dias : [];
-                    const diasComSalas = dias.filter(dia => Number(dia.total) > 0).length;
-                    const metaIlha = document.createElement('span');
-                    metaIlha.className = 'status-island-meta';
-                    metaIlha.textContent = diasComSalas > 0
-                        ? `${diasComSalas} dia${diasComSalas === 1 ? '' : 's'} com ${statusResumo.includes('sala') ? statusResumo : 'salas neste status'}`
-                        : 'Nenhum dia com salas neste status.';
-
-                    textoIlha.append(nomeIlha, metaIlha);
-                    infoIlha.append(iconIlha, textoIlha);
-
-                    const totalSalas = Number(ilha.totalSalas) || 0;
-                    const countIlha = document.createElement('div');
-                    countIlha.className = 'status-island-count';
-                    const countNumero = document.createElement('span');
-                    countNumero.className = 'status-island-count-number';
-                    countNumero.textContent = totalSalas.toLocaleString('pt-BR');
-                    const countLabel = document.createElement('span');
-                    countLabel.className = 'status-island-count-label';
-                    countLabel.textContent = labelResumo;
-                    countIlha.append(countNumero, countLabel);
-
-                    summaryIlha.append(infoIlha, countIlha);
-                    detailsIlha.appendChild(summaryIlha);
-
-                    const diasWrapper = document.createElement('div');
-                    diasWrapper.className = 'status-tree-children';
-
-                    if (!dias.length) {
-                        const vazioIlha = document.createElement('div');
-                        vazioIlha.className = 'status-room-empty';
-                        vazioIlha.textContent = 'Nenhum dia disponível neste status.';
-                        diasWrapper.appendChild(vazioIlha);
-                    } else {
-                        dias.forEach(dia => {
-                            const detalheDia = document.createElement('details');
-                            detalheDia.className = 'status-tree-day';
-                            detalheDia.open = false;
-
-                            const resumoDia = document.createElement('summary');
-                            resumoDia.className = 'status-day-summary';
-
-                            const infoDia = document.createElement('div');
-                            infoDia.className = 'status-day-info';
-                            const iconDia = document.createElement('span');
-                            iconDia.className = 'status-day-icon';
-                            const iconDiaInner = document.createElement('i');
-                            iconDiaInner.className = 'fas fa-calendar-day';
-                            iconDia.appendChild(iconDiaInner);
-
-                            const labelDia = document.createElement('div');
-                            labelDia.className = 'status-day-label';
-                            const tituloDia = document.createElement('span');
-                            tituloDia.className = 'status-day-title';
-                            tituloDia.textContent = dia.label || dia.data || 'Dia';
-                            const totalDia = Number(dia.total) || 0;
-                            const metaDia = document.createElement('span');
-                            metaDia.className = 'status-day-meta';
-                            metaDia.textContent = totalDia > 0
-                                ? contarTexto(totalDia)
-                                : 'Nenhuma sala neste status.';
-                            labelDia.append(tituloDia, metaDia);
-                            infoDia.append(iconDia, labelDia);
-
-                            const countDia = document.createElement('span');
-                            countDia.className = 'status-tree-count';
-                            countDia.textContent = totalDia.toLocaleString('pt-BR');
-
-                            resumoDia.append(infoDia, countDia);
-                            detalheDia.appendChild(resumoDia);
-
-                            const conteudoDia = document.createElement('div');
-                            conteudoDia.className = 'status-day-content';
-
-                            if (totalDia > 0) {
-                                const listaSalas = document.createElement('ul');
-                                listaSalas.className = 'status-room-list';
-
-                                const salasOrdenadas = Array.isArray(dia.salas)
-                                    ? [...dia.salas].sort((a, b) => String(a.sala || '').localeCompare(String(b.sala || ''), undefined, { numeric: true }))
-                                    : [];
-
-                                salasOrdenadas.forEach(item => {
-                                    const liSala = document.createElement('li');
-                                    liSala.className = 'status-room-item';
-
-                                    const cabecalho = document.createElement('div');
-                                    cabecalho.className = 'status-room-header';
-                                    const tituloSala = document.createElement('div');
-                                    tituloSala.className = 'status-room-title';
-                                    const iconSala = document.createElement('i');
-                                    iconSala.className = 'fas fa-door-open';
-                                    const nomeSala = document.createElement('span');
-                                    nomeSala.textContent = `Sala ${item.sala || '-'}`;
-                                    tituloSala.append(iconSala, nomeSala);
-
-                                    const badgeSala = document.createElement('span');
-                                    badgeSala.className = 'status-room-badge';
-                                    badgeSala.textContent = formatarStatusLabel(item.statusBase || dados.status || 'livre');
-                                    cabecalho.append(tituloSala, badgeSala);
-                                    liSala.appendChild(cabecalho);
-
-                                    const eventos = Array.isArray(item.eventos) ? item.eventos : [];
-                                    if (eventos.length) {
-                                        const listaEventos = document.createElement('ul');
-                                        listaEventos.className = 'status-room-eventos';
-                                        eventos.forEach(evento => {
-                                            const liEvento = document.createElement('li');
-                                            const horario = document.createElement('span');
-                                            horario.className = 'status-room-time';
-                                            const horaInicio = evento.horaInicio || '';
-                                            const horaFim = evento.horaFim || '';
-                                            let horarioTexto = 'Horário não informado';
-                                            if (horaInicio && horaFim) {
-                                                horarioTexto = `${horaInicio} - ${horaFim}`;
-                                            } else if (horaInicio || horaFim) {
-                                                horarioTexto = horaInicio || horaFim;
-                                            }
-                                            horario.textContent = horarioTexto;
-
-                                            const infoEvento = document.createElement('div');
-                                            infoEvento.className = 'status-room-info';
-
-                                            const profissional = document.createElement('span');
-                                            profissional.className = 'status-room-tag';
-                                            const profissionalIcon = document.createElement('i');
-                                            profissionalIcon.className = 'fas fa-user-md';
-                                            profissional.append(profissionalIcon, document.createTextNode(evento.profissional || 'Profissional não informado'));
-
-                                            const especialidade = document.createElement('span');
-                                            especialidade.className = 'status-room-tag';
-                                            const especialidadeIcon = document.createElement('i');
-                                            especialidadeIcon.className = 'fas fa-stethoscope';
-                                            especialidade.append(especialidadeIcon, document.createTextNode(evento.especialidade || 'Especialidade não informada'));
-
-                                            const categoria = document.createElement('span');
-                                            categoria.className = 'status-room-tag';
-                                            const categoriaIcon = document.createElement('i');
-                                            categoriaIcon.className = 'fas fa-layer-group';
-                                            categoria.append(categoriaIcon, document.createTextNode(evento.categoria || 'Categoria não informada'));
-
-                                            const badgeEvento = document.createElement('span');
-                                            badgeEvento.className = 'status-room-badge';
-                                            badgeEvento.textContent = formatarStatusLabel(evento.status || item.statusBase || dados.status || 'ocupado');
-
-                                            infoEvento.append(profissional, especialidade, categoria, badgeEvento);
-                                            liEvento.append(horario, infoEvento);
-                                            listaEventos.appendChild(liEvento);
-                                        });
-                                        liSala.appendChild(listaEventos);
-                                    } else {
-                                        const vazio = document.createElement('div');
-                                        vazio.className = 'status-room-empty';
-                                        vazio.textContent = 'Sem agendamentos no filtro aplicado.';
-                                        liSala.appendChild(vazio);
-                                    }
-
-                                    listaSalas.appendChild(liSala);
-                                });
-
-                                conteudoDia.appendChild(listaSalas);
-                            } else {
-                                const vazioDia = document.createElement('div');
-                                vazioDia.className = 'status-room-empty';
-                                vazioDia.textContent = 'Nenhuma sala com este status neste dia.';
-                                conteudoDia.appendChild(vazioDia);
-                            }
-
-                            detalheDia.appendChild(conteudoDia);
-                            diasWrapper.appendChild(detalheDia);
-                        });
+                const gerarEventosHtml = (eventos, statusPadrao) => {
+                    if (!Array.isArray(eventos) || !eventos.length) {
+                        return '<div class="status-room-empty">Sem agendamentos no filtro aplicado.</div>';
                     }
 
-                    detailsIlha.appendChild(diasWrapper);
-                    fragment.appendChild(detailsIlha);
-                });
+                    const itens = eventos.map(evento => {
+                        const horaInicio = (evento.horaInicio || '').trim();
+                        const horaFim = (evento.horaFim || '').trim();
+                        let horarioTexto = 'Horário não informado';
+                        if (horaInicio && horaFim) {
+                            horarioTexto = `${horaInicio} - ${horaFim}`;
+                        } else if (horaInicio || horaFim) {
+                            horarioTexto = horaInicio || horaFim;
+                        }
 
-                container.appendChild(fragment);
+                        const profissional = evento.profissional || 'Profissional não informado';
+                        const especialidade = evento.especialidade || 'Especialidade não informada';
+                        const categoria = evento.categoria || 'Categoria não informada';
+                        const statusEvento = formatarStatusLabel(evento.status || statusPadrao || 'ocupado');
+
+                        return `<li><span class="status-room-time">${escapeHtml(horarioTexto)}</span><div class="status-room-info"><span class="status-room-tag"><i class="fas fa-user-md"></i> ${escapeHtml(profissional)}</span><span class="status-room-tag"><i class="fas fa-stethoscope"></i> ${escapeHtml(especialidade)}</span><span class="status-room-tag"><i class="fas fa-layer-group"></i> ${escapeHtml(categoria)}</span><span class="status-room-badge">${escapeHtml(statusEvento)}</span></div></li>`;
+                    }).join('');
+
+                    return `<ul class="status-room-eventos">${itens}</ul>`;
+                };
+
+                const gerarSalasHtml = (salas, statusPadrao) => {
+                    if (!salas.length) {
+                        return '<div class="status-room-empty">Sem agendamentos no filtro aplicado.</div>';
+                    }
+
+                    const itens = salas.map(item => {
+                        const numeroSala = item.sala === null || item.sala === undefined ? '-' : item.sala;
+                        const statusBase = item.statusBase || statusPadrao || dados.status || 'livre';
+                        const eventos = Array.isArray(item.eventos) ? item.eventos : [];
+                        const eventosHtml = eventos.length
+                            ? gerarEventosHtml(eventos, statusBase)
+                            : '<div class="status-room-empty">Sem agendamentos no filtro aplicado.</div>';
+
+                        return `<li class="status-room-item"><div class="status-room-header"><div class="status-room-title"><i class="fas fa-door-open"></i><span>Sala ${escapeHtml(numeroSala)}</span></div><span class="status-room-badge">${escapeHtml(formatarStatusLabel(statusBase))}</span></div>${eventosHtml}</li>`;
+                    }).join('');
+
+                    return `<ul class="status-room-list">${itens}</ul>`;
+                };
+
+                const gerarDiasHtml = dias => {
+                    if (!dias.length) {
+                        return '<div class="status-room-empty">Nenhum dia disponível neste status.</div>';
+                    }
+
+                    return dias.map(dia => {
+                        const tituloDia = dia.label || dia.data || 'Dia';
+                        const totalDia = Number(dia.total) || 0;
+                        const metaDiaTexto = totalDia > 0
+                            ? contarTexto(totalDia)
+                            : 'Nenhuma sala neste status.';
+                        const salasOrdenadas = Array.isArray(dia.salas)
+                            ? [...dia.salas].sort((a, b) => String(a.sala || '').localeCompare(String(b.sala || ''), undefined, { numeric: true }))
+                            : [];
+                        const conteudoDia = totalDia > 0
+                            ? gerarSalasHtml(salasOrdenadas, dia.statusBase || dados.status)
+                            : '<div class="status-room-empty">Nenhuma sala com este status neste dia.</div>';
+
+                        return `<details class="status-tree-day"><summary class="status-day-summary"><div class="status-day-info"><span class="status-day-icon"><i class="fas fa-calendar-day"></i></span><div class="status-day-label"><span class="status-day-title">${escapeHtml(tituloDia)}</span><span class="status-day-meta">${escapeHtml(metaDiaTexto)}</span></div></div><span class="status-tree-count">${escapeHtml(formatarNumero(totalDia))}</span></summary><div class="status-day-content">${conteudoDia}</div></details>`;
+                    }).join('');
+                };
+
+                const ilhasHtml = ilhas.map(ilha => {
+                    const dias = Array.isArray(ilha.dias) ? ilha.dias : [];
+                    const diasComSalas = dias.reduce((acc, dia) => acc + (Number(dia.total) > 0 ? 1 : 0), 0);
+                    const totalSalas = formatarNumero(ilha.totalSalas);
+                    const metaIlhaTexto = diasComSalas > 0
+                        ? `${diasComSalas} dia${diasComSalas === 1 ? '' : 's'} com ${statusResumo.includes('sala') ? statusResumo : 'salas neste status'}`
+                        : 'Nenhum dia com salas neste status.';
+                    const diasHtml = gerarDiasHtml(dias);
+
+                    return `<details class="status-tree-node"><summary class="status-island-summary"><div class="status-island-info"><span class="status-island-icon"><i class="fas fa-umbrella-beach"></i></span><div class="status-island-text"><span class="status-island-name">${escapeHtml(ilha.label || 'Sem ilha definida')}</span><span class="status-island-meta">${escapeHtml(metaIlhaTexto)}</span></div></div><div class="status-island-count"><span class="status-island-count-number">${escapeHtml(totalSalas)}</span><span class="status-island-count-label">${escapeHtml(labelResumo)}</span></div></summary><div class="status-tree-children">${diasHtml}</div></details>`;
+                }).join('');
+
+                container.innerHTML = ilhasHtml;
 
                 const totalIlhas = Number(dados.totalIlhas) || ilhas.length;
                 const totalSalas = Number(dados.totalSalas) || 0;
