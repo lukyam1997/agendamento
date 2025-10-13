@@ -5138,6 +5138,34 @@
                             <select id="sala-mes-filtro-status" multiple class="sr-only-input"></select>
                         </div>
                         <div class="report-filter-field">
+                            <label for="sala-mes-filtro-unidade">Unidades</label>
+                            <div class="report-multiselect" data-select-id="sala-mes-filtro-unidade" data-placeholder="Todas as unidades">
+                                <button type="button" class="report-multiselect-btn">Todas as unidades</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="sala-mes-filtro-unidade" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
+                            <label for="sala-mes-filtro-ilha">Ilhas</label>
+                            <div class="report-multiselect" data-select-id="sala-mes-filtro-ilha" data-placeholder="Todas as ilhas">
+                                <button type="button" class="report-multiselect-btn">Todas as ilhas</button>
+                                <div class="report-multiselect-panel">
+                                    <div class="report-multiselect-actions">
+                                        <button type="button" data-action="select-all">Selecionar todas</button>
+                                        <button type="button" data-action="clear">Limpar</button>
+                                    </div>
+                                    <div class="report-multiselect-options"></div>
+                                </div>
+                            </div>
+                            <select id="sala-mes-filtro-ilha" multiple class="sr-only-input"></select>
+                        </div>
+                        <div class="report-filter-field">
                             <label for="sala-mes-filtro-especialidade">Especialidades</label>
                             <div class="report-multiselect" data-select-id="sala-mes-filtro-especialidade" data-placeholder="Todas as especialidades">
                                 <button type="button" class="report-multiselect-btn">Todas as especialidades</button>
@@ -5178,6 +5206,64 @@
                                 </div>
                             </div>
                             <select id="sala-mes-filtro-profissional" multiple class="sr-only-input"></select>
+                        </div>
+                    </div>
+
+                    <div class="locker-overview" id="locker-overview">
+                        <div class="alert alert-info" id="locker-overview-loading" role="status">Carregando acompanhamento das salas...</div>
+                        <div class="locker-overview-content" id="locker-overview-content" style="display: none;">
+                            <div class="resumo-grid locker-overview-cards">
+                                <div class="resumo-card">
+                                    <span class="resumo-label">Salas livres</span>
+                                    <span class="resumo-valor" id="locker-total-livres">0</span>
+                                </div>
+                                <div class="resumo-card">
+                                    <span class="resumo-label">Em uso</span>
+                                    <span class="resumo-valor" id="locker-total-ocupadas">0</span>
+                                </div>
+                                <div class="resumo-card">
+                                    <span class="resumo-label">Reservadas</span>
+                                    <span class="resumo-valor" id="locker-total-reservadas">0</span>
+                                </div>
+                                <div class="resumo-card">
+                                    <span class="resumo-label">Bloqueadas</span>
+                                    <span class="resumo-valor" id="locker-total-bloqueadas">0</span>
+                                </div>
+                                <div class="resumo-card">
+                                    <span class="resumo-label">Em manutenção</span>
+                                    <span class="resumo-valor" id="locker-total-manutencao">0</span>
+                                </div>
+                                <div class="resumo-card">
+                                    <span class="resumo-label">Vencidas</span>
+                                    <span class="resumo-valor" id="locker-total-vencidas">0</span>
+                                </div>
+                                <div class="resumo-card">
+                                    <span class="resumo-label">Total</span>
+                                    <span class="resumo-valor" id="locker-total-geral">0</span>
+                                </div>
+                            </div>
+                            <p class="overview-updated" id="locker-overview-updated"></p>
+                            <div class="table-card">
+                                <div class="table-card-header">
+                                    <h3>Salas filtradas</h3>
+                                    <span id="locker-overview-total"></span>
+                                </div>
+                                <table id="locker-overview-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Sala</th>
+                                            <th>Status</th>
+                                            <th>Ilha</th>
+                                            <th>Unidade</th>
+                                            <th>Turnos</th>
+                                            <th>Especialidades</th>
+                                            <th>Próximo evento</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                                <div class="status-room-empty" id="locker-overview-empty" style="display: none;">Nenhuma sala encontrada com os filtros atuais.</div>
+                            </div>
                         </div>
                     </div>
 
@@ -5829,7 +5915,8 @@
             dadosMestres: {
                 especialidades: [],
                 categorias: [],
-                ilhas: []
+                ilhas: [],
+                unidades: []
             },
             filtros: {
                 especialidade: [],
@@ -5902,6 +5989,8 @@
         let salaMesAtualizacaoTimer = null;
         let salaMesRequestAtual = null;
         let salaMesLoadingPendencias = 0;
+        let lockerOverviewRequestId = null;
+        let lockerOverviewUltimaResposta = null;
 
         function obterInfoCacheDia(diaIso) {
             const registro = cacheDadosPorDia.get(diaIso);
@@ -6963,7 +7052,14 @@
         function carregarDadosMestres() {
             google.script.run
                 .withSuccessHandler(function(dados) {
-                    estado.dadosMestres = dados;
+                    const mestre = dados || {};
+                    estado.dadosMestres = {
+                        ...mestre,
+                        especialidades: Array.isArray(mestre.especialidades) ? mestre.especialidades : [],
+                        categorias: Array.isArray(mestre.categorias) ? mestre.categorias : [],
+                        ilhas: Array.isArray(mestre.ilhas) ? mestre.ilhas : [],
+                        unidades: Array.isArray(mestre.unidades) ? mestre.unidades : []
+                    };
                     preencherFiltros();
                     setupMultiselectListeners();
                     preencherFormularios();
@@ -7210,20 +7306,40 @@
                 .map(status => ({ value: status, label: formatarStatusLabel(status) }));
 
             const ilhasSet = new Set();
+            const unidadesSet = new Set();
+            const adicionarUnidade = valor => {
+                if (valor === undefined || valor === null) {
+                    return;
+                }
+                const texto = String(valor).trim();
+                if (texto) {
+                    unidadesSet.add(texto);
+                }
+            };
             (estado.dadosMestres.ilhas || []).forEach(ilha => {
                 if (ilha !== undefined && ilha !== null && `${ilha}`.trim()) {
                     ilhasSet.add(String(ilha).trim());
                 }
             });
+            (estado.dadosMestres.unidades || []).forEach(adicionarUnidade);
             estado.salas.forEach(sala => {
                 if (sala.ilha !== undefined && sala.ilha !== null && `${sala.ilha}`.trim()) {
                     ilhasSet.add(String(sala.ilha).trim());
+                }
+                if (sala.unidade !== undefined && sala.unidade !== null && `${sala.unidade}`.trim()) {
+                    adicionarUnidade(sala.unidade);
+                } else if (sala.bloco !== undefined && sala.bloco !== null && `${sala.bloco}`.trim()) {
+                    adicionarUnidade(sala.bloco);
                 }
             });
             const ilhasLista = Array.from(ilhasSet)
                 .filter(Boolean)
                 .sort(ordenarAlphaNumerico)
                 .map(ilha => ({ value: ilha, label: `Ilha ${ilha}` }));
+            const unidadesLista = Array.from(unidadesSet)
+                .filter(Boolean)
+                .sort(ordenarAlphaNumerico)
+                .map(unidade => ({ value: unidade, label: `Bloco ${unidade}` }));
 
             const salasSet = new Set();
             estado.salas.forEach(sala => {
@@ -7294,6 +7410,7 @@
             return {
                 turnos,
                 status: statusValores,
+                unidades: unidadesLista,
                 ilhas: ilhasLista,
                 salas: salasLista,
                 especialidades: especialidadesLista,
@@ -7306,6 +7423,7 @@
             if (!opcoes) return;
             definirRelatorioOpcoes(`${prefixo}-filtro-turno`, opcoes.turnos);
             definirRelatorioOpcoes(`${prefixo}-filtro-status`, opcoes.status);
+            definirRelatorioOpcoes(`${prefixo}-filtro-unidade`, opcoes.unidades);
             definirRelatorioOpcoes(`${prefixo}-filtro-ilha`, opcoes.ilhas);
             definirRelatorioOpcoes(`${prefixo}-filtro-sala`, opcoes.salas);
             definirRelatorioOpcoes(`${prefixo}-filtro-especialidade`, opcoes.especialidades);
@@ -7329,6 +7447,8 @@
             const opcoes = opcoesExistentes || obterOpcoesFiltroComuns();
             definirRelatorioOpcoes('sala-mes-filtro-turno', opcoes.turnos);
             definirRelatorioOpcoes('sala-mes-filtro-status', opcoes.status);
+            definirRelatorioOpcoes('sala-mes-filtro-unidade', opcoes.unidades);
+            definirRelatorioOpcoes('sala-mes-filtro-ilha', opcoes.ilhas);
             definirRelatorioOpcoes('sala-mes-filtro-especialidade', opcoes.especialidades);
             definirRelatorioOpcoes('sala-mes-filtro-categoria', opcoes.categorias);
             definirRelatorioOpcoes('sala-mes-filtro-profissional', opcoes.profissionais);
@@ -13105,6 +13225,7 @@
             salaMesAtualizacaoTimer = setTimeout(() => {
                 salaMesAtualizacaoTimer = null;
                 atualizarSalaMesStatus();
+                carregarLockerOverview();
             }, 350);
         }
 
@@ -13460,6 +13581,251 @@
 
             mostrarSalaMesStatusMapa('Preparando filtros de período...', 'info');
             agendarSalaMesAtualizacao();
+        }
+
+        function setLockerOverviewLoading(ativo, mensagem, tipo = 'info', opcoes = {}) {
+            const loading = document.getElementById('locker-overview-loading');
+            const content = document.getElementById('locker-overview-content');
+            const manterConteudo = opcoes && opcoes.manterConteudo === true;
+
+            if (loading) {
+                loading.classList.remove('alert-info', 'alert-error', 'alert-success');
+                loading.classList.add('alert', tipo === 'erro' ? 'alert-error' : (tipo === 'sucesso' ? 'alert-success' : 'alert-info'));
+                loading.textContent = mensagem || (tipo === 'erro'
+                    ? 'Não foi possível carregar o acompanhamento das salas.'
+                    : 'Carregando acompanhamento das salas...');
+                loading.style.display = ativo ? 'block' : 'none';
+            }
+
+            if (content) {
+                if (ativo && manterConteudo && lockerOverviewUltimaResposta) {
+                    content.style.display = 'block';
+                } else {
+                    content.style.display = ativo ? 'none' : 'block';
+                }
+            }
+        }
+
+        function formatarDataHoraCurta(iso) {
+            if (!iso) {
+                return '';
+            }
+            const data = new Date(iso);
+            if (Number.isNaN(data.getTime())) {
+                return '';
+            }
+            return data.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function atualizarLockerOverviewFiltrosDisponiveis(opcoes = {}) {
+            if (!opcoes || typeof opcoes !== 'object') {
+                return;
+            }
+            if (Array.isArray(opcoes.turnos)) definirRelatorioOpcoes('sala-mes-filtro-turno', opcoes.turnos);
+            if (Array.isArray(opcoes.status)) definirRelatorioOpcoes('sala-mes-filtro-status', opcoes.status);
+            if (Array.isArray(opcoes.unidades)) definirRelatorioOpcoes('sala-mes-filtro-unidade', opcoes.unidades);
+            if (Array.isArray(opcoes.ilhas)) definirRelatorioOpcoes('sala-mes-filtro-ilha', opcoes.ilhas);
+            if (Array.isArray(opcoes.especialidades)) definirRelatorioOpcoes('sala-mes-filtro-especialidade', opcoes.especialidades);
+            if (Array.isArray(opcoes.categorias)) definirRelatorioOpcoes('sala-mes-filtro-categoria', opcoes.categorias);
+            if (Array.isArray(opcoes.profissionais)) definirRelatorioOpcoes('sala-mes-filtro-profissional', opcoes.profissionais);
+        }
+
+        function montarDescricaoProximoEvento(evento) {
+            if (!evento || typeof evento !== 'object') {
+                return 'Sem agendamentos';
+            }
+            const partes = [];
+            if (evento.dataFormatada) {
+                partes.push(evento.dataFormatada);
+            } else if (evento.data) {
+                partes.push(evento.data);
+            }
+            const horario = [evento.horaInicio, evento.horaFim].filter(Boolean).join(' - ');
+            if (horario) {
+                partes.push(horario);
+            }
+            if (evento.profissional) {
+                partes.push(evento.profissional);
+            }
+            if (evento.especialidade) {
+                partes.push(evento.especialidade);
+            }
+            if (evento.statusLabel && evento.status) {
+                partes.push(evento.statusLabel);
+            }
+            return partes.length ? partes.join(' • ') : 'Sem agendamentos';
+        }
+
+        function renderLockerOverview(resposta) {
+            try {
+                let dados = resposta;
+                if (typeof dados === 'string') {
+                    try {
+                        dados = JSON.parse(dados);
+                    } catch (erro) {
+                        console.error('Não foi possível interpretar o overview das salas:', erro, resposta);
+                        setLockerOverviewLoading(true, 'Não foi possível interpretar os dados recebidos.', 'erro');
+                        return;
+                    }
+                }
+
+                if (!dados || dados.error) {
+                    const mensagem = dados && dados.error ? String(dados.error) : 'Não foi possível carregar o acompanhamento das salas.';
+                    setLockerOverviewLoading(true, mensagem, 'erro', { manterConteudo: Boolean(lockerOverviewUltimaResposta) });
+                    return;
+                }
+
+                lockerOverviewUltimaResposta = dados;
+
+                atualizarLockerOverviewFiltrosDisponiveis(dados.filtrosDisponiveis || {});
+
+                const totais = dados.totais || {};
+                const totaisGerais = dados.totaisGerais || {};
+                const numero = valor => {
+                    const n = Number(valor);
+                    return Number.isFinite(n) ? n : 0;
+                };
+
+                const totalFiltrado = numero(totais.total || dados.totalSalas);
+                const totalGeral = numero(dados.totalGeral || totaisGerais.total || totalFiltrado);
+
+                const atualizarCampo = (id, valor) => {
+                    const elemento = document.getElementById(id);
+                    if (elemento) {
+                        elemento.textContent = numero(valor).toLocaleString('pt-BR');
+                    }
+                };
+
+                atualizarCampo('locker-total-livres', totais.livres);
+                atualizarCampo('locker-total-ocupadas', totais.emUso || totais.ocupadas);
+                atualizarCampo('locker-total-reservadas', totais.reservados);
+                atualizarCampo('locker-total-bloqueadas', totais.bloqueados);
+                atualizarCampo('locker-total-manutencao', totais.manutencao);
+                atualizarCampo('locker-total-vencidas', totais.vencidos);
+                atualizarCampo('locker-total-geral', totalFiltrado);
+
+                const totalSpan = document.getElementById('locker-overview-total');
+                if (totalSpan) {
+                    if (totalGeral && totalGeral !== totalFiltrado) {
+                        totalSpan.textContent = `${totalFiltrado.toLocaleString('pt-BR')} de ${totalGeral.toLocaleString('pt-BR')} sala${totalGeral === 1 ? '' : 's'}`;
+                    } else {
+                        totalSpan.textContent = `${totalFiltrado.toLocaleString('pt-BR')} sala${totalFiltrado === 1 ? '' : 's'}`;
+                    }
+                }
+
+                const atualizadoEm = document.getElementById('locker-overview-updated');
+                if (atualizadoEm) {
+                    const texto = dados.atualizadoEm ? formatarDataHoraCurta(dados.atualizadoEm) : '';
+                    atualizadoEm.textContent = texto ? `Atualizado em ${texto}` : '';
+                }
+
+                const tbody = document.querySelector('#locker-overview-table tbody');
+                const vazio = document.getElementById('locker-overview-empty');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    const salas = Array.isArray(dados.salas) ? dados.salas : [];
+                    if (!salas.length) {
+                        if (vazio) {
+                            vazio.style.display = 'block';
+                        }
+                    } else {
+                        if (vazio) {
+                            vazio.style.display = 'none';
+                        }
+                        const ordenadas = salas.slice().sort((a, b) => SALA_LABEL_COLLATOR.compare(String(a?.sala ?? ''), String(b?.sala ?? '')));
+                        ordenadas.forEach(item => {
+                            const tr = document.createElement('tr');
+                            tr.dataset.status = item.status || '';
+
+                            const criarCelula = texto => {
+                                const td = document.createElement('td');
+                                td.textContent = texto || '-';
+                                return td;
+                            };
+
+                            const salaTd = criarCelula(item.sala ? `Sala ${item.sala}` : '-');
+                            if (item.motivo) {
+                                salaTd.title = item.motivo;
+                            }
+                            tr.appendChild(salaTd);
+
+                            tr.appendChild(criarCelula(item.statusLabel || item.status || '-'));
+                            tr.appendChild(criarCelula(item.ilha ? `Ilha ${item.ilha}` : '-'));
+                            tr.appendChild(criarCelula(item.unidade ? `Bloco ${item.unidade}` : '-'));
+
+                            const turnosLabel = Array.isArray(item.turnosLabel) ? item.turnosLabel : (Array.isArray(item.turnos) ? item.turnos : []);
+                            tr.appendChild(criarCelula(turnosLabel.length ? turnosLabel.join(', ') : '-'));
+
+                            const especialidades = Array.isArray(item.especialidades) ? item.especialidades : [];
+                            tr.appendChild(criarCelula(especialidades.length ? especialidades.join(', ') : '-'));
+
+                            tr.appendChild(criarCelula(montarDescricaoProximoEvento(item.proximoEvento)));
+                            tbody.appendChild(tr);
+                        });
+                    }
+                }
+
+                setLockerOverviewLoading(false);
+            } catch (error) {
+                console.error('Erro ao renderizar overview das salas:', error);
+                setLockerOverviewLoading(true, 'Não foi possível exibir o acompanhamento das salas.', 'erro', { manterConteudo: Boolean(lockerOverviewUltimaResposta) });
+            }
+        }
+
+        function carregarLockerOverview() {
+            try {
+                const runner = typeof google !== 'undefined' && google.script ? google.script.run : null;
+                if (!runner) {
+                    console.warn('Serviço de scripts indisponível para carregar overview das salas.');
+                    setLockerOverviewLoading(true, 'Serviço de scripts indisponível no momento.', 'erro', { manterConteudo: Boolean(lockerOverviewUltimaResposta) });
+                    return;
+                }
+
+                const filtrosBase = coletarFiltrosSalaMes({ incluirStatus: true }) || {};
+                const filtros = {
+                    status: filtrosBase.status || [],
+                    turnos: filtrosBase.turnos || [],
+                    ilhas: filtrosBase.ilhas || [],
+                    unidades: filtrosBase.unidades || [],
+                    especialidades: filtrosBase.especialidades || [],
+                    categorias: filtrosBase.categorias || [],
+                    profissionais: filtrosBase.profissionais || []
+                };
+
+                if (lockerOverviewUltimaResposta) {
+                    setLockerOverviewLoading(true, 'Atualizando acompanhamento das salas...', 'info', { manterConteudo: true });
+                } else {
+                    setLockerOverviewLoading(true);
+                }
+
+                const requisicaoId = Symbol('lockerOverview');
+                lockerOverviewRequestId = requisicaoId;
+
+                runner
+                    .withSuccessHandler(resposta => {
+                        if (lockerOverviewRequestId !== requisicaoId) {
+                            return;
+                        }
+                        renderLockerOverview(resposta);
+                    })
+                    .withFailureHandler(error => {
+                        if (lockerOverviewRequestId !== requisicaoId) {
+                            return;
+                        }
+                        console.error('Erro ao carregar overview das salas:', error);
+                        setLockerOverviewLoading(true, 'Não foi possível carregar o acompanhamento das salas.', 'erro', { manterConteudo: Boolean(lockerOverviewUltimaResposta) });
+                    })
+                    .getLockerOverview(JSON.stringify(filtros));
+            } catch (error) {
+                console.error('Erro ao iniciar atualização do overview das salas:', error);
+                setLockerOverviewLoading(true, 'Não foi possível iniciar o carregamento do acompanhamento das salas.', 'erro', { manterConteudo: Boolean(lockerOverviewUltimaResposta) });
+            }
         }
 
         function setSalaMesLoading(ativo) {
@@ -13880,6 +14246,8 @@
             return {
                 turnos,
                 status,
+                ilhas: limparLista(obterValoresMultiplo('sala-mes-filtro-ilha')),
+                unidades: limparLista(obterValoresMultiplo('sala-mes-filtro-unidade')),
                 especialidades: limparLista(obterValoresMultiplo('sala-mes-filtro-especialidade')),
                 categorias: limparLista(obterValoresMultiplo('sala-mes-filtro-categoria')),
                 profissionais: limparLista(obterValoresMultiplo('sala-mes-filtro-profissional'))
