@@ -13647,12 +13647,24 @@
         function coletarFiltrosSalaMes(opcoes = {}) {
             const incluirStatus = opcoes.incluirStatus !== false;
             const limparLista = lista => (lista || []).map(item => String(item || '').trim()).filter(Boolean);
+
+            const turnos = limparLista(obterValoresMultiplo('sala-mes-filtro-turno'));
+            const statusLista = incluirStatus ? limparLista(obterValoresMultiplo('sala-mes-filtro-status')) : [];
+            const especialidades = limparLista(obterValoresMultiplo('sala-mes-filtro-especialidade'));
+            const categorias = limparLista(obterValoresMultiplo('sala-mes-filtro-categoria'));
+            const profissionais = limparLista(obterValoresMultiplo('sala-mes-filtro-profissional'));
+
             return {
-                turnos: limparLista(obterValoresMultiplo('sala-mes-filtro-turno')),
-                status: incluirStatus ? limparLista(obterValoresMultiplo('sala-mes-filtro-status')) : [],
-                especialidades: limparLista(obterValoresMultiplo('sala-mes-filtro-especialidade')),
-                categorias: limparLista(obterValoresMultiplo('sala-mes-filtro-categoria')),
-                profissionais: limparLista(obterValoresMultiplo('sala-mes-filtro-profissional'))
+                turnos,
+                turno: turnos.length ? turnos[0] : '',
+                status: statusLista,
+                statusLista: [...statusLista],
+                especialidades,
+                especialidade: especialidades.length ? especialidades[0] : '',
+                categorias,
+                categoria: categorias.length ? categorias[0] : '',
+                profissionais,
+                profissional: profissionais.length ? profissionais[0] : ''
             };
         }
 
