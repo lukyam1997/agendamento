@@ -5242,28 +5242,7 @@
                                     <span class="resumo-valor" id="locker-total-geral">0</span>
                                 </div>
                             </div>
-                            <p class="overview-updated" id="locker-overview-updated"></p>
-                            <div class="table-card">
-                                <div class="table-card-header">
-                                    <h3>Salas filtradas</h3>
-                                    <span id="locker-overview-total"></span>
-                                </div>
-                                <table id="locker-overview-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Sala</th>
-                                            <th>Status</th>
-                                            <th>Ilha</th>
-                                            <th>Unidade</th>
-                                            <th>Turnos</th>
-                                            <th>Especialidades</th>
-                                            <th>Próximo evento</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                                <div class="status-room-empty" id="locker-overview-empty" style="display: none;">Nenhuma sala encontrada com os filtros atuais.</div>
-                            </div>
+                            <div class="status-room-empty" id="locker-overview-empty" style="display: none;">Nenhuma sala encontrada com os filtros atuais.</div>
                         </div>
                     </div>
 
@@ -5271,7 +5250,6 @@
                         <div class="status-map-header">
                             <div class="status-map-title">
                                 <h3>Salas por status no período</h3>
-                                <p class="status-map-description">Clique em uma ilha para visualizar os dias disponíveis e, em seguida, explore as salas em cada dia.</p>
                             </div>
                             <div class="status-map-legend" aria-label="Legenda de status">
                                 <span class="status-map-legend-item status-map-legend-livre">
@@ -13727,9 +13705,9 @@
 
                 const tbody = document.querySelector('#locker-overview-table tbody');
                 const vazio = document.getElementById('locker-overview-empty');
+                const salas = Array.isArray(dados.salas) ? dados.salas : [];
                 if (tbody) {
                     tbody.innerHTML = '';
-                    const salas = Array.isArray(dados.salas) ? dados.salas : [];
                     if (!salas.length) {
                         if (vazio) {
                             vazio.style.display = 'block';
@@ -13769,6 +13747,8 @@
                             tbody.appendChild(tr);
                         });
                     }
+                } else if (vazio) {
+                    vazio.style.display = salas.length ? 'none' : 'block';
                 }
 
                 setLockerOverviewLoading(false);
