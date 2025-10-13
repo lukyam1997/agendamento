@@ -13816,7 +13816,7 @@
                 return;
             }
 
-            const filtros = coletarFiltrosSalaMes({ incluirStatus: false });
+            const filtros = coletarFiltrosSalaMes();
             const chaveCache = JSON.stringify({ status: status || 'livre', periodo: periodoConfig, filtros });
             const dadosCache = obterCacheSalaMes(chaveCache);
             if (dadosCache) {
@@ -13872,9 +13872,14 @@
         function coletarFiltrosSalaMes(opcoes = {}) {
             const incluirStatus = opcoes.incluirStatus !== false;
             const limparLista = lista => (lista || []).map(item => String(item || '').trim()).filter(Boolean);
+            let turnos = limparLista(obterValoresMultiplo('sala-mes-filtro-turno'));
+            if (turnos.includes('todos')) {
+                turnos = turnos.length > 1 ? turnos.filter(valor => valor !== 'todos') : [];
+            }
+            const status = incluirStatus ? limparLista(obterValoresMultiplo('sala-mes-filtro-status')) : [];
             return {
-                turnos: limparLista(obterValoresMultiplo('sala-mes-filtro-turno')),
-                status: incluirStatus ? limparLista(obterValoresMultiplo('sala-mes-filtro-status')) : [],
+                turnos,
+                status,
                 especialidades: limparLista(obterValoresMultiplo('sala-mes-filtro-especialidade')),
                 categorias: limparLista(obterValoresMultiplo('sala-mes-filtro-categoria')),
                 profissionais: limparLista(obterValoresMultiplo('sala-mes-filtro-profissional'))
