@@ -2318,6 +2318,20 @@
           flex: 1 1 320px;
       }
 
+      .status-map-filters {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          flex: 1 1 260px;
+      }
+
+      @media (min-width: 992px) {
+          .status-map-filters {
+              flex-direction: row;
+              align-items: flex-end;
+          }
+      }
+
       .status-map-control {
           display: flex;
           flex-direction: column;
@@ -2334,6 +2348,10 @@
       }
 
       .status-map-control-status {
+          min-width: 220px;
+      }
+
+      .status-map-control-turno {
           min-width: 220px;
       }
 
@@ -5176,6 +5194,22 @@
                                     <select id="sala-mes-status-visualizacao" class="status-map-select">
                                         <option value="livre">Livre</option>
                                     </select>
+                                </div>
+                                <div class="status-map-filters" id="sala-mes-filtros">
+                                    <div class="status-map-control status-map-control-turno">
+                                        <label for="sala-mes-filtro-turno">Turnos</label>
+                                        <div class="report-multiselect" data-select-id="sala-mes-filtro-turno" data-placeholder="Todos os turnos">
+                                            <button type="button" class="report-multiselect-btn">Todos os turnos</button>
+                                            <div class="report-multiselect-panel">
+                                                <div class="report-multiselect-actions">
+                                                    <button type="button" data-action="select-all">Selecionar todos</button>
+                                                    <button type="button" data-action="clear">Limpar</button>
+                                                </div>
+                                                <div class="report-multiselect-options"></div>
+                                            </div>
+                                        </div>
+                                        <select id="sala-mes-filtro-turno" multiple class="sr-only-input"></select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
