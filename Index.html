@@ -2378,7 +2378,7 @@
           flex: 1 1 320px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
       }
 
       .status-map-control {
@@ -2420,68 +2420,17 @@
           box-shadow: 0 0 0 3px var(--primary-soft);
       }
 
-      .status-map-filters {
-          background: var(--surface-filter-panel);
-          border: 1px solid var(--border-soft);
-          border-radius: var(--radius-md);
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      .status-map-side .filter-toggle-bar {
+          justify-content: flex-start;
+          margin: 0;
       }
 
-      body.light-theme .status-map-filters {
-          box-shadow: none;
+      .status-map-side .filter-toggle-btn {
+          background: var(--surface-base);
       }
 
-      .status-map-filters-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-      }
-
-      .status-map-filters-title {
-          font-size: 0.82rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--text-muted);
-      }
-
-      .status-map-filters-grid {
-          display: grid;
-          gap: 12px;
-          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      }
-
-      .status-map-filter-field {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-      }
-
-      .status-map-filter-field label {
-          font-size: 0.78rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          color: var(--text-muted);
-      }
-
-      .status-map-filters-grid.is-collapsed {
-          display: none;
-      }
-
-      @media (max-width: 768px) {
-          .status-map-filters {
-              padding: 14px;
-          }
-
-          .status-map-filters-grid {
-              grid-template-columns: 1fr;
-          }
+      .status-map-side .report-filters {
+          margin: 0;
       }
 
       .status-map-periodo-detalhes {
@@ -3208,19 +3157,18 @@
       }
 
       .status-map-body {
-          display: flex;
-          flex-wrap: wrap;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
           gap: 24px;
           margin-top: 24px;
+          align-items: start;
       }
 
       .status-map-main {
-          flex: 1 1 420px;
           min-width: 0;
       }
 
       .status-map-sidebar {
-          flex: 0 0 320px;
           display: flex;
           flex-direction: column;
           gap: 16px;
@@ -3229,7 +3177,16 @@
           border: 1px solid var(--border-soft);
           box-shadow: var(--shadow-soft);
           padding: 20px;
-          max-height: 520px;
+      }
+
+      @media (max-width: 1100px) {
+          .status-map-body {
+              grid-template-columns: 1fr;
+          }
+
+          .status-map-sidebar {
+              max-width: 100%;
+          }
       }
 
       body.light-theme .status-map-sidebar {
@@ -3238,8 +3195,10 @@
 
       .status-map-sidebar-header {
           display: flex;
-          flex-direction: column;
-          gap: 4px;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 8px;
+          flex-wrap: wrap;
       }
 
       .status-map-sidebar-header h3 {
@@ -3249,8 +3208,9 @@
       }
 
       .status-map-sidebar-header span {
-          font-size: 0.8rem;
+          font-size: 0.85rem;
           color: var(--text-muted);
+          text-align: right;
       }
 
       .status-map-sidebar-list {
@@ -3258,6 +3218,8 @@
           gap: 12px;
           overflow-y: auto;
           padding-right: 4px;
+          flex: 1;
+          min-height: 0;
       }
 
       .status-map-sidebar-list .room-card {
@@ -5636,16 +5598,14 @@
                                             <option value="livre">Livre</option>
                                         </select>
                                     </div>
-                                    <div class="status-map-filters">
-                                        <div class="status-map-filters-header">
-                                            <span class="status-map-filters-title">Filtros adicionais</span>
-                                            <button type="button" class="filter-toggle-btn" data-filter-toggle="sala-mes-filtros" data-expanded-text="Ocultar filtros" data-collapsed-text="Mostrar filtros" aria-expanded="true" aria-controls="sala-mes-filtros">
-                                                <i class="fas fa-eye-slash" aria-hidden="true"></i>
-                                                <span class="filter-toggle-label">Ocultar filtros</span>
-                                            </button>
-                                        </div>
-                                        <div class="status-map-filters-grid" id="sala-mes-filtros">
-                                            <div class="status-map-filter-field">
+                                    <div class="filter-toggle-bar">
+                                        <button type="button" class="filter-toggle-btn" data-filter-toggle="sala-mes-filtros" data-expanded-text="Ocultar filtros" data-collapsed-text="Mostrar filtros" aria-expanded="true" aria-controls="sala-mes-filtros">
+                                            <i class="fas fa-eye-slash" aria-hidden="true"></i>
+                                            <span class="filter-toggle-label">Ocultar filtros</span>
+                                        </button>
+                                    </div>
+                                    <div class="report-filters compact" id="sala-mes-filtros">
+                                        <div class="report-filter-field">
                                                 <label for="sala-mes-filtro-turno">Turnos</label>
                                                 <div class="report-multiselect" data-select-id="sala-mes-filtro-turno" data-placeholder="Todos os turnos">
                                                     <button type="button" class="report-multiselect-btn">Todos os turnos</button>
@@ -5658,8 +5618,8 @@
                                                     </div>
                                                 </div>
                                                 <select id="sala-mes-filtro-turno" multiple class="sr-only-input"></select>
-                                            </div>
-                                            <div class="status-map-filter-field">
+                                        </div>
+                                        <div class="report-filter-field">
                                                 <label for="sala-mes-filtro-status">Status</label>
                                                 <div class="report-multiselect" data-select-id="sala-mes-filtro-status" data-placeholder="Todos os status">
                                                     <button type="button" class="report-multiselect-btn">Todos os status</button>
@@ -5672,8 +5632,8 @@
                                                     </div>
                                                 </div>
                                                 <select id="sala-mes-filtro-status" multiple class="sr-only-input"></select>
-                                            </div>
-                                            <div class="status-map-filter-field">
+                                        </div>
+                                        <div class="report-filter-field">
                                                 <label for="sala-mes-filtro-unidade">Blocos</label>
                                                 <div class="report-multiselect" data-select-id="sala-mes-filtro-unidade" data-placeholder="Todos os blocos">
                                                     <button type="button" class="report-multiselect-btn">Todos os blocos</button>
@@ -5686,8 +5646,8 @@
                                                     </div>
                                                 </div>
                                                 <select id="sala-mes-filtro-unidade" multiple class="sr-only-input"></select>
-                                            </div>
-                                            <div class="status-map-filter-field">
+                                        </div>
+                                        <div class="report-filter-field">
                                                 <label for="sala-mes-filtro-ilha">Ilhas</label>
                                                 <div class="report-multiselect" data-select-id="sala-mes-filtro-ilha" data-placeholder="Todas as ilhas">
                                                     <button type="button" class="report-multiselect-btn">Todas as ilhas</button>
@@ -5700,8 +5660,8 @@
                                                     </div>
                                                 </div>
                                                 <select id="sala-mes-filtro-ilha" multiple class="sr-only-input"></select>
-                                            </div>
-                                            <div class="status-map-filter-field">
+                                        </div>
+                                        <div class="report-filter-field">
                                                 <label for="sala-mes-filtro-especialidade">Especialidades</label>
                                                 <div class="report-multiselect" data-select-id="sala-mes-filtro-especialidade" data-placeholder="Todas as especialidades">
                                                     <button type="button" class="report-multiselect-btn">Todas as especialidades</button>
@@ -5714,8 +5674,8 @@
                                                     </div>
                                                 </div>
                                                 <select id="sala-mes-filtro-especialidade" multiple class="sr-only-input"></select>
-                                            </div>
-                                            <div class="status-map-filter-field">
+                                        </div>
+                                        <div class="report-filter-field">
                                                 <label for="sala-mes-filtro-categoria">Categorias</label>
                                                 <div class="report-multiselect" data-select-id="sala-mes-filtro-categoria" data-placeholder="Todas as categorias">
                                                     <button type="button" class="report-multiselect-btn">Todas as categorias</button>
@@ -5728,8 +5688,8 @@
                                                     </div>
                                                 </div>
                                                 <select id="sala-mes-filtro-categoria" multiple class="sr-only-input"></select>
-                                            </div>
-                                            <div class="status-map-filter-field">
+                                        </div>
+                                        <div class="report-filter-field">
                                                 <label for="sala-mes-filtro-profissional">Profissionais</label>
                                                 <div class="report-multiselect" data-select-id="sala-mes-filtro-profissional" data-placeholder="Todos os profissionais">
                                                     <button type="button" class="report-multiselect-btn">Todos os profissionais</button>
@@ -5742,7 +5702,6 @@
                                                     </div>
                                                 </div>
                                                 <select id="sala-mes-filtro-profissional" multiple class="sr-only-input"></select>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
