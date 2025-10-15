@@ -267,17 +267,19 @@
       }
 
       .controls {
-          display: flex;
+          display: inline-flex;
           flex-wrap: wrap;
           gap: 12px;
-          justify-content: flex-end;
-          align-items: stretch;
+          justify-content: center;
+          align-items: center;
           padding: 14px 16px;
           border-radius: 22px;
           background-color: var(--surface-highlight);
           border: 1px solid var(--border-soft);
           box-shadow: var(--shadow-soft);
           min-width: 280px;
+          width: fit-content;
+          margin-left: auto;
       }
 
       .theme-toggle {
