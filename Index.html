@@ -269,15 +269,15 @@
       .controls {
           display: inline-flex;
           flex-wrap: wrap;
-          gap: 10px;
+          gap: 8px;
           justify-content: center;
           align-items: center;
-          padding: 6px 14px;
-          border-radius: 20px;
+          padding: 4px 10px;
+          border-radius: 18px;
           background-color: var(--surface-highlight);
           border: 1px solid var(--border-soft);
           box-shadow: var(--shadow-soft);
-          min-width: 240px;
+          min-width: 210px;
           width: fit-content;
           margin-left: auto;
       }
@@ -286,8 +286,8 @@
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 40px;
-          height: 40px;
+          width: 34px;
+          height: 34px;
           border-radius: 50%;
           border: 1px solid var(--border-soft);
           background: var(--surface-elevated);
@@ -305,7 +305,7 @@
       }
 
       .theme-toggle i {
-          font-size: 1.2rem;
+          font-size: 1.05rem;
           line-height: 1;
           display: flex;
           align-items: center;
@@ -315,23 +315,23 @@
       .date-controls {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 4px;
           background: var(--surface-elevated);
           border-radius: var(--radius-md);
-          padding: 6px 12px;
+          padding: 4px 10px;
           border: 1px solid var(--border-soft);
       }
 
       .date-controls button {
-          width: 28px;
-          height: 28px;
+          width: 24px;
+          height: 24px;
           border-radius: 50%;
           border: 1px solid transparent;
           background: rgba(255, 255, 255, 0.06);
           color: var(--text-secondary);
           cursor: pointer;
           transition: var(--transition-fast);
-          font-size: 0.82rem;
+          font-size: 0.78rem;
       }
 
       .date-controls button:hover,
@@ -345,9 +345,9 @@
           border: none;
           color: var(--text-primary);
           font-weight: 600;
-          font-size: 0.88rem;
+          font-size: 0.84rem;
           padding: 0 4px;
-          min-width: 115px;
+          min-width: 110px;
       }
 
       .date-controls input[type="date"]::-webkit-calendar-picker-indicator {
@@ -413,10 +413,10 @@
       }
 
       #current-date {
-          min-width: 130px;
+          min-width: 120px;
           text-align: center;
           font-weight: 600;
-          font-size: 0.95rem;
+          font-size: 0.9rem;
       }
 
       .turno-selector {
@@ -424,16 +424,17 @@
           background: var(--surface-elevated);
           border-radius: var(--radius-md);
           border: 1px solid var(--border-soft);
-          padding: 3px;
+          padding: 2px;
       }
 
       .turno-btn {
           border: none;
           background: transparent;
           color: var(--text-muted);
-          padding: 8px 16px;
+          padding: 6px 12px;
           border-radius: var(--radius-sm);
           font-weight: 600;
+          font-size: 0.85rem;
           cursor: pointer;
           transition: var(--transition-fast);
       }
@@ -450,7 +451,7 @@
 
       .quick-actions {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           align-items: center;
       }
 
@@ -458,18 +459,18 @@
           border: 1px solid var(--border-soft);
           background: var(--surface-elevated);
           color: var(--text-secondary);
-          padding: 8px 12px;
+          padding: 6px 10px;
           border-radius: var(--radius-sm);
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           cursor: pointer;
           transition: var(--transition-fast);
       }
 
       .icon-button.icon-only {
-          width: 40px;
-          height: 40px;
+          width: 34px;
+          height: 34px;
           padding: 0;
           border-radius: 50%;
           justify-content: center;
@@ -486,12 +487,12 @@
           border: none;
           border-radius: var(--radius-sm);
           font-weight: 600;
-          padding: 8px 14px;
+          padding: 7px 12px;
           cursor: pointer;
           transition: var(--transition-fast);
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           justify-content: center;
           box-shadow: var(--shadow-soft);
       }
@@ -797,6 +798,7 @@
 
           .controls {
               justify-content: flex-start;
+              gap: 6px;
           }
       }
 
@@ -822,7 +824,38 @@
           }
 
           .controls {
-              padding: 8px 12px;
+              padding: 6px 10px;
+          }
+
+          .turno-btn {
+              padding: 5px 10px;
+              font-size: 0.82rem;
+          }
+
+          #current-date {
+              min-width: 0;
+              font-size: 0.85rem;
+          }
+      }
+
+      @media (max-width: 520px) {
+          .controls {
+              width: 100%;
+              gap: 6px;
+          }
+
+          .date-controls {
+              flex: 1 1 100%;
+              justify-content: center;
+          }
+
+          .turno-selector {
+              flex: 1 1 100%;
+              justify-content: center;
+          }
+
+          .turno-btn {
+              flex: 1;
           }
       }
 
