@@ -679,78 +679,227 @@ function getStatusSalas() {
   }
 }
 
+function normalizarIntervaloDias(inicio, fim) {
+  const inicioData = inicio instanceof Date ? new Date(inicio.getTime()) : new Date(inicio);
+  const fimData = fim instanceof Date ? new Date(fim.getTime()) : new Date(fim);
+
+  if (isNaN(inicioData.getTime()) || isNaN(fimData.getTime())) {
+    return null;
+  }
+
+  inicioData.setHours(12, 0, 0, 0);
+  fimData.setHours(12, 0, 0, 0);
+
+  if (inicioData.getTime() > fimData.getTime()) {
+    const temporaria = inicioData.getTime();
+    inicioData.setTime(fimData.getTime());
+    fimData.setTime(temporaria);
+  }
+
+  return { inicio: inicioData, fim: fimData };
+}
+
+function construirAgendamentoBase(row, tz) {
+  const turnoOriginal = String(row[BASE_COLUMNS.TURNO - 1] || '').trim();
+  const statusOriginal = String(row[BASE_COLUMNS.STATUS - 1] || 'ocupado').trim();
+  const especialidadeOriginal = String(row[BASE_COLUMNS.ESPECIALIDADE - 1] || '').trim();
+  const categoriaOriginal = String(row[BASE_COLUMNS.CATEGORIA - 1] || '').trim();
+  const profissionalOriginal = String(row[BASE_COLUMNS.PROFISSIONAL - 1] || '').trim();
+  const sala = String(row[BASE_COLUMNS.SALA - 1] || '').trim();
+  const ilha = String(row[BASE_COLUMNS.ILHA - 1] || '').trim();
+
+  return {
+    id: row[BASE_COLUMNS.ID - 1] || '',
+    sala,
+    ilha,
+    dataInicio: row[BASE_COLUMNS.DATA1 - 1]
+      ? Utilities.formatDate(new Date(row[BASE_COLUMNS.DATA1 - 1]), tz, 'yyyy-MM-dd')
+      : '',
+    dataFim: row[BASE_COLUMNS.DATA2 - 1]
+      ? Utilities.formatDate(new Date(row[BASE_COLUMNS.DATA2 - 1]), tz, 'yyyy-MM-dd')
+      : row[BASE_COLUMNS.DATA1 - 1]
+        ? Utilities.formatDate(new Date(row[BASE_COLUMNS.DATA1 - 1]), tz, 'yyyy-MM-dd')
+        : '',
+    turno: turnoOriginal,
+    turnoNormalizado: normalizarTurnoServidor(turnoOriginal),
+    horaInicio: formatarHora(row[BASE_COLUMNS.HORA1 - 1]),
+    horaFim: formatarHora(row[BASE_COLUMNS.HORA2 - 1]),
+    especialidade: especialidadeOriginal,
+    especialidadeNormalizada: normalizarTextoServidor(especialidadeOriginal),
+    profissional: profissionalOriginal,
+    profissionalNormalizado: normalizarTextoServidor(profissionalOriginal),
+    categoria: categoriaOriginal,
+    categoriaNormalizada: normalizarTextoServidor(categoriaOriginal),
+    status: statusOriginal,
+    statusNormalizado: normalizarStatusServidor(statusOriginal),
+    observacoes: String(row[BASE_COLUMNS.OBSERVACOES - 1] || '').trim(),
+    horaChegadaReal: formatarHora(row[BASE_COLUMNS.HORA_CHEGADA_REAL - 1]),
+    horaSaidaReal: formatarHora(row[BASE_COLUMNS.HORA_SAIDA_REAL - 1])
+  };
+}
+
+function reconstruirAgendamentosPeriodo(dados) {
+  if (!dados || typeof dados !== 'object') {
+    return { dias: {}, ordemDias: [] };
+  }
+
+  const diasOrigem = dados.dias || {};
+  const diasDestino = {};
+  Object.keys(diasOrigem).forEach(diaIso => {
+    diasDestino[diaIso] = (diasOrigem[diaIso] || []).map(item => ({ ...item }));
+  });
+
+  const ordemDias = Array.isArray(dados.ordemDias)
+    ? [...dados.ordemDias]
+    : Object.keys(diasDestino).sort();
+
+  return {
+    dias: diasDestino,
+    ordemDias
+  };
+}
+
+function obterAgendamentosPeriodoAgrupado(inicioEntrada, fimEntrada) {
+  const intervalo = normalizarIntervaloDias(inicioEntrada, fimEntrada);
+  if (!intervalo) {
+    return { dias: {}, ordemDias: [] };
+  }
+
+  const { inicio, fim } = intervalo;
+  const tz = obterTimeZonePadrao();
+  const cacheKey = `agpd:${Utilities.formatDate(inicio, tz, 'yyyyMMdd')}:${Utilities.formatDate(fim, tz, 'yyyyMMdd')}`;
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(cacheKey);
+
+  if (cached) {
+    try {
+      return reconstruirAgendamentosPeriodo(JSON.parse(cached));
+    } catch (erro) {
+      console.warn('Falha ao interpretar cache de agendamentos por período:', erro);
+    }
+  }
+
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) {
+    return { dias: {}, ordemDias: [] };
+  }
+
+  const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
+  if (!sheet) {
+    return { dias: {}, ordemDias: [] };
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+  if (lastRow <= 1 || lastColumn < BASE_COLUMNS.HORA_SAIDA_REAL) {
+    return { dias: {}, ordemDias: [] };
+  }
+
+  const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+  const inicioMillis = inicio.getTime();
+  const fimMillis = fim.getTime();
+  const diasResultado = {};
+  const diasSet = new Set();
+
+  values.forEach((row, index) => {
+    try {
+      if (!row || row.every(cell => cell === '' || cell === null)) return;
+
+      const dataInicioBruta = row[BASE_COLUMNS.DATA1 - 1];
+      if (!dataInicioBruta) return;
+      const dataInicioLinha = new Date(dataInicioBruta);
+      if (isNaN(dataInicioLinha.getTime())) return;
+
+      const dataFimBruta = row[BASE_COLUMNS.DATA2 - 1]
+        ? new Date(row[BASE_COLUMNS.DATA2 - 1])
+        : new Date(dataInicioLinha);
+      if (isNaN(dataFimBruta.getTime())) return;
+
+      const inicioLinha = new Date(dataInicioLinha.getFullYear(), dataInicioLinha.getMonth(), dataInicioLinha.getDate(), 12);
+      const fimLinha = new Date(dataFimBruta.getFullYear(), dataFimBruta.getMonth(), dataFimBruta.getDate(), 12);
+
+      const vigenciaInicio = Math.max(inicioLinha.getTime(), inicioMillis);
+      const vigenciaFim = Math.min(fimLinha.getTime(), fimMillis);
+      if (vigenciaInicio > vigenciaFim) return;
+
+      const baseAgendamento = construirAgendamentoBase(row, tz);
+      const cursor = new Date(vigenciaInicio);
+      cursor.setHours(12, 0, 0, 0);
+
+      while (cursor.getTime() <= vigenciaFim) {
+        const diaIso = Utilities.formatDate(cursor, tz, 'yyyy-MM-dd');
+        if (!diasResultado[diaIso]) {
+          diasResultado[diaIso] = [];
+        }
+        diasResultado[diaIso].push({ ...baseAgendamento, dia: diaIso });
+        diasSet.add(diaIso);
+        cursor.setDate(cursor.getDate() + 1);
+        cursor.setHours(12, 0, 0, 0);
+      }
+    } catch (erro) {
+      console.warn(`Erro ao processar agendamento na linha ${index + 2}:`, erro);
+    }
+  });
+
+  const resultado = {
+    dias: diasResultado,
+    ordemDias: Array.from(diasSet).sort()
+  };
+
+  try {
+    cache.put(cacheKey, JSON.stringify(resultado), CACHE_DURATION);
+    registrarCacheKey(cacheKey);
+  } catch (erroCache) {
+    console.warn('Não foi possível armazenar agendamentos agregados no cache:', erroCache);
+  }
+
+  return reconstruirAgendamentosPeriodo(resultado);
+}
+
+function gerarHashTexto(texto) {
+  if (!texto) {
+    return '0';
+  }
+
+  try {
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_1, texto);
+    return digest
+      .map(byte => {
+        const valor = (byte & 0xff).toString(16);
+        return valor.length === 1 ? `0${valor}` : valor;
+      })
+      .join('')
+      .slice(0, 32);
+  } catch (erro) {
+    console.warn('Falha ao gerar hash de texto, utilizando fallback simples:', erro);
+    return String(texto).length.toString(16);
+  }
+}
+
 /**
  * Obtém os agendamentos para uma data específica com tratamento robusto
  */
 function getAgendamentos(data) {
   try {
+    const dataValida = data instanceof Date ? new Date(data.getTime()) : new Date(data);
     // 🔑 VALIDAÇÃO - verifica se a data é válida
-    if (isNaN(data.getTime())) {
+    if (isNaN(dataValida.getTime())) {
       console.error('Data inválida fornecida para getAgendamentos:', data);
       return [];
     }
 
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    if (!spreadsheet) {
-      console.error('Planilha não encontrada');
+    const intervalo = normalizarIntervaloDias(dataValida, dataValida);
+    if (!intervalo) {
+      console.error('Intervalo inválido calculado para getAgendamentos:', data);
       return [];
     }
-    
-    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
-    if (!sheet) {
-      console.error('Aba BASE não encontrada');
-      return [];
-    }
-    
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
-    
-    if (values.length <= 1) {
-      console.log('Nenhum agendamento encontrado na aba BASE');
-      return [];
-    }
-    
-    // Remover cabeçalho
-    values.shift();
 
-    const dataFormatada = Utilities.formatDate(data, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-    console.log(`Processando ${values.length} linhas para data: ${dataFormatada}`);
-    
-    const agendamentos = values.filter(row => {
-      // Pular linhas vazias
-      if (row.every(cell => !cell)) return false;
-
-      const dataInicio = new Date(row[BASE_COLUMNS.DATA1 - 1]);
-      const dataFim = new Date(row[BASE_COLUMNS.DATA2 - 1]);
-      
-      if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) return false;
-      
-      const dataInicioStr = Utilities.formatDate(dataInicio, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-      const dataFimStr = Utilities.formatDate(dataFim, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-      
-      return dataFormatada >= dataInicioStr && dataFormatada <= dataFimStr;
-    }).map(row => {
-      return {
-        id: row[BASE_COLUMNS.ID - 1] || '',
-        sala: String(row[BASE_COLUMNS.SALA - 1] || '').trim(),
-        dataInicio: Utilities.formatDate(new Date(row[BASE_COLUMNS.DATA1 - 1]), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
-        dataFim: Utilities.formatDate(new Date(row[BASE_COLUMNS.DATA2 - 1]), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
-        turno: String(row[BASE_COLUMNS.TURNO - 1] || '').trim(),
-        horaInicio: formatarHora(row[BASE_COLUMNS.HORA1 - 1]),
-        horaFim: formatarHora(row[BASE_COLUMNS.HORA2 - 1]),
-        especialidade: String(row[BASE_COLUMNS.ESPECIALIDADE - 1] || '').trim(),
-        profissional: String(row[BASE_COLUMNS.PROFISSIONAL - 1] || '').trim(),
-        categoria: String(row[BASE_COLUMNS.CATEGORIA - 1] || '').trim(),
-        ilha: String(row[BASE_COLUMNS.ILHA - 1] || '').trim(),
-        status: String(row[BASE_COLUMNS.STATUS - 1] || 'ocupado').trim(),
-        observacoes: String(row[BASE_COLUMNS.OBSERVACOES - 1] || '').trim(),
-        horaChegadaReal: formatarHora(row[BASE_COLUMNS.HORA_CHEGADA_REAL - 1]),
-        horaSaidaReal: formatarHora(row[BASE_COLUMNS.HORA_SAIDA_REAL - 1])
-      };
-    });
-    
-    console.log(`Agendamentos encontrados: ${agendamentos.length}`);
-    return agendamentos;
+    const tz = obterTimeZonePadrao();
+    const diaIso = Utilities.formatDate(intervalo.inicio, tz, 'yyyy-MM-dd');
+    const agrupado = obterAgendamentosPeriodoAgrupado(intervalo.inicio, intervalo.fim);
+    const agendamentos = agrupado.dias[diaIso] || [];
+    console.log(`Agendamentos agregados encontrados para ${diaIso}: ${agendamentos.length}`);
+    return agendamentos.map(item => ({ ...item }));
   } catch (error) {
     console.error('Erro ao carregar agendamentos:', error);
     return [];
@@ -1958,21 +2107,53 @@ function getDadosAgregados(periodo, filtrosJson) {
 function getAgendamentosSalaMes(sala, mes, filtrosJson) {
   try {
     const filtros = parseRelatorioFiltros(filtrosJson);
-    // mes no formato YYYY-MM
-    const [ano, mesNum] = mes.split('-');
-    const primeiroDia = new Date(ano, mesNum - 1, 1);
-    const ultimoDia = new Date(ano, mesNum, 0);
+    if (typeof mes !== 'string' || !/^\d{4}-\d{2}$/.test(mes)) {
+      throw new Error('Mês inválido informado para consulta.');
+    }
 
-    const agendamentos = [];
-    let currentDate = new Date(primeiroDia);
-    while (currentDate <= ultimoDia) {
-      const agsDia = getAgendamentos(currentDate).filter(ag => {
-        if (String(ag.sala) !== String(sala)) return false;
+    const [anoStr, mesStr] = mes.split('-');
+    const ano = parseInt(anoStr, 10);
+    const mesNumero = parseInt(mesStr, 10);
+    if (!Number.isInteger(ano) || !Number.isInteger(mesNumero)) {
+      throw new Error('Mês inválido informado para consulta.');
+    }
+
+    const primeiroDia = new Date(ano, mesNumero - 1, 1, 12);
+    const ultimoDia = new Date(ano, mesNumero, 0, 12);
+    if (isNaN(primeiroDia.getTime()) || isNaN(ultimoDia.getTime())) {
+      throw new Error('Não foi possível determinar o período solicitado.');
+    }
+
+    const filtrosHash = gerarHashTexto(JSON.stringify(filtros || {}));
+    const salaChave = String(sala || '').trim() || 'todas';
+    const salaHash = salaChave.replace(/\s+/g, '_');
+    const cacheKey = `salames:${salaHash}:${mes}:${filtrosHash}`;
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (erroCache) {
+        console.warn('Falha ao interpretar cache de agendamentos por sala/mês:', erroCache);
+      }
+    }
+
+    const dadosPeriodo = obterAgendamentosPeriodoAgrupado(primeiroDia, ultimoDia);
+    const tz = obterTimeZonePadrao();
+    const resultado = [];
+    const salaComparacao = String(sala || '');
+
+    const cursor = new Date(primeiroDia.getTime());
+    cursor.setHours(12, 0, 0, 0);
+    while (cursor.getTime() <= ultimoDia.getTime()) {
+      const diaIso = Utilities.formatDate(cursor, tz, 'yyyy-MM-dd');
+      const agsDia = (dadosPeriodo.dias[diaIso] || []).filter(ag => {
+        if (String(ag.sala || '') !== salaComparacao) return false;
         return agendamentoCorrespondeFiltros(ag, filtros);
       });
-      const dataStr = Utilities.formatDate(currentDate, 'UTC', 'yyyy-MM-dd');
-      agendamentos.push({
-        data: dataStr,
+
+      resultado.push({
+        data: diaIso,
         horarios: agsDia.map(ag => `${ag.horaInicio}-${ag.horaFim} (${ag.especialidade})`),
         eventos: agsDia.map(ag => ({
           horaInicio: ag.horaInicio,
@@ -1985,10 +2166,19 @@ function getAgendamentosSalaMes(sala, mes, filtrosJson) {
           observacoes: ag.observacoes || ''
         }))
       });
-      currentDate.setDate(currentDate.getDate() + 1);
+
+      cursor.setDate(cursor.getDate() + 1);
+      cursor.setHours(12, 0, 0, 0);
     }
 
-    return agendamentos;
+    try {
+      cache.put(cacheKey, JSON.stringify(resultado), CACHE_DURATION);
+      registrarCacheKey(cacheKey);
+    } catch (erroSalvarCache) {
+      console.warn('Não foi possível armazenar o cache de agendamentos por sala/mês:', erroSalvarCache);
+    }
+
+    return resultado;
   } catch (error) {
     console.error('Erro em getAgendamentosSalaMes:', error);
     return [];
@@ -2234,6 +2424,19 @@ function getMapaStatusSalasMes(statusDesejado, periodoEntrada, filtrosJson) {
     }
 
     const filtros = parseRelatorioFiltros(filtrosJson);
+    const periodoHash = gerarHashTexto(JSON.stringify({ origem: periodoEntrada, dias: diasPeriodo }));
+    const filtrosHash = gerarHashTexto(JSON.stringify(filtros || {}));
+    const cacheKey = `mapasalas:${statusAlvo}:${periodoHash}:${filtrosHash}`;
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (erroCache) {
+        console.warn('Falha ao interpretar cache do mapa de status das salas:', erroCache);
+      }
+    }
+
     const salasOrigem = getSalas();
     const salasInfo = new Map();
 
@@ -2251,6 +2454,14 @@ function getMapaStatusSalasMes(statusDesejado, periodoEntrada, filtrosJson) {
     const ilhasMapa = new Map();
     const tz = obterTimeZonePadrao();
 
+    const inicioReferencia = periodoInfo.inicio instanceof Date && !isNaN(periodoInfo.inicio.getTime())
+      ? periodoInfo.inicio
+      : new Date(`${diasPeriodo[0]}T12:00:00`);
+    const fimReferencia = periodoInfo.fim instanceof Date && !isNaN(periodoInfo.fim.getTime())
+      ? periodoInfo.fim
+      : new Date(`${diasPeriodo[diasPeriodo.length - 1]}T12:00:00`);
+    const agendamentosPeriodo = obterAgendamentosPeriodoAgrupado(inicioReferencia, fimReferencia);
+
     diasPeriodo.forEach(diaReferencia => {
       const partes = diaReferencia.split('-');
       if (partes.length < 3) return;
@@ -2260,7 +2471,9 @@ function getMapaStatusSalasMes(statusDesejado, periodoEntrada, filtrosJson) {
       if (!Number.isInteger(anoDia) || !Number.isInteger(mesDia) || !Number.isInteger(diaNumero)) return;
 
       const diaAtual = new Date(anoDia, mesDia - 1, diaNumero, 12);
-      const agendamentosDia = getAgendamentos(diaAtual).filter(ag => agendamentoCorrespondeFiltros(ag, filtros));
+      const diaIsoReferencia = Utilities.formatDate(diaAtual, tz, 'yyyy-MM-dd');
+      const agendamentosDia = (agendamentosPeriodo.dias[diaIsoReferencia] || [])
+        .filter(ag => agendamentoCorrespondeFiltros(ag, filtros));
 
       const statusPorSala = new Map();
       const detalhesPorSala = new Map();
@@ -2376,7 +2589,7 @@ function getMapaStatusSalasMes(statusDesejado, periodoEntrada, filtrosJson) {
       });
     });
 
-    return {
+    const resultado = {
       status: statusAlvo,
       statusLabel: formatarStatusRelatorio(statusAlvo),
       periodo: {
@@ -2389,6 +2602,15 @@ function getMapaStatusSalasMes(statusDesejado, periodoEntrada, filtrosJson) {
       diasNoPeriodo: diasOrdenados.length,
       ilhas
     };
+
+    try {
+      cache.put(cacheKey, JSON.stringify(resultado), CACHE_DURATION);
+      registrarCacheKey(cacheKey);
+    } catch (erroArmazenar) {
+      console.warn('Não foi possível armazenar o cache do mapa de status das salas:', erroArmazenar);
+    }
+
+    return resultado;
   } catch (error) {
     console.error('Erro em getMapaStatusSalasMes:', error);
     return { error: error.toString() };

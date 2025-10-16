@@ -2771,6 +2771,41 @@
           flex: 1 1 260px;
       }
 
+      .status-map-actions {
+          display: flex;
+          align-items: flex-end;
+          margin-left: auto;
+      }
+
+      .status-map-apply-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--primary);
+          color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          padding: 10px 18px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .status-map-apply-btn:hover:not([disabled]) {
+          background: var(--primary-strong);
+          transform: translateY(-1px);
+      }
+
+      .status-map-apply-btn[disabled] {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+      }
+
+      .status-map-apply-btn.is-pending {
+          box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.25);
+      }
+
       @media (min-width: 992px) {
           .status-map-filters {
               flex-direction: row;

@@ -1186,6 +1186,12 @@
                                         <select id="sala-mes-filtro-turno" multiple class="sr-only-input"></select>
                                     </div>
                                 </div>
+                                <div class="status-map-actions">
+                                    <button type="button" id="sala-mes-aplicar" class="status-map-apply-btn" disabled>
+                                        <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                                        <span>Aplicar filtros</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div id="sala-mes-status-feedback" class="status-map-feedback" aria-live="polite"></div>
@@ -1792,6 +1798,7 @@
         let salaMesAtualizacaoTimer = null;
         let salaMesRequestAtual = null;
         let salaMesLoadingPendencias = 0;
+        let salaMesFiltrosPendentes = false;
 
         function obterInfoCacheDia(diaIso) {
             const registro = cacheDadosPorDia.get(diaIso);
@@ -3572,7 +3579,7 @@
             if (salaMesFiltros && salaMesFiltros.dataset.listenersAttached !== 'true') {
                 salaMesFiltros.querySelectorAll('select').forEach(select => {
                     select.addEventListener('change', () => {
-                        agendarSalaMesAtualizacao();
+                        definirSalaMesPendencia(true);
                     });
                 });
                 salaMesFiltros.dataset.listenersAttached = 'true';
@@ -8924,6 +8931,26 @@
             }, 350);
         }
 
+        function atualizarEstadoBotaoSalaMes() {
+            const botao = document.getElementById('sala-mes-aplicar');
+            if (!botao) return;
+            botao.disabled = !salaMesFiltrosPendentes;
+            botao.classList.toggle('is-pending', salaMesFiltrosPendentes);
+        }
+
+        function definirSalaMesPendencia(pendente = true) {
+            salaMesFiltrosPendentes = Boolean(pendente);
+            atualizarEstadoBotaoSalaMes();
+        }
+
+        function aplicarSalaMesFiltros(forcar = false) {
+            if (!forcar && !salaMesFiltrosPendentes) {
+                return;
+            }
+            definirSalaMesPendencia(false);
+            agendarSalaMesAtualizacao();
+        }
+
         function atualizarSalaMesDiaCampos() {
             const modoSelecionado = document.querySelector('input[name="sala-mes-dia-modo"]:checked');
             const modo = modoSelecionado ? modoSelecionado.value : 'hoje';
@@ -9099,7 +9126,7 @@
                     garantirPadroesSalaMes(estado.salaMesPeriodo.tipo);
                     sincronizarSalaMesPeriodoValores();
                     atualizarVisibilidade();
-                    agendarSalaMesAtualizacao();
+                    definirSalaMesPendencia(true);
                 });
                 tipoSelect.dataset.salaMesPeriodoListeners = 'true';
             }
@@ -9118,21 +9145,21 @@
             registrar('sala-mes-periodo-meses', () => {
                 estado.salaMesPeriodo.meses = obterValoresMultiplo('sala-mes-periodo-meses');
                 if ((estado.salaMesPeriodo.tipo || 'mes') === 'mes') {
-                    agendarSalaMesAtualizacao();
+                    definirSalaMesPendencia(true);
                 }
             });
 
             registrar('sala-mes-periodo-semana-meses', () => {
                 estado.salaMesPeriodo.semanaMeses = obterValoresMultiplo('sala-mes-periodo-semana-meses');
                 if ((estado.salaMesPeriodo.tipo || 'mes') === 'semana') {
-                    agendarSalaMesAtualizacao();
+                    definirSalaMesPendencia(true);
                 }
             });
 
             registrar('sala-mes-periodo-semanas', () => {
                 estado.salaMesPeriodo.semanas = obterValoresMultiplo('sala-mes-periodo-semanas');
                 if ((estado.salaMesPeriodo.tipo || 'mes') === 'semana') {
-                    agendarSalaMesAtualizacao();
+                    definirSalaMesPendencia(true);
                 }
             });
 
@@ -9143,7 +9170,7 @@
                 radio.addEventListener('change', () => {
                     estado.salaMesPeriodo.diaModo = radio.value;
                     atualizarSalaMesDiaCampos();
-                    agendarSalaMesAtualizacao();
+                    definirSalaMesPendencia(true);
                 });
                 radio.dataset.salaMesPeriodoListeners = 'true';
             });
@@ -9154,7 +9181,7 @@
                     estado.salaMesPeriodo.diaUnico = inputDia.value || '';
                     const modoAtual = document.querySelector('input[name="sala-mes-dia-modo"]:checked');
                     if (modoAtual && modoAtual.value === 'data') {
-                        agendarSalaMesAtualizacao();
+                        definirSalaMesPendencia(true);
                     }
                 });
                 inputDia.dataset.salaMesPeriodoListeners = 'true';
@@ -9167,7 +9194,7 @@
                     estado.salaMesPeriodo.intervalo.inicio = inputInicio.value || '';
                     const modoAtual = document.querySelector('input[name="sala-mes-dia-modo"]:checked');
                     if (modoAtual && modoAtual.value === 'intervalo') {
-                        agendarSalaMesAtualizacao();
+                        definirSalaMesPendencia(true);
                     }
                 });
                 inputInicio.dataset.salaMesPeriodoListeners = 'true';
@@ -9180,7 +9207,7 @@
                     estado.salaMesPeriodo.intervalo.fim = inputFim.value || '';
                     const modoAtual = document.querySelector('input[name="sala-mes-dia-modo"]:checked');
                     if (modoAtual && modoAtual.value === 'intervalo') {
-                        agendarSalaMesAtualizacao();
+                        definirSalaMesPendencia(true);
                     }
                 });
                 inputFim.dataset.salaMesPeriodoListeners = 'true';
@@ -9264,9 +9291,17 @@
             const statusSelect = document.getElementById('sala-mes-status-visualizacao');
             if (statusSelect && statusSelect.dataset.listenersAttached !== 'true') {
                 statusSelect.addEventListener('change', () => {
-                    agendarSalaMesAtualizacao();
+                    definirSalaMesPendencia(true);
                 });
                 statusSelect.dataset.listenersAttached = 'true';
+            }
+
+            const botaoAplicar = document.getElementById('sala-mes-aplicar');
+            if (botaoAplicar && botaoAplicar.dataset.listenersAttached !== 'true') {
+                botaoAplicar.addEventListener('click', () => {
+                    aplicarSalaMesFiltros();
+                });
+                botaoAplicar.dataset.listenersAttached = 'true';
             }
 
             const container = document.getElementById('sala-mes-status-lista');
@@ -9275,7 +9310,8 @@
             }
 
             mostrarSalaMesStatusMapa('Preparando filtros de período...', 'info');
-            agendarSalaMesAtualizacao();
+            atualizarEstadoBotaoSalaMes();
+            aplicarSalaMesFiltros(true);
         }
 
         function setSalaMesLoading(ativo) {
@@ -9518,6 +9554,7 @@
                         console.error('Erro ao carregar o mapa de status:', error);
                         setSalaMesLoading(false);
                         mostrarSalaMesStatusMapa('Erro ao carregar a visão por status. Tente novamente.', 'erro');
+                        definirSalaMesPendencia(true);
                         const fallback = document.getElementById('sala-mes-status-lista');
                         if (fallback) {
                             fallback.innerHTML = '<div class="status-room-empty">Não foi possível carregar os dados.</div>';
@@ -9528,6 +9565,7 @@
                 console.error('Erro ao iniciar atualização do mapa de status:', error);
                 setSalaMesLoading(false);
                 mostrarSalaMesStatusMapa('Não foi possível iniciar a atualização. Verifique sua conexão.', 'erro');
+                definirSalaMesPendencia(true);
                 const fallback = document.getElementById('sala-mes-status-lista');
                 if (fallback) {
                     fallback.innerHTML = '<div class="status-room-empty">Não foi possível carregar os dados solicitados.</div>';
