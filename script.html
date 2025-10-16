@@ -2624,21 +2624,47 @@
 
                 const navGroupElement = toggle.closest('.nav-group');
                 if (navGroupElement) {
-                    navGroupElement.addEventListener('mouseleave', () => {
+                    let hoverCloseTimer = null;
+
+                    const clearHoverCloseTimer = () => {
+                        if (hoverCloseTimer) {
+                            clearTimeout(hoverCloseTimer);
+                            hoverCloseTimer = null;
+                        }
+                    };
+
+                    navGroupElement.addEventListener('mouseenter', () => {
                         if (mobileNavMediaQuery.matches) {
                             return;
                         }
-                        const activeElement = document.activeElement;
-                        if (activeElement && navGroupElement.contains(activeElement)) {
+                        clearHoverCloseTimer();
+                    });
+
+                    navGroupElement.addEventListener('mouseleave', event => {
+                        if (mobileNavMediaQuery.matches) {
                             return;
                         }
-                        setGroupExpanded(toggle, false);
+
+                        const relatedTarget = event.relatedTarget;
+                        if (relatedTarget && navGroupElement.contains(relatedTarget)) {
+                            return;
+                        }
+
+                        clearHoverCloseTimer();
+                        hoverCloseTimer = setTimeout(() => {
+                            const activeElement = document.activeElement;
+                            if (activeElement && navGroupElement.contains(activeElement)) {
+                                return;
+                            }
+                            setGroupExpanded(toggle, false);
+                        }, 140);
                     });
 
                     navGroupElement.addEventListener('focusout', event => {
                         if (mobileNavMediaQuery.matches) {
                             return;
                         }
+                        clearHoverCloseTimer();
                         const nextFocused = event.relatedTarget;
                         if (nextFocused && navGroupElement.contains(nextFocused)) {
                             return;
