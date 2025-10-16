@@ -51,7 +51,8 @@ const USUARIOS_COLUMNS = {
   NOME: 2,
   SETOR: 3,
   SENHA_HASH: 4,
-  ROLE: 5
+  ROLE: 5,
+  SALT: 6
 };
 
 // Colunas na aba LOGS
@@ -66,7 +67,9 @@ const LOGS_COLUMNS = {
 // Cache para melhor performance (cache por 30 segundos)
 const CACHE_DURATION = 30;
 const CACHE_KEYS_PROPERTY = 'CACHE_KEYS_LIST';
-const CACHE_KEYS_MAX = 200;
+const CACHE_KEYS_PROPERTY_PREFIX = 'CACHE_KEYS_PREFIX:';
+const CACHE_KEYS_TTL_DIAS = 3;
+const CACHE_KEYS_TTL_MS = CACHE_KEYS_TTL_DIAS * 24 * 60 * 60 * 1000;
 
 // Total estimado de salas para cálculos de ocupação
 const TOTAL_SALAS_ESTIMADO = 56;
@@ -77,6 +80,98 @@ const NOMES_MESES_PT = [
 
 // Email do administrador (substitua pelo email real)
 const ADMIN_EMAIL = 'lukyam.lmm@isgh.org.br';
+
+let spreadsheetCache = null;
+
+function obterSpreadsheetPrincipal() {
+  if (spreadsheetCache) {
+    try {
+      spreadsheetCache.getId();
+      return spreadsheetCache;
+    } catch (error) {
+      console.warn('Cache da planilha inválido, será recarregado.', error);
+      spreadsheetCache = null;
+    }
+  }
+
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) {
+    throw new Error('Planilha ativa não encontrada');
+  }
+  spreadsheetCache = spreadsheet;
+  return spreadsheet;
+}
+
+function tentarObterSpreadsheetPrincipal() {
+  try {
+    return obterSpreadsheetPrincipal();
+  } catch (error) {
+    console.warn('Não foi possível obter a planilha principal:', error);
+    return null;
+  }
+}
+
+function executarComLock(tipo, tempoEsperaMs, callback) {
+  const lock = tipo === 'script'
+    ? LockService.getScriptLock()
+    : LockService.getDocumentLock();
+  const tempoEspera = Math.max(tempoEsperaMs || 0, 1000);
+  try {
+    lock.waitLock(tempoEspera);
+  } catch (erro) {
+    console.warn('Não foi possível obter lock para operação crítica.', erro);
+    throw new Error('Sistema ocupado, tente novamente em instantes.');
+  }
+
+  try {
+    return callback();
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch (erroLiberacao) {
+      console.warn('Falha ao liberar lock.', erroLiberacao);
+    }
+  }
+}
+
+function bytesParaHex(bytes) {
+  return bytes.map(byte => {
+    const valor = (byte < 0 ? byte + 256 : byte).toString(16);
+    return valor.padStart(2, '0');
+  }).join('');
+}
+
+function gerarSaltSenha() {
+  return Utilities.getUuid().replace(/-/g, '');
+}
+
+function calcularHashSenhaComSalt(senha, salt) {
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, `${salt}${senha}`);
+  return bytesParaHex(Array.from(digest));
+}
+
+function garantirEstruturaUsuariosSheet(sheet) {
+  if (!sheet) return;
+  const ultimaColuna = USUARIOS_COLUMNS.SALT;
+  if (sheet.getLastColumn() < ultimaColuna) {
+    sheet.insertColumnsAfter(sheet.getLastColumn(), ultimaColuna - sheet.getLastColumn());
+  }
+  const cabecalhosEsperados = ['MATRICULA', 'NOME', 'SETOR', 'SENHA_HASH', 'ROLE', 'SALT'];
+  const headerRange = sheet.getRange(1, 1, 1, ultimaColuna);
+  const header = headerRange.getValues()[0];
+  let precisaAtualizar = false;
+  const atualizados = header.map((valor, indice) => {
+    const texto = String(valor || '').trim();
+    if (texto.toUpperCase() !== cabecalhosEsperados[indice]) {
+      precisaAtualizar = true;
+      return cabecalhosEsperados[indice];
+    }
+    return texto;
+  });
+  if (precisaAtualizar) {
+    headerRange.setValues([atualizados]);
+  }
+}
 // Utilidades de normalização compartilhadas entre relatórios e dashboards
 function removerAcentosServidor(valor) {
   return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -105,6 +200,69 @@ function normalizarStatusServidor(valor) {
   if (status.includes('livre') || status.includes('liber')) return 'livre';
   if (status.includes('ocup')) return 'ocupado';
   return status;
+}
+
+function interpretarFiltrosJson(filtrosJson, contexto) {
+  if (!filtrosJson) return {};
+  try {
+    const bruto = JSON.parse(filtrosJson);
+    return bruto && typeof bruto === 'object' ? bruto : {};
+  } catch (error) {
+    console.warn(`Não foi possível interpretar filtros (${contexto}):`, error);
+    return {};
+  }
+}
+
+function normalizarListaEntrada(valor, normalizador, aceitarValorUnico) {
+  if (valor === undefined || valor === null) return [];
+  const lista = Array.isArray(valor)
+    ? valor
+    : aceitarValorUnico ? [valor] : [];
+  return lista
+    .map(item => {
+      const conteudo = normalizador ? normalizador(item) : String(item || '').trim();
+      return conteudo;
+    })
+    .filter(Boolean);
+}
+
+function normalizarDatasEspecificas(lista) {
+  return normalizarListaEntrada(lista, valor => {
+    if (!valor) return null;
+    if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor.trim())) {
+      return valor.trim();
+    }
+    const data = new Date(valor);
+    if (!isNaN(data.getTime())) {
+      return Utilities.formatDate(data, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    }
+    return null;
+  }, true);
+}
+
+function normalizarIntervaloIso(intervalo) {
+  if (!intervalo || typeof intervalo !== 'object') {
+    return null;
+  }
+  const inicio = normalizarDatasEspecificas([intervalo.inicio])[0];
+  const fim = normalizarDatasEspecificas([intervalo.fim])[0];
+  if (!inicio || !fim) {
+    return null;
+  }
+  return inicio <= fim ? { inicio, fim } : { inicio: fim, fim: inicio };
+}
+
+function normalizarMesReferencia(valor) {
+  const texto = String(valor || '').trim();
+  return /^\d{4}-\d{2}$/.test(texto) ? texto : null;
+}
+
+function normalizarNumeroIntervalo(valor, minimo, maximo) {
+  const numero = parseInt(valor, 10);
+  if (!Number.isInteger(numero)) return null;
+  if (minimo !== undefined && numero < minimo) return null;
+  if (maximo !== undefined && numero > maximo) return null;
+  return numero;
 }
 
 function formatarDataCurta(date) {
@@ -138,7 +296,7 @@ function mapearRowParaAgendamento(row) {
 }
 
 function obterSheetLogs() {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const spreadsheet = tentarObterSpreadsheetPrincipal();
   if (!spreadsheet) {
     throw new Error('Planilha não encontrada para registrar logs');
   }
@@ -173,13 +331,17 @@ function registrarLog(acao, detalhes, dadosExtras) {
       }
     }
 
-    sheet.appendRow([
+    const linha = [
       timestamp,
       usuario || 'Sistema',
       acao || 'OPERACAO_DESCONHECIDA',
       detalhes || '',
       dadosTexto
-    ]);
+    ];
+
+    executarComLock('script', 30000, () => {
+      sheet.appendRow(linha);
+    });
   } catch (error) {
     console.error('Erro ao registrar log:', error, acao, detalhes);
   }
@@ -284,71 +446,36 @@ function parseDashboardFiltros(filtrosJson) {
     semanas: [],
     anos: []
   };
-  if (!filtrosJson) return vazio;
-  try {
-    const bruto = JSON.parse(filtrosJson) || {};
-    const normalizarIso = valor => {
-      if (!valor) return null;
-      if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor.trim())) {
-        return valor.trim();
-      }
-      const data = new Date(valor);
-      if (!isNaN(data.getTime())) {
-        return Utilities.formatDate(data, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-      }
-      return null;
-    };
-    const diasValidos = (bruto.diasEspecificos || [])
-      .map(normalizarIso)
-      .filter(Boolean);
-    let intervaloDias = null;
-    if (bruto.intervaloDias && typeof bruto.intervaloDias === 'object') {
-      const inicio = normalizarIso(bruto.intervaloDias.inicio);
-      const fim = normalizarIso(bruto.intervaloDias.fim);
-      if (inicio && fim) {
-        intervaloDias = inicio <= fim ? { inicio, fim } : { inicio: fim, fim: inicio };
-      }
-    }
-    const normalizarLista = (lista, normalizador) => (lista || []).map(item => {
-      const valor = normalizador ? normalizador(item) : String(item || '').trim();
-      return valor;
-    }).filter(Boolean);
 
-    const normalizarMes = valor => {
-      const texto = String(valor || '').trim();
-      return /^\d{4}-\d{2}$/.test(texto) ? texto : null;
-    };
-    const normalizarSemana = valor => {
-      const numero = parseInt(valor, 10);
-      return Number.isInteger(numero) && numero >= 1 && numero <= 6 ? numero : null;
-    };
-    const normalizarAno = valor => {
-      const numero = parseInt(valor, 10);
-      return Number.isInteger(numero) ? numero : null;
-    };
-
-    const mesesValidos = (bruto.meses || []).map(normalizarMes).filter(Boolean);
-    const semanasValidas = (bruto.semanas || []).map(normalizarSemana).filter(valor => valor !== null);
-    const anosValidos = (bruto.anos || []).map(normalizarAno).filter(valor => valor !== null);
-
-    return {
-      turnos: normalizarLista(bruto.turnos, normalizarTurnoServidor),
-      ilhas: normalizarLista(bruto.ilhas, valor => String(valor || '').trim()),
-      especialidades: normalizarLista(bruto.especialidades, normalizarTextoServidor),
-      status: normalizarLista(bruto.status, normalizarStatusServidor),
-      categorias: normalizarLista(bruto.categorias, normalizarTextoServidor),
-      profissionais: normalizarLista(bruto.profissionais, normalizarTextoServidor),
-      salas: normalizarLista(bruto.salas, valor => String(valor || '').trim()),
-      diasEspecificos: diasValidos,
-      intervaloDias,
-      meses: mesesValidos,
-      semanas: semanasValidas,
-      anos: anosValidos
-    };
-  } catch (error) {
-    console.warn('Não foi possível interpretar filtros do dashboard:', error);
+  const bruto = interpretarFiltrosJson(filtrosJson, 'dashboard');
+  if (!Object.keys(bruto).length) {
     return vazio;
   }
+
+  const normalizarConjunto = (valor, normalizador, aceitarUnico) => {
+    return Array.from(new Set(normalizarListaEntrada(valor, normalizador, aceitarUnico)));
+  };
+
+  const diasEspecificos = normalizarDatasEspecificas(bruto.diasEspecificos);
+  const intervaloDias = normalizarIntervaloIso(bruto.intervaloDias);
+  const meses = normalizarConjunto(bruto.meses, normalizarMesReferencia, true);
+  const semanas = normalizarConjunto(bruto.semanas, valor => normalizarNumeroIntervalo(valor, 1, 6), true);
+  const anos = normalizarConjunto(bruto.anos, valor => normalizarNumeroIntervalo(valor), true);
+
+  return {
+    turnos: normalizarConjunto(bruto.turnos, normalizarTurnoServidor, true),
+    ilhas: normalizarConjunto(bruto.ilhas, valor => String(valor || '').trim(), true),
+    especialidades: normalizarConjunto(bruto.especialidades, normalizarTextoServidor, true),
+    status: normalizarConjunto(bruto.status, normalizarStatusServidor, true),
+    categorias: normalizarConjunto(bruto.categorias, normalizarTextoServidor, true),
+    profissionais: normalizarConjunto(bruto.profissionais, normalizarTextoServidor, true),
+    salas: normalizarConjunto(bruto.salas, valor => String(valor || '').trim(), true),
+    diasEspecificos,
+    intervaloDias,
+    meses,
+    semanas: semanas.filter(valor => valor !== null),
+    anos: anos.filter(valor => valor !== null)
+  };
 }
 
 
@@ -369,51 +496,42 @@ function parseRelatorioFiltros(filtrosJson) {
     profissionais: [],
     busca: null
   };
-  if (!filtrosJson) return vazio;
-  try {
-    const bruto = JSON.parse(filtrosJson) || {};
-    const normalizarArray = (valor, normalizador) => {
-      if (valor === undefined || valor === null) return [];
-      const array = Array.isArray(valor) ? valor : [valor];
-      return array
-        .map(item => {
-          const conteudo = normalizador ? normalizador(item) : String(item || '').trim();
-          return conteudo;
-        })
-        .filter(Boolean);
-    };
 
-    let turnos = normalizarArray(bruto.turnos || bruto.turno, normalizarTurnoServidor);
-    if (turnos.includes('todos')) {
-      turnos = turnos.length === 1 ? [] : turnos.filter(turno => turno !== 'todos');
-    }
-    const ilhas = normalizarArray(bruto.ilhas || bruto.ilha, valor => String(valor || '').trim());
-    const especialidades = normalizarArray(bruto.especialidades || bruto.especialidade, normalizarTextoServidor);
-    const statusLista = normalizarArray(bruto.status || bruto.statusLista, normalizarStatusServidor);
-    const salas = normalizarArray(bruto.salas || bruto.sala, valor => String(valor || '').trim());
-    const categorias = normalizarArray(bruto.categorias || bruto.categoria, normalizarTextoServidor);
-    const profissionais = normalizarArray(bruto.profissionais || bruto.profissional, normalizarTextoServidor);
-    const busca = bruto.busca ? normalizarTextoServidor(bruto.busca) : null;
-
-    return {
-      turno: turnos.length ? turnos[0] : null,
-      turnos,
-      ilha: ilhas.length ? ilhas[0] : null,
-      ilhas,
-      especialidade: especialidades.length ? especialidades[0] : null,
-      especialidades,
-      status: statusLista.length ? statusLista[0] : null,
-      statusLista,
-      sala: salas.length ? salas[0] : null,
-      salas,
-      categorias,
-      profissionais,
-      busca
-    };
-  } catch (error) {
-    console.warn('Não foi possível interpretar filtros do relatório:', error);
+  const bruto = interpretarFiltrosJson(filtrosJson, 'relatorio');
+  if (!Object.keys(bruto).length) {
     return vazio;
   }
+
+  const normalizarValores = (valor, normalizador) => normalizarListaEntrada(valor, normalizador, true);
+
+  let turnos = normalizarValores(bruto.turnos || bruto.turno, normalizarTurnoServidor);
+  if (turnos.includes('todos')) {
+    turnos = turnos.length === 1 ? [] : turnos.filter(turno => turno !== 'todos');
+  }
+
+  const ilhas = normalizarValores(bruto.ilhas || bruto.ilha, valor => String(valor || '').trim());
+  const especialidades = normalizarValores(bruto.especialidades || bruto.especialidade, normalizarTextoServidor);
+  const statusLista = normalizarValores(bruto.status || bruto.statusLista, normalizarStatusServidor);
+  const salas = normalizarValores(bruto.salas || bruto.sala, valor => String(valor || '').trim());
+  const categorias = normalizarValores(bruto.categorias || bruto.categoria, normalizarTextoServidor);
+  const profissionais = normalizarValores(bruto.profissionais || bruto.profissional, normalizarTextoServidor);
+  const busca = bruto.busca ? normalizarTextoServidor(bruto.busca) : null;
+
+  return {
+    turno: turnos.length ? turnos[0] : null,
+    turnos,
+    ilha: ilhas.length ? ilhas[0] : null,
+    ilhas,
+    especialidade: especialidades.length ? especialidades[0] : null,
+    especialidades,
+    status: statusLista.length ? statusLista[0] : null,
+    statusLista,
+    sala: salas.length ? salas[0] : null,
+    salas,
+    categorias,
+    profissionais,
+    busca
+  };
 }
 
 function obterIntervaloPeriodo(periodo) {
@@ -577,7 +695,12 @@ function getSalas() {
     const salas = [];
     const statusSalas = getStatusSalas();
     
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
+    if (!spreadsheet) {
+      console.warn('Planilha não encontrada, usando fallback de salas.');
+      return getSalasBasicas();
+    }
+
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.CADASTRO);
     if (!sheet) {
       console.warn('Aba CADASTRO não encontrada, usando fallback');
@@ -628,12 +751,12 @@ function getSalas() {
  */
 function getStatusSalas() {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
     if (!spreadsheet) {
       console.warn('Planilha não encontrada, retornando status vazio');
       return {};
     }
-    
+
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.STATUS_SALAS);
     if (!sheet) {
       console.warn('Aba STATUS_SALAS não encontrada, retornando status vazio');
@@ -779,7 +902,7 @@ function obterAgendamentosPeriodoAgrupado(inicioEntrada, fimEntrada) {
     }
   }
 
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const spreadsheet = tentarObterSpreadsheetPrincipal();
   if (!spreadsheet) {
     return { dias: {}, ordemDias: [] };
   }
@@ -947,12 +1070,12 @@ function formatarHora(hora) {
  */
 function getDadosMestres() {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
     if (!spreadsheet) {
       console.warn('Planilha não encontrada');
       return getDadosMestresBasicos();
     }
-    
+
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.CADASTRO);
     if (!sheet) {
       console.warn('Aba CADASTRO não encontrada');
@@ -1031,135 +1154,121 @@ function getDadosMestresBasicos() {
  */
 function salvarAgendamento(agendamento) {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
     if (!spreadsheet) {
       return { success: false, message: 'Planilha não encontrada' };
     }
-    
+
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
     if (!sheet) {
       return { success: false, message: 'Aba BASE não encontrada' };
     }
-    
-    // Se 'datas' é array (dias específicos), loopar e salvar um por data
-    if (agendamento.datas && Array.isArray(agendamento.datas)) {
-      let ids = [];
-      const logsCriados = [];
-      for (const dataStr of agendamento.datas) {
-        const dataValida = new Date(`${dataStr}T12:00:00`);
-        if (isNaN(dataValida.getTime())) {
-          continue; // Ignorar data inválida
-        }
-        
-        // Verificar conflitos por data
-        const conflito = verificarConflitos(
-          agendamento.sala, 
-          dataStr, 
-          agendamento.horaInicio, 
-          agendamento.horaFim, 
-          agendamento.turno
-        );
-        
-        if (conflito.conflito) {
-          return { success: false, message: conflito.mensagem + ` (na data ${dataStr})` };
-        }
-        
-        // Obter próximo ID
-        const lastRow = sheet.getLastRow();
-        let nextId = 1;
-        if (lastRow > 1) {
-          const lastId = sheet.getRange(lastRow, BASE_COLUMNS.ID).getValue();
-          nextId = parseInt(lastId) + 1;
-        }
-        
-        // Preparar os dados para inserção (dataInicio = dataFim = dataStr)
-        const newRow = [
-          nextId,
-          agendamento.ilha,
-          agendamento.sala,
-          dataValida,
-          dataValida,
-          agendamento.turno,
-          agendamento.especialidade,
-          agendamento.profissional,
-          agendamento.categoria,
-          'ocupado',
-          agendamento.observacoes || '',
-          agendamento.horaInicio,
-          agendamento.horaFim,
-          new Date(),
-          '',
-          ''
-        ];
-        
-        // Adicionar nova linha
-        sheet.appendRow(newRow);
-        ids.push(nextId);
-        logsCriados.push({
-          id: nextId,
-          sala: agendamento.sala,
-          ilha: agendamento.ilha,
-          data: dataStr,
-          turno: agendamento.turno,
-          horaInicio: agendamento.horaInicio,
-          horaFim: agendamento.horaFim,
-          especialidade: agendamento.especialidade,
-          profissional: agendamento.profissional,
-          categoria: agendamento.categoria
-        });
-      }
 
-      // Limpar cache para forçar atualização
+    const resultado = executarComLock('document', 30000, () => {
       const cache = CacheService.getScriptCache();
-      const keys = cache.getKeys();
-      keys.forEach(key => {
-        if (key.startsWith('dados_')) {
-          cache.remove(key);
-        }
-      });
+      const limparCacheDados = () => {
+        const keys = cache.getKeys ? cache.getKeys() : [];
+        (keys || []).forEach(key => {
+          if (key && key.startsWith('dados_')) {
+            cache.remove(key);
+          }
+        });
+      };
 
-      console.log('Agendamentos salvos com sucesso IDs:', ids);
-      if (logsCriados.length) {
-        registrarLog(
-          'CRIAR_AGENDAMENTO_MULTIPLO',
-          `Agendamentos criados (${logsCriados.length})`,
-          { agendamentoBase: agendamento, registros: logsCriados }
-        );
+      if (agendamento.datas && Array.isArray(agendamento.datas)) {
+        const ids = [];
+        const logsCriados = [];
+
+        for (const dataStr of agendamento.datas) {
+          const dataValida = new Date(`${dataStr}T12:00:00`);
+          if (isNaN(dataValida.getTime())) {
+            continue;
+          }
+
+          const conflito = verificarConflitos(
+            agendamento.sala,
+            dataStr,
+            agendamento.horaInicio,
+            agendamento.horaFim,
+            agendamento.turno
+          );
+
+          if (conflito.conflito) {
+            return { sucesso: false, mensagem: conflito.mensagem + ` (na data ${dataStr})` };
+          }
+
+          const lastRow = sheet.getLastRow();
+          let nextId = 1;
+          if (lastRow > 1) {
+            const lastId = sheet.getRange(lastRow, BASE_COLUMNS.ID).getValue();
+            nextId = parseInt(lastId, 10) + 1;
+          }
+
+          const newRow = [
+            nextId,
+            agendamento.ilha,
+            agendamento.sala,
+            dataValida,
+            dataValida,
+            agendamento.turno,
+            agendamento.especialidade,
+            agendamento.profissional,
+            agendamento.categoria,
+            'ocupado',
+            agendamento.observacoes || '',
+            agendamento.horaInicio,
+            agendamento.horaFim,
+            new Date(),
+            '',
+            ''
+          ];
+
+          sheet.appendRow(newRow);
+          ids.push(nextId);
+          logsCriados.push({
+            id: nextId,
+            sala: agendamento.sala,
+            ilha: agendamento.ilha,
+            data: dataStr,
+            turno: agendamento.turno,
+            horaInicio: agendamento.horaInicio,
+            horaFim: agendamento.horaFim,
+            especialidade: agendamento.especialidade,
+            profissional: agendamento.profissional,
+            categoria: agendamento.categoria
+          });
+        }
+
+        limparCacheDados();
+
+        return { sucesso: true, ids, logs: logsCriados };
       }
-      return { success: true, message: 'Agendamentos salvos com sucesso!', ids: ids };
-    } else {
-      // Modo padrão (período contínuo)
-      // Verificar conflitos
+
       const conflito = verificarConflitos(
-        agendamento.sala, 
-        agendamento.dataInicio, 
-        agendamento.horaInicio, 
-        agendamento.horaFim, 
+        agendamento.sala,
+        agendamento.dataInicio,
+        agendamento.horaInicio,
+        agendamento.horaFim,
         agendamento.turno
       );
-      
+
       if (conflito.conflito) {
-        return { success: false, message: conflito.mensagem };
+        return { sucesso: false, mensagem: conflito.mensagem };
       }
-      
-      // Obter próximo ID
+
       const lastRow = sheet.getLastRow();
       let nextId = 1;
-      
       if (lastRow > 1) {
         const lastId = sheet.getRange(lastRow, BASE_COLUMNS.ID).getValue();
-        nextId = parseInt(lastId) + 1;
+        nextId = parseInt(lastId, 10) + 1;
       }
-      
-      // Converter datas e validar (com ajuste para meio-dia para evitar issues de timezone)
+
       const dataInicio = new Date(`${agendamento.dataInicio}T12:00:00`);
       const dataFim = new Date(`${agendamento.dataFim}T12:00:00`);
-      
       if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) {
-        return { success: false, message: 'Datas fornecidas são inválidas' };
+        return { sucesso: false, mensagem: 'Datas fornecidas são inválidas' };
       }
-      
-      // Preparar os dados para inserção
+
       const newRow = [
         nextId,
         agendamento.ilha,
@@ -1178,33 +1287,43 @@ function salvarAgendamento(agendamento) {
         '',
         ''
       ];
-      
-      // Adicionar nova linha
+
       sheet.appendRow(newRow);
+      limparCacheDados();
 
-      // Limpar cache para forçar atualização
-      const cache = CacheService.getScriptCache();
-      const keys = cache.getKeys();
-      keys.forEach(key => {
-        if (key.startsWith('dados_')) {
-          cache.remove(key);
-        }
-      });
+      return { sucesso: true, id: nextId, log: { id: nextId, ...agendamento } };
+    });
 
-      console.log('Agendamento salvo com sucesso ID:', nextId);
+    if (!resultado || resultado.sucesso === false) {
+      return { success: false, message: resultado && resultado.mensagem ? resultado.mensagem : 'Falha ao salvar agendamento' };
+    }
+
+    if (Array.isArray(resultado.ids)) {
+      console.log('Agendamentos salvos com sucesso IDs:', resultado.ids);
+      if (resultado.logs && resultado.logs.length) {
+        registrarLog(
+          'CRIAR_AGENDAMENTO_MULTIPLO',
+          `Agendamentos criados (${resultado.logs.length})`,
+          { agendamentoBase: agendamento, registros: resultado.logs }
+        );
+      }
+      return { success: true, message: 'Agendamentos salvos com sucesso!', ids: resultado.ids };
+    }
+
+    if (resultado.id) {
       registrarLog(
         'CRIAR_AGENDAMENTO',
-        `Agendamento criado (ID ${nextId})`,
-        {
-          id: nextId,
-          ...agendamento
-        }
+        `Agendamento criado (${resultado.id})`,
+        resultado.log || { agendamento }
       );
-      return { success: true, message: 'Agendamento salvo com sucesso!', id: nextId };
+      console.log('Agendamento salvo com sucesso ID:', resultado.id);
+      return { success: true, message: 'Agendamento salvo com sucesso!', id: resultado.id };
     }
+
+    return { success: false, message: 'Falha ao salvar agendamento' };
   } catch (error) {
     console.error('Erro ao salvar agendamento:', error);
-    return { success: false, message: 'Erro interno ao salvar agendamento: ' + error.toString() };
+    return { success: false, message: 'Erro ao salvar agendamento: ' + error.toString() };
   }
 }
 
@@ -1213,118 +1332,117 @@ function salvarAgendamento(agendamento) {
  */
 function atualizarStatusMultiplasSalas(salas, status, motivo) {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
     if (!spreadsheet) {
       return { success: false, message: 'Planilha não encontrada' };
     }
-    
-    let sheet = spreadsheet.getSheetByName(SHEET_NAMES.STATUS_SALAS);
-    
-    // Verificar se a aba existe, se não, criar
-    if (!sheet) {
-      sheet = spreadsheet.insertSheet(SHEET_NAMES.STATUS_SALAS);
-      sheet.getRange(1, 1, 1, 5).setValues([[
-        'SALA', 'STATUS', 'MOTIVO', 'DATA_ATUALIZACAO', 'USUARIO'
-      ]]);
-    }
-    
-    // Obter dados atuais
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
-    
-    const userEmail = Session.getActiveUser().getEmail() || 'Sistema';
-    const now = new Date();
-    let countAtualizadas = 0;
-    
-    const alteracoes = [];
 
-    salas.forEach(sala => {
-      try {
-        let linhaExistente = -1;
-        let statusAnterior = 'livre';
-        let motivoAnterior = '';
+    const resultado = executarComLock('document', 30000, () => {
+      let sheet = spreadsheet.getSheetByName(SHEET_NAMES.STATUS_SALAS);
+      if (!sheet) {
+        sheet = spreadsheet.insertSheet(SHEET_NAMES.STATUS_SALAS);
+        sheet.getRange(1, 1, 1, 5).setValues([[
+          'SALA', 'STATUS', 'MOTIVO', 'DATA_ATUALIZACAO', 'USUARIO'
+        ]]);
+      }
 
-        // Procurar sala existente (começando da linha 2)
-        for (let i = 1; i < values.length; i++) {
-          if (String(values[i][STATUS_COLUMNS.SALA - 1]).trim() === sala) {
-            linhaExistente = i + 1;
-            statusAnterior = String(values[i][STATUS_COLUMNS.STATUS - 1] || '').trim().toLowerCase();
-            motivoAnterior = String(values[i][STATUS_COLUMNS.MOTIVO - 1] || '').trim();
-            break;
+      const dataRange = sheet.getDataRange();
+      const values = dataRange.getValues();
+      const userEmail = Session.getActiveUser().getEmail() || 'Sistema';
+      const now = new Date();
+      let countAtualizadas = 0;
+      const alteracoes = [];
+      const listaSalas = Array.isArray(salas) ? salas : [];
+
+      listaSalas.forEach(sala => {
+        try {
+          let linhaExistente = -1;
+          let statusAnterior = 'livre';
+          let motivoAnterior = '';
+
+          for (let i = 1; i < values.length; i++) {
+            if (String(values[i][STATUS_COLUMNS.SALA - 1]).trim() === sala) {
+              linhaExistente = i + 1;
+              statusAnterior = String(values[i][STATUS_COLUMNS.STATUS - 1] || '').trim().toLowerCase();
+              motivoAnterior = String(values[i][STATUS_COLUMNS.MOTIVO - 1] || '').trim();
+              break;
+            }
           }
-        }
 
-        if (status === 'livre') {
-          // Remover da tabela se for desbloquear
-          if (linhaExistente > 0) {
-            sheet.deleteRow(linhaExistente);
-            countAtualizadas++;
-            alteracoes.push({
-              sala,
-              statusAnterior,
-              statusNovo: 'livre',
-              motivoAnterior,
-              motivoNovo: ''
-            });
-          }
-        } else {
-          if (linhaExistente > 0) {
-            // Atualizar linha existente
-            sheet.getRange(linhaExistente, STATUS_COLUMNS.STATUS).setValue(status);
-            sheet.getRange(linhaExistente, STATUS_COLUMNS.MOTIVO).setValue(motivo);
-            sheet.getRange(linhaExistente, STATUS_COLUMNS.DATA_ATUALIZACAO).setValue(now);
-            sheet.getRange(linhaExistente, STATUS_COLUMNS.USUARIO).setValue(userEmail);
-            countAtualizadas++;
-            alteracoes.push({
-              sala,
-              statusAnterior,
-              statusNovo: status,
-              motivoAnterior,
-              motivoNovo: motivo
-            });
+          if (status === 'livre') {
+            if (linhaExistente > 0) {
+              sheet.deleteRow(linhaExistente);
+              countAtualizadas++;
+              alteracoes.push({
+                sala,
+                statusAnterior,
+                statusNovo: 'livre',
+                motivoAnterior,
+                motivoNovo: ''
+              });
+            }
           } else {
-            // Adicionar nova linha
-            const newRow = [
-              sala,
-              status,
-              motivo,
-              now,
-              userEmail
-            ];
-            sheet.appendRow(newRow);
-            countAtualizadas++;
-            alteracoes.push({
-              sala,
-              statusAnterior: 'livre',
-              statusNovo: status,
-              motivoAnterior: '',
-              motivoNovo: motivo
-            });
+            if (linhaExistente > 0) {
+              sheet.getRange(linhaExistente, STATUS_COLUMNS.STATUS).setValue(status);
+              sheet.getRange(linhaExistente, STATUS_COLUMNS.MOTIVO).setValue(motivo);
+              sheet.getRange(linhaExistente, STATUS_COLUMNS.DATA_ATUALIZACAO).setValue(now);
+              sheet.getRange(linhaExistente, STATUS_COLUMNS.USUARIO).setValue(userEmail);
+              countAtualizadas++;
+              alteracoes.push({
+                sala,
+                statusAnterior,
+                statusNovo: status,
+                motivoAnterior,
+                motivoNovo: motivo
+              });
+            } else {
+              const newRow = [
+                sala,
+                status,
+                motivo,
+                now,
+                userEmail
+              ];
+              sheet.appendRow(newRow);
+              countAtualizadas++;
+              alteracoes.push({
+                sala,
+                statusAnterior: 'livre',
+                statusNovo: status,
+                motivoAnterior: '',
+                motivoNovo: motivo
+              });
+            }
           }
+        } catch (erroSala) {
+          console.error(`Erro ao atualizar sala ${sala}:`, erroSala);
         }
-      } catch (e) {
-        console.error(`Erro ao atualizar sala ${sala}:`, e);
-      }
-    });
-    
-    // Limpar cache de todas as datas
-    const cache = CacheService.getScriptCache();
-    const keys = cache.getKeys();
-    keys.forEach(key => {
-      if (key.startsWith('dados_')) {
-        cache.remove(key);
-      }
+      });
+
+      const cache = CacheService.getScriptCache();
+      const keys = cache.getKeys ? cache.getKeys() : [];
+      (keys || []).forEach(key => {
+        if (key && key.startsWith('dados_')) {
+          cache.remove(key);
+        }
+      });
+
+      return { countAtualizadas, alteracoes };
     });
 
-    console.log(`Status atualizado: ${countAtualizadas} salas`);
-    if (alteracoes.length) {
+    console.log(`Status atualizado: ${resultado.countAtualizadas} salas`);
+    if (resultado.alteracoes.length) {
       registrarLog(
         'ATUALIZAR_STATUS_SALAS',
-        `Status ajustado para ${status} (${alteracoes.length} sala${alteracoes.length === 1 ? '' : 's'})`,
-        { status, motivo, alteracoes }
+        `Status ajustado para ${status} (${resultado.alteracoes.length} sala${resultado.alteracoes.length === 1 ? '' : 's'})`,
+        { status, motivo, alteracoes: resultado.alteracoes }
       );
     }
-    return { success: true, message: `Status de ${countAtualizadas} salas atualizado para ${status}` };
+
+    return {
+      success: true,
+      message: `Status de ${resultado.countAtualizadas} sala${resultado.countAtualizadas === 1 ? '' : 's'} atualizado para ${status}`
+    };
   } catch (error) {
     console.error('Erro ao atualizar status das salas:', error);
     return { success: false, message: 'Erro interno ao atualizar status: ' + error.toString() };
@@ -1384,38 +1502,47 @@ function verificarConflitos(sala, data, horaInicio, horaFim, turno, agendamentoI
  */
 function removerAgendamento(id) {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
     if (!spreadsheet) {
       return { success: false, message: 'Planilha não encontrada' };
     }
-    
-    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
-    if (!sheet) {
-      return { success: false, message: 'Aba BASE não encontrada' };
-    }
-    
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
-    
-    for (let i = 1; i < values.length; i++) {
-      if (values[i][BASE_COLUMNS.ID - 1] == id) {
-        const agendamentoAnterior = mapearRowParaAgendamento(values[i]);
-        sheet.deleteRow(i + 1);
 
-        // Limpar cache para forçar atualização
-        limparCache();
-
-        console.log('Agendamento removido ID:', id);
-        registrarLog(
-          'REMOVER_AGENDAMENTO',
-          `Agendamento ${id} removido`,
-          { antes: agendamentoAnterior }
-        );
-        return { success: true, message: 'Agendamento removido com sucesso!' };
+    const resultado = executarComLock('document', 30000, () => {
+      const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
+      if (!sheet) {
+        return { encontrado: false, motivo: 'Aba BASE não encontrada' };
       }
+
+      const dataRange = sheet.getDataRange();
+      const values = dataRange.getValues();
+
+      for (let i = 1; i < values.length; i++) {
+        if (values[i][BASE_COLUMNS.ID - 1] == id) {
+          const agendamentoAnterior = mapearRowParaAgendamento(values[i]);
+          sheet.deleteRow(i + 1);
+          return { encontrado: true, agendamentoAnterior };
+        }
+      }
+
+      return { encontrado: false };
+    });
+
+    if (resultado.motivo) {
+      return { success: false, message: resultado.motivo };
     }
-    
-    return { success: false, message: 'Agendamento não encontrado!' };
+
+    if (!resultado.encontrado) {
+      return { success: false, message: 'Agendamento não encontrado!' };
+    }
+
+    limparCache();
+    registrarLog(
+      'REMOVER_AGENDAMENTO',
+      `Agendamento ${id} removido`,
+      { antes: resultado.agendamentoAnterior }
+    );
+    console.log('Agendamento removido ID:', id);
+    return { success: true, message: 'Agendamento removido com sucesso!' };
   } catch (error) {
     console.error('Erro ao remover agendamento:', error);
     return { success: false, message: 'Erro interno ao remover agendamento' };
@@ -1427,7 +1554,14 @@ function removerAgendamento(id) {
  */
 function getSystemHealth() {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
+    if (!spreadsheet) {
+      return {
+        success: false,
+        error: 'Planilha não encontrada',
+        timestamp: new Date().toISOString()
+      };
+    }
     const sheets = {
       BASE: !!spreadsheet.getSheetByName(SHEET_NAMES.BASE),
       CADASTRO: !!spreadsheet.getSheetByName(SHEET_NAMES.CADASTRO),
@@ -1464,32 +1598,59 @@ function getSystemHealth() {
 /**
  * Limpa o cache do sistema
  */
+function extrairPrefixoCache(cacheKey) {
+  if (typeof cacheKey !== 'string' || !cacheKey.length) {
+    return 'geral';
+  }
+  const match = cacheKey.match(/^([\w-]+)/);
+  return match ? match[1] : 'geral';
+}
+
+function interpretarRegistrosCache(stored, agora) {
+  if (!stored) return [];
+  let registros = [];
+  try {
+    const parsed = JSON.parse(stored);
+    if (Array.isArray(parsed)) {
+      registros = parsed.map(item => {
+        if (typeof item === 'string') {
+          return { chave: item, timestamp: agora };
+        }
+        if (item && typeof item === 'object') {
+          return {
+            chave: item.chave || item.key || item.cacheKey || '',
+            timestamp: item.timestamp || item.ts || agora
+          };
+        }
+        return null;
+      }).filter(obj => obj && obj.chave);
+    }
+  } catch (error) {
+    registros = String(stored)
+      .split(',')
+      .map(item => ({ chave: item.trim(), timestamp: agora }))
+      .filter(item => item.chave);
+  }
+  return registros;
+}
+
 function registrarCacheKey(cacheKey) {
   try {
+    if (!cacheKey) return;
     const props = PropertiesService.getScriptProperties();
-    const stored = props.getProperty(CACHE_KEYS_PROPERTY);
-    let keys = [];
+    const prefixo = extrairPrefixoCache(cacheKey);
+    const propriedade = `${CACHE_KEYS_PROPERTY_PREFIX}${prefixo}`;
+    const agora = Date.now();
+    const limite = agora - CACHE_KEYS_TTL_MS;
+    const stored = props.getProperty(propriedade);
+    let registros = interpretarRegistrosCache(stored, agora);
 
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          keys = parsed;
-        } else if (parsed) {
-          keys = [parsed];
-        }
-      } catch (error) {
-        keys = stored.split(',').map(item => item.trim()).filter(Boolean);
-      }
+    registros = registros.filter(item => item.timestamp >= limite);
+    if (!registros.some(item => item.chave === cacheKey)) {
+      registros.push({ chave: cacheKey, timestamp: agora });
     }
 
-    if (!keys.includes(cacheKey)) {
-      keys.push(cacheKey);
-      if (keys.length > CACHE_KEYS_MAX) {
-        keys = keys.slice(-CACHE_KEYS_MAX);
-      }
-      props.setProperty(CACHE_KEYS_PROPERTY, JSON.stringify(keys));
-    }
+    props.setProperty(propriedade, JSON.stringify(registros));
   } catch (error) {
     console.warn('Não foi possível registrar a chave de cache:', cacheKey, error);
   }
@@ -1499,31 +1660,37 @@ function limparCache() {
   try {
     const cache = CacheService.getScriptCache();
     const props = PropertiesService.getScriptProperties();
-    const stored = props.getProperty(CACHE_KEYS_PROPERTY);
+    const agora = Date.now();
+    const limite = agora - CACHE_KEYS_TTL_MS;
 
-    if (stored) {
-      let keys = [];
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          keys = parsed;
-        } else if (parsed) {
-          keys = [parsed];
-        }
-      } catch (error) {
-        keys = stored.split(',').map(item => item.trim()).filter(Boolean);
-      }
-
-      if (keys.length) {
-        keys.forEach(key => {
-          if (key && key.startsWith('dados_')) {
-            cache.remove(key);
+    const todasChaves = props.getKeys() || [];
+    todasChaves
+      .filter(chave => chave && chave.startsWith(CACHE_KEYS_PROPERTY_PREFIX))
+      .forEach(chave => {
+        const stored = props.getProperty(chave);
+        let registros = interpretarRegistrosCache(stored, agora);
+        registros.forEach(item => {
+          if (item && item.chave) {
+            cache.remove(item.chave);
           }
         });
-      }
-    }
+        registros = registros.filter(item => item.timestamp >= limite);
+        if (registros.length) {
+          props.setProperty(chave, JSON.stringify(registros));
+        } else {
+          props.deleteProperty(chave);
+        }
+      });
 
-    props.deleteProperty(CACHE_KEYS_PROPERTY);
+    const legado = props.getProperty(CACHE_KEYS_PROPERTY);
+    if (legado) {
+      interpretarRegistrosCache(legado, agora).forEach(item => {
+        if (item && item.chave) {
+          cache.remove(item.chave);
+        }
+      });
+      props.deleteProperty(CACHE_KEYS_PROPERTY);
+    }
     return { success: true, message: 'Cache limpo com sucesso!' };
   } catch (error) {
     console.error('Erro ao limpar cache:', error);
@@ -1536,22 +1703,44 @@ function limparCache() {
  */
 function login(matricula, senha) {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
+    if (!spreadsheet) {
+      return { success: false, message: 'Banco de usuários não encontrado' };
+    }
+
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.USUARIOS);
     if (!sheet) {
       return { success: false, message: 'Banco de usuários não encontrado' };
     }
 
-    const data = sheet.getDataRange().getValues();
-    data.shift(); // Remover cabeçalho
+    garantirEstruturaUsuariosSheet(sheet);
 
-    const hashSenha = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, senha).toString();
+    const data = sheet.getDataRange().getValues();
+    data.shift();
+
+    const digestSemSalt = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, senha);
+    const hashSemSaltHex = bytesParaHex(Array.from(digestSemSalt));
+    const hashSemSaltLegacy = Array.from(digestSemSalt).toString();
 
     for (const row of data) {
-      if (row[USUARIOS_COLUMNS.MATRICULA - 1] === matricula && row[USUARIOS_COLUMNS.SENHA_HASH - 1] === hashSenha) {
-        const token = Utilities.getUuid();
-        // Armazenar token se necessário, mas para simplicidade, só retornar role
-        return { success: true, token: token, role: row[USUARIOS_COLUMNS.ROLE - 1] };
+      if (row[USUARIOS_COLUMNS.MATRICULA - 1] === matricula) {
+        const salt = String(row[USUARIOS_COLUMNS.SALT - 1] || '').trim();
+        const hashArmazenado = String(row[USUARIOS_COLUMNS.SENHA_HASH - 1] || '').trim();
+        let autenticado = false;
+
+        if (salt) {
+          const hashComparacao = calcularHashSenhaComSalt(senha, salt);
+          autenticado = hashComparacao === hashArmazenado;
+        } else if (hashArmazenado) {
+          autenticado = hashArmazenado === hashSemSaltHex || hashArmazenado === hashSemSaltLegacy;
+        }
+
+        if (autenticado) {
+          const token = Utilities.getUuid();
+          return { success: true, token, role: row[USUARIOS_COLUMNS.ROLE - 1] };
+        }
+
+        break;
       }
     }
 
@@ -1567,31 +1756,52 @@ function login(matricula, senha) {
  */
 function cadastrarUsuario(usuario) {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.USUARIOS);
-    if (!sheet) {
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
+    if (!spreadsheet) {
       return { success: false, message: 'Banco de usuários não encontrado' };
     }
 
-    const data = sheet.getDataRange().getValues();
-    // Verificar se matrícula já existe
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][USUARIOS_COLUMNS.MATRICULA - 1] === usuario.matricula) {
-        return { success: false, message: 'Matrícula já cadastrada' };
+    const resultado = executarComLock('document', 30000, () => {
+      const sheet = spreadsheet.getSheetByName(SHEET_NAMES.USUARIOS);
+      if (!sheet) {
+        return { sucesso: false, mensagem: 'Banco de usuários não encontrado' };
       }
+
+      garantirEstruturaUsuariosSheet(sheet);
+      const data = sheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][USUARIOS_COLUMNS.MATRICULA - 1] === usuario.matricula) {
+          return { duplicado: true };
+        }
+      }
+
+      const salt = gerarSaltSenha();
+      const hashSenha = calcularHashSenhaComSalt(usuario.senha, salt);
+      const novaLinha = [
+        usuario.matricula,
+        usuario.nome,
+        usuario.setor,
+        hashSenha,
+        usuario.role,
+        salt
+      ];
+
+      sheet.appendRow(novaLinha);
+      return { criado: true };
+    });
+
+    if (resultado.sucesso === false) {
+      return { success: false, message: resultado.mensagem || 'Falha ao cadastrar usuário' };
     }
 
-    const hashSenha = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, usuario.senha).toString();
+    if (resultado.duplicado) {
+      return { success: false, message: 'Matrícula já cadastrada' };
+    }
 
-    const newRow = [
-      usuario.matricula,
-      usuario.nome,
-      usuario.setor,
-      hashSenha,
-      usuario.role
-    ];
+    if (!resultado.criado) {
+      return { success: false, message: 'Falha ao cadastrar usuário' };
+    }
 
-    sheet.appendRow(newRow);
     registrarLog(
       'CADASTRAR_USUARIO',
       `Novo usuário cadastrado (${usuario.matricula})`,
@@ -1614,11 +1824,16 @@ function cadastrarUsuario(usuario) {
  */
 function forgotPassword(matricula) {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
+    if (!spreadsheet) {
+      return { success: false, message: 'Banco de usuários não encontrado' };
+    }
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.USUARIOS);
     if (!sheet) {
       return { success: false, message: 'Banco de usuários não encontrado' };
     }
+
+    garantirEstruturaUsuariosSheet(sheet);
 
     const data = sheet.getDataRange().getValues();
     let userExists = false;
@@ -1726,7 +1941,7 @@ function getDadosAgregados(periodo, filtrosJson) {
       }
     }
 
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
     if (!spreadsheet) {
       return { error: 'Planilha não encontrada' };
     }
@@ -2643,7 +2858,7 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
     const inicioPeriodo = new Date(inicioData.getFullYear(), inicioData.getMonth(), inicioData.getDate(), 12);
     const fimPeriodo = new Date(fimData.getFullYear(), fimData.getMonth(), fimData.getDate(), 12);
 
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
     if (!spreadsheet) {
       return {
         resumo: {
@@ -2969,237 +3184,184 @@ function getRelatorioPeriodo(inicio, fim, filtrosJson) {
 // Nova função para atualizar um agendamento específico
 function atualizarAgendamento(id, novosDados) {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
-    if (!sheet) {
-      return { success: false, message: 'Aba BASE não encontrada' };
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
+    if (!spreadsheet) {
+      return { success: false, message: 'Planilha não encontrada' };
     }
-    
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
-    
-    const targetId = String(id).trim();
-    let found = false;
-    let logDetalhes = null;
-    for (let i = 1; i < values.length; i++) {
-      const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
-      if (currentId === targetId) {
-        const rowIndex = i + 1;
-        const linhaAnterior = mapearRowParaAgendamento(values[i]);
-        const linhaAtualizada = { ...linhaAnterior };
 
-        if (novosDados.sala) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.SALA).setValue(novosDados.sala);
-          linhaAtualizada.sala = novosDados.sala;
-        }
-        if (novosDados.ilha) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.ILHA).setValue(novosDados.ilha);
-          linhaAtualizada.ilha = novosDados.ilha;
-        }
-        if (novosDados.turno) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.TURNO).setValue(novosDados.turno);
-          linhaAtualizada.turno = novosDados.turno;
-        }
-        if (novosDados.horaInicio) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.HORA1).setValue(novosDados.horaInicio);
-          linhaAtualizada.horaInicio = novosDados.horaInicio;
-        }
-        if (novosDados.horaFim) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.HORA2).setValue(novosDados.horaFim);
-          linhaAtualizada.horaFim = novosDados.horaFim;
-        }
-        if (novosDados.especialidade !== undefined) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.ESPECIALIDADE).setValue(novosDados.especialidade);
-          linhaAtualizada.especialidade = novosDados.especialidade;
-        }
-        if (novosDados.profissional !== undefined) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.PROFISSIONAL).setValue(novosDados.profissional);
-          linhaAtualizada.profissional = novosDados.profissional;
-        }
-        if (novosDados.categoria !== undefined) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.CATEGORIA).setValue(novosDados.categoria);
-          linhaAtualizada.categoria = novosDados.categoria;
-        }
-        if (novosDados.status !== undefined) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.STATUS).setValue(novosDados.status);
-          linhaAtualizada.status = novosDados.status;
-        }
-        if (novosDados.observacoes !== undefined) {
-          sheet.getRange(rowIndex, BASE_COLUMNS.OBSERVACOES).setValue(novosDados.observacoes);
-          linhaAtualizada.observacoes = novosDados.observacoes;
-        }
-
-        found = true;
-        logDetalhes = { antes: linhaAnterior, depois: linhaAtualizada, atualizacoes: novosDados };
-        break;
+    const resultado = executarComLock('document', 30000, () => {
+      const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
+      if (!sheet) {
+        return { sucesso: false, mensagem: 'Aba BASE não encontrada' };
       }
+
+      const dataRange = sheet.getDataRange();
+      const values = dataRange.getValues();
+
+      const targetId = String(id).trim();
+      let logDetalhes = null;
+      let encontrado = false;
+
+      for (let i = 1; i < values.length; i++) {
+        const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
+        if (currentId === targetId) {
+          const rowIndex = i + 1;
+          const linhaAnterior = mapearRowParaAgendamento(values[i]);
+          const linhaAtualizada = { ...linhaAnterior };
+
+          if (novosDados.sala) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.SALA).setValue(novosDados.sala);
+            linhaAtualizada.sala = novosDados.sala;
+          }
+          if (novosDados.ilha) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.ILHA).setValue(novosDados.ilha);
+            linhaAtualizada.ilha = novosDados.ilha;
+          }
+          if (novosDados.turno) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.TURNO).setValue(novosDados.turno);
+            linhaAtualizada.turno = novosDados.turno;
+          }
+          if (novosDados.horaInicio) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.HORA1).setValue(novosDados.horaInicio);
+            linhaAtualizada.horaInicio = novosDados.horaInicio;
+          }
+          if (novosDados.horaFim) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.HORA2).setValue(novosDados.horaFim);
+            linhaAtualizada.horaFim = novosDados.horaFim;
+          }
+          if (novosDados.especialidade !== undefined) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.ESPECIALIDADE).setValue(novosDados.especialidade);
+            linhaAtualizada.especialidade = novosDados.especialidade;
+          }
+          if (novosDados.profissional !== undefined) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.PROFISSIONAL).setValue(novosDados.profissional);
+            linhaAtualizada.profissional = novosDados.profissional;
+          }
+          if (novosDados.categoria !== undefined) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.CATEGORIA).setValue(novosDados.categoria);
+            linhaAtualizada.categoria = novosDados.categoria;
+          }
+          if (novosDados.status !== undefined) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.STATUS).setValue(novosDados.status);
+            linhaAtualizada.status = novosDados.status;
+          }
+          if (novosDados.observacoes !== undefined) {
+            sheet.getRange(rowIndex, BASE_COLUMNS.OBSERVACOES).setValue(novosDados.observacoes);
+            linhaAtualizada.observacoes = novosDados.observacoes;
+          }
+
+          logDetalhes = { antes: linhaAnterior, depois: linhaAtualizada };
+          encontrado = true;
+          break;
+        }
+      }
+
+      return { sucesso: true, encontrado, logDetalhes };
+    });
+
+    if (resultado.sucesso === false) {
+      return { success: false, message: resultado.mensagem || 'Erro ao atualizar agendamento' };
     }
 
-    if (!found) {
+    if (!resultado.encontrado) {
       return { success: false, message: 'Agendamento não encontrado' };
     }
-    
-    // Limpar todos os caches para garantir atualização
-    limparCache();
 
-    if (logDetalhes) {
+    if (resultado.logDetalhes) {
       registrarLog(
         'ATUALIZAR_AGENDAMENTO',
         `Agendamento ${id} atualizado`,
-        logDetalhes
+        resultado.logDetalhes
       );
     }
 
-    return { success: true, message: 'Agendamento atualizado com sucesso' };
+    return { success: true, message: 'Agendamento atualizado com sucesso!' };
   } catch (error) {
     console.error('Erro ao atualizar agendamento:', error);
-    return { success: false, message: 'Erro interno ao atualizar agendamento: ' + error.toString() };
-  }
-}
-
-function registrarFrequenciaAgendamento(id, dadosFrequencia) {
-  try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
-    if (!sheet) {
-      return { success: false, message: 'Aba BASE não encontrada' };
-    }
-
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
-
-    const targetId = String(id).trim();
-    let rowIndex = -1;
-    for (let i = 1; i < values.length; i++) {
-      const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
-      if (currentId === targetId) {
-        rowIndex = i + 1;
-        break;
-      }
-    }
-
-    if (rowIndex < 0) {
-      return { success: false, message: 'Agendamento não encontrado' };
-    }
-
-    const linhaAnterior = mapearRowParaAgendamento(values[rowIndex - 1]);
-
-    const faltou = dadosFrequencia && dadosFrequencia.faltou;
-    let horaChegada = '';
-    let horaSaida = '';
-
-    if (faltou) {
-      horaChegada = 'FALTOU';
-      horaSaida = 'FALTOU';
-    } else {
-      horaChegada = dadosFrequencia && typeof dadosFrequencia.horaChegadaReal === 'string'
-        ? dadosFrequencia.horaChegadaReal.trim()
-        : '';
-      horaSaida = dadosFrequencia && typeof dadosFrequencia.horaSaidaReal === 'string'
-        ? dadosFrequencia.horaSaidaReal.trim()
-        : '';
-    }
-
-    sheet.getRange(rowIndex, BASE_COLUMNS.HORA_CHEGADA_REAL).setValue(horaChegada);
-    sheet.getRange(rowIndex, BASE_COLUMNS.HORA_SAIDA_REAL).setValue(horaSaida);
-
-    limparCache();
-
-    registrarLog(
-      'REGISTRAR_FREQUENCIA',
-      `Frequência registrada para agendamento ${targetId}`,
-      {
-        antes: linhaAnterior,
-        depois: { ...linhaAnterior, horaChegadaReal: horaChegada, horaSaidaReal: horaSaida },
-        faltou: !!faltou
-      }
-    );
-
-    return {
-      success: true,
-      message: faltou ? 'Profissional marcado como faltou.' : 'Frequência registrada com sucesso.',
-      id: targetId,
-      horaChegadaReal: horaChegada,
-      horaSaidaReal: horaSaida
-    };
-  } catch (error) {
-    console.error('Erro ao registrar frequência:', error);
-    return { success: false, message: 'Erro interno ao registrar frequência: ' + error.toString() };
+    return { success: false, message: 'Erro interno ao atualizar agendamento' };
   }
 }
 
 // Nova função para trocar dois agendamentos de sala
 function trocarAgendamentos(id1, id2) {
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
-    if (!sheet) {
-      return { success: false, message: 'Aba BASE não encontrada' };
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
+    if (!spreadsheet) {
+      return { success: false, message: 'Planilha não encontrada' };
     }
-    
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
-    
-    const targetId1 = String(id1).trim();
-    const targetId2 = String(id2).trim();
-    let pos1 = -1, pos2 = -1;
-    for (let i = 1; i < values.length; i++) {
-      const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
-      if (currentId === targetId1) {
-        pos1 = i + 1;
+
+    const resultado = executarComLock('document', 30000, () => {
+      const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
+      if (!sheet) {
+        return { sucesso: false, mensagem: 'Aba BASE não encontrada' };
       }
-      if (currentId === targetId2) {
-        pos2 = i + 1;
-      }
-      if (pos1 > 0 && pos2 > 0) break;
-    }
-    
-    if (pos1 < 0 || pos2 < 0) {
-      return { success: false, message: 'Um dos agendamentos não encontrado' };
-    }
-    
-    console.log('Trocando IDs:', id1, id2);
-    const linha1Antes = mapearRowParaAgendamento(values[pos1 - 1]);
-    const linha2Antes = mapearRowParaAgendamento(values[pos2 - 1]);
 
-    // Trocar salas e ilhas
-    const sala1 = sheet.getRange(pos1, BASE_COLUMNS.SALA).getValue();
-    const ilha1 = sheet.getRange(pos1, BASE_COLUMNS.ILHA).getValue();
-    const sala2 = sheet.getRange(pos2, BASE_COLUMNS.SALA).getValue();
-    const ilha2 = sheet.getRange(pos2, BASE_COLUMNS.ILHA).getValue();
-    
-    console.log('Sala1 original:', sala1, 'Ilha1:', ilha1);
-    console.log('Sala2 original:', sala2, 'Ilha2:', ilha2);
-    
-    sheet.getRange(pos1, BASE_COLUMNS.SALA).setValue(sala2);
-    sheet.getRange(pos1, BASE_COLUMNS.ILHA).setValue(ilha2);
-    sheet.getRange(pos2, BASE_COLUMNS.SALA).setValue(sala1);
-    sheet.getRange(pos2, BASE_COLUMNS.ILHA).setValue(ilha1);
+      const dataRange = sheet.getDataRange();
+      const values = dataRange.getValues();
 
-    console.log('Troca aplicada nas linhas:', pos1, pos2);
+      const targetId1 = String(id1).trim();
+      const targetId2 = String(id2).trim();
+      let pos1 = -1;
+      let pos2 = -1;
 
-    // Limpar todos os caches para garantir atualização
-    limparCache();
-
-    registrarLog(
-      'TROCAR_AGENDAMENTOS',
-      `Salas trocadas entre agendamentos ${id1} e ${id2}`,
-      {
-        agendamento1: {
-          antes: linha1Antes,
-          depois: { ...linha1Antes, sala: sala2, ilha: ilha2 }
-        },
-        agendamento2: {
-          antes: linha2Antes,
-          depois: { ...linha2Antes, sala: sala1, ilha: ilha1 }
+      for (let i = 1; i < values.length; i++) {
+        const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
+        if (currentId === targetId1) {
+          pos1 = i + 1;
         }
+        if (currentId === targetId2) {
+          pos2 = i + 1;
+        }
+        if (pos1 > 0 && pos2 > 0) break;
       }
-    );
 
-    return { success: true, message: 'Troca realizada com sucesso' };
+      if (pos1 < 0 || pos2 < 0) {
+        return { sucesso: false, mensagem: 'Um dos agendamentos não encontrado' };
+      }
+
+      const linha1Antes = mapearRowParaAgendamento(values[pos1 - 1]);
+      const linha2Antes = mapearRowParaAgendamento(values[pos2 - 1]);
+
+      const sala1 = sheet.getRange(pos1, BASE_COLUMNS.SALA).getValue();
+      const ilha1 = sheet.getRange(pos1, BASE_COLUMNS.ILHA).getValue();
+      const sala2 = sheet.getRange(pos2, BASE_COLUMNS.SALA).getValue();
+      const ilha2 = sheet.getRange(pos2, BASE_COLUMNS.ILHA).getValue();
+
+      sheet.getRange(pos1, BASE_COLUMNS.SALA).setValue(sala2);
+      sheet.getRange(pos1, BASE_COLUMNS.ILHA).setValue(ilha2);
+      sheet.getRange(pos2, BASE_COLUMNS.SALA).setValue(sala1);
+      sheet.getRange(pos2, BASE_COLUMNS.ILHA).setValue(ilha1);
+
+      const linha1Depois = mapearRowParaAgendamento(sheet.getRange(pos1, 1, 1, sheet.getLastColumn()).getValues()[0]);
+      const linha2Depois = mapearRowParaAgendamento(sheet.getRange(pos2, 1, 1, sheet.getLastColumn()).getValues()[0]);
+
+      return {
+        sucesso: true,
+        log: {
+          troca: {
+            primeiro: { antes: linha1Antes, depois: linha1Depois },
+            segundo: { antes: linha2Antes, depois: linha2Depois }
+          }
+        }
+      };
+    });
+
+    if (resultado.sucesso === false) {
+      return { success: false, message: resultado.mensagem || 'Erro ao trocar agendamentos' };
+    }
+
+    if (resultado.log) {
+      registrarLog(
+        'TROCAR_AGENDAMENTOS',
+        `Troca realizada entre agendamentos ${id1} e ${id2}`,
+        resultado.log
+      );
+    }
+
+    return { success: true, message: 'Agendamentos trocados com sucesso!' };
   } catch (error) {
     console.error('Erro ao trocar agendamentos:', error);
-    return { success: false, message: 'Erro interno ao trocar agendamentos: ' + error.toString() };
+    return { success: false, message: 'Erro interno ao trocar agendamentos' };
   }
 }
 
