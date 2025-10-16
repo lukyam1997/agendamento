@@ -286,6 +286,7 @@
           gap: 8px;
           justify-content: center;
           align-items: center;
+          align-self: center;
           padding: 4px 10px;
           border-radius: 18px;
           background-color: var(--surface-highlight);
@@ -819,6 +820,7 @@
 
           .controls {
               width: 100%;
+              align-self: stretch;
           }
       }
 
