@@ -2548,14 +2548,135 @@
                 }
             }
 
+            const navGroupToggles = document.querySelectorAll('.nav-group-toggle');
+
+            const setGroupExpanded = (toggle, expanded) => {
+                if (!toggle) return;
+                const controlsId = toggle.getAttribute('aria-controls');
+                const submenu = controlsId ? document.getElementById(controlsId) : toggle.nextElementSibling;
+                const group = toggle.closest('.nav-group');
+                toggle.setAttribute('aria-expanded', String(expanded));
+                toggle.classList.toggle('is-open', expanded);
+                if (submenu) {
+                    submenu.classList.toggle('is-open', expanded);
+                }
+                if (group) {
+                    group.classList.toggle('is-open', expanded);
+                }
+            };
+
+            navGroupToggles.forEach(toggle => {
+                const shouldStartOpen = toggle.dataset.initialOpen === 'true';
+                if (shouldStartOpen) {
+                    setGroupExpanded(toggle, true);
+                } else {
+                    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                    setGroupExpanded(toggle, expanded);
+                }
+
+                toggle.addEventListener('click', event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                    const nextState = !expanded;
+
+                    if (mobileNavMediaQuery.matches) {
+                        navGroupToggles.forEach(other => {
+                            if (other !== toggle) {
+                                setGroupExpanded(other, false);
+                                const otherGroup = other.closest('.nav-group');
+                                if (otherGroup) {
+                                    otherGroup.classList.remove('is-active');
+                                }
+                            }
+                        });
+                    }
+
+                    setGroupExpanded(toggle, nextState);
+
+                    const currentGroup = toggle.closest('.nav-group');
+                    if (currentGroup) {
+                        document.querySelectorAll('.nav-group').forEach(group => {
+                            if (group !== currentGroup && !mobileNavMediaQuery.matches) {
+                                const groupToggle = group.querySelector('.nav-group-toggle');
+                                if (groupToggle) {
+                                    setGroupExpanded(groupToggle, false);
+                                }
+                                group.classList.remove('is-active');
+                            }
+                        });
+                        if (nextState) {
+                            currentGroup.classList.add('is-active');
+                        }
+                    }
+                });
+            });
+
+            if (navGroupToggles.length > 0) {
+                document.addEventListener('click', event => {
+                    if (mobileNavMediaQuery.matches) {
+                        return;
+                    }
+                    navGroupToggles.forEach(toggle => {
+                        const group = toggle.closest('.nav-group');
+                        if (!group) {
+                            return;
+                        }
+                        if (!group.contains(event.target) && !group.classList.contains('is-active')) {
+                            setGroupExpanded(toggle, false);
+                        }
+                    });
+                });
+            }
+
+            const initialActiveButton = document.querySelector('.nav-btn.active');
+            if (initialActiveButton) {
+                const initialGroup = initialActiveButton.closest('.nav-group');
+                if (initialGroup) {
+                    initialGroup.classList.add('is-active');
+                    const initialToggle = initialGroup.querySelector('.nav-group-toggle');
+                    if (initialToggle) {
+                        setGroupExpanded(initialToggle, true);
+                    }
+                }
+            }
+
             // Configuração das abas
             document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('focus', () => {
+                    const group = btn.closest('.nav-group');
+                    if (!group) {
+                        return;
+                    }
+                    const toggle = group.querySelector('.nav-group-toggle');
+                    if (toggle) {
+                        setGroupExpanded(toggle, true);
+                    }
+                });
+
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                     const tab = this.getAttribute('data-tab');
                     document.querySelectorAll('.dashboard-section').forEach(sec => sec.classList.remove('active'));
                     document.getElementById(`${tab}-section`).classList.add('active');
+                    const group = this.closest('.nav-group');
+                    if (group) {
+                        document.querySelectorAll('.nav-group').forEach(otherGroup => {
+                            if (otherGroup !== group) {
+                                otherGroup.classList.remove('is-active');
+                                const otherToggle = otherGroup.querySelector('.nav-group-toggle');
+                                if (otherToggle) {
+                                    setGroupExpanded(otherToggle, false);
+                                }
+                            }
+                        });
+                        group.classList.add('is-active');
+                        const toggle = group.querySelector('.nav-group-toggle');
+                        if (toggle) {
+                            setGroupExpanded(toggle, true);
+                        }
+                    }
                     if (tab === 'dashboard') carregarDashboard();
                     if (tab === 'sala-mes') carregarSalaMesOptions();
                     if (tab === 'relatorios') inicializarRelatorios();
