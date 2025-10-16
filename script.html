@@ -2508,6 +2508,22 @@
             const mobileNavMediaQuery = typeof window.matchMedia === 'function'
                 ? window.matchMedia('(max-width: 960px)')
                 : { matches: false };
+            const navGroupToggles = document.querySelectorAll('.nav-group-toggle');
+
+            const setGroupExpanded = (toggle, expanded) => {
+                if (!toggle) return;
+                const controlsId = toggle.getAttribute('aria-controls');
+                const submenu = controlsId ? document.getElementById(controlsId) : toggle.nextElementSibling;
+                const group = toggle.closest('.nav-group');
+                toggle.setAttribute('aria-expanded', String(expanded));
+                toggle.classList.toggle('is-open', expanded);
+                if (submenu) {
+                    submenu.classList.toggle('is-open', expanded);
+                }
+                if (group) {
+                    group.classList.toggle('is-open', expanded);
+                }
+            };
 
             const closeMobileNav = () => {
                 if (!navToggle || !mainNav) return;
@@ -2538,7 +2554,19 @@
                 const handleMobileNavChange = (event) => {
                     if (!event.matches) {
                         closeMobileNav();
+                        navGroupToggles.forEach(toggle => {
+                            if (toggle.dataset.initialOpen === 'true') {
+                                setGroupExpanded(toggle, false);
+                            }
+                        });
+                        return;
                     }
+
+                    navGroupToggles.forEach(toggle => {
+                        if (toggle.dataset.initialOpen === 'true') {
+                            setGroupExpanded(toggle, true);
+                        }
+                    });
                 };
 
                 if (typeof mobileNavMediaQuery.addEventListener === 'function') {
@@ -2548,27 +2576,10 @@
                 }
             }
 
-            const navGroupToggles = document.querySelectorAll('.nav-group-toggle');
-
-            const setGroupExpanded = (toggle, expanded) => {
-                if (!toggle) return;
-                const controlsId = toggle.getAttribute('aria-controls');
-                const submenu = controlsId ? document.getElementById(controlsId) : toggle.nextElementSibling;
-                const group = toggle.closest('.nav-group');
-                toggle.setAttribute('aria-expanded', String(expanded));
-                toggle.classList.toggle('is-open', expanded);
-                if (submenu) {
-                    submenu.classList.toggle('is-open', expanded);
-                }
-                if (group) {
-                    group.classList.toggle('is-open', expanded);
-                }
-            };
-
             navGroupToggles.forEach(toggle => {
                 const shouldStartOpen = toggle.dataset.initialOpen === 'true';
                 if (shouldStartOpen) {
-                    setGroupExpanded(toggle, true);
+                    setGroupExpanded(toggle, mobileNavMediaQuery.matches);
                 } else {
                     const expanded = toggle.getAttribute('aria-expanded') === 'true';
                     setGroupExpanded(toggle, expanded);
@@ -2610,6 +2621,31 @@
                         }
                     }
                 });
+
+                const navGroupElement = toggle.closest('.nav-group');
+                if (navGroupElement) {
+                    navGroupElement.addEventListener('mouseleave', () => {
+                        if (mobileNavMediaQuery.matches) {
+                            return;
+                        }
+                        const activeElement = document.activeElement;
+                        if (activeElement && navGroupElement.contains(activeElement)) {
+                            return;
+                        }
+                        setGroupExpanded(toggle, false);
+                    });
+
+                    navGroupElement.addEventListener('focusout', event => {
+                        if (mobileNavMediaQuery.matches) {
+                            return;
+                        }
+                        const nextFocused = event.relatedTarget;
+                        if (nextFocused && navGroupElement.contains(nextFocused)) {
+                            return;
+                        }
+                        setGroupExpanded(toggle, false);
+                    });
+                }
             });
 
             if (navGroupToggles.length > 0) {
@@ -2622,7 +2658,7 @@
                         if (!group) {
                             return;
                         }
-                        if (!group.contains(event.target) && !group.classList.contains('is-active')) {
+                        if (!group.contains(event.target)) {
                             setGroupExpanded(toggle, false);
                         }
                     });
@@ -2636,7 +2672,7 @@
                     initialGroup.classList.add('is-active');
                     const initialToggle = initialGroup.querySelector('.nav-group-toggle');
                     if (initialToggle) {
-                        setGroupExpanded(initialToggle, true);
+                        setGroupExpanded(initialToggle, mobileNavMediaQuery.matches);
                     }
                 }
             }
@@ -2674,7 +2710,11 @@
                         group.classList.add('is-active');
                         const toggle = group.querySelector('.nav-group-toggle');
                         if (toggle) {
-                            setGroupExpanded(toggle, true);
+                            if (mobileNavMediaQuery.matches) {
+                                setGroupExpanded(toggle, true);
+                            } else {
+                                setGroupExpanded(toggle, false);
+                            }
                         }
                     }
                     if (tab === 'dashboard') carregarDashboard();
