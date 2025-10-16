@@ -663,39 +663,140 @@
           flex: 1 1 auto;
           display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 8px 10px;
-          padding: 10px 12px;
+          justify-content: flex-start;
+          gap: 18px;
+          padding: 12px 16px;
           border-radius: 22px;
           background-color: var(--surface-highlight);
           border: 1px solid var(--border-soft);
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
           flex-wrap: wrap;
           width: 100%;
+          position: relative;
+          overflow: visible;
       }
 
       .main-nav::-webkit-scrollbar {
           display: none;
       }
 
+      .nav-group {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          min-width: 0;
+      }
+
+      .nav-group-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          border: 1px solid transparent;
+          border-radius: 16px;
+          padding: 10px 18px;
+          background: transparent;
+          color: var(--text-secondary);
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: var(--transition-fast);
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      }
+
+      .nav-group-toggle .group-caret {
+          margin-left: auto;
+          transition: transform var(--transition-fast);
+      }
+
+      .nav-group.is-open .nav-group-toggle,
+      .nav-group-toggle.is-open {
+          border-color: var(--primary);
+          color: var(--primary);
+          box-shadow: 0 12px 24px rgba(30, 136, 229, 0.22);
+          background: rgba(30, 136, 229, 0.12);
+      }
+
+      .nav-group.is-active .nav-group-toggle {
+          color: var(--primary);
+          border-color: var(--primary);
+      }
+
+      .nav-group.is-open .group-caret,
+      .nav-group-toggle.is-open .group-caret {
+          transform: rotate(-180deg);
+      }
+
+      .nav-group-toggle:hover,
+      .nav-group-toggle:focus-visible {
+          border-color: var(--primary);
+          color: var(--primary);
+          box-shadow: 0 10px 20px rgba(30, 136, 229, 0.18);
+          outline: none;
+      }
+
+      .nav-submenu {
+          display: none;
+          position: absolute;
+          top: calc(100% + 14px);
+          left: 0;
+          background: var(--surface-base);
+          border-radius: 20px;
+          border: 1px solid var(--border-soft);
+          box-shadow: var(--shadow-strong);
+          padding: 16px;
+          min-width: 240px;
+          flex-direction: column;
+          gap: 10px;
+          z-index: 25;
+      }
+
+      .nav-group.is-open .nav-submenu,
+      .nav-submenu.is-open {
+          display: flex;
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+          .nav-group:hover .nav-submenu {
+              display: flex;
+          }
+      }
+
       .nav-btn {
           position: relative;
           border: none;
-          padding: 10px 18px;
-          border-radius: 999px;
+          padding: 10px 16px;
+          border-radius: 14px;
           background: transparent;
           color: var(--text-muted);
           font-weight: 600;
           letter-spacing: 0.02em;
           transition: var(--transition-fast);
-          white-space: nowrap;
           z-index: 0;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          justify-content: flex-start;
+          width: 100%;
+          min-width: 0;
+      }
+
+      .nav-btn i {
+          font-size: 1rem;
+      }
+
+      .nav-btn span {
+          flex: 1 1 auto;
+          text-align: left;
       }
 
       .nav-btn:focus-visible {
           outline: none;
           box-shadow: 0 0 0 4px var(--info-soft), inset 0 0 0 2px var(--info-strong);
           color: var(--text-secondary);
+          background: rgba(30, 136, 229, 0.12);
       }
 
       .nav-btn::after {
@@ -720,12 +821,71 @@
 
       .nav-btn.active {
           color: #ffffff;
-          background-color: var(--primary);
-          box-shadow: var(--shadow-soft);
+          background: linear-gradient(135deg, var(--primary), var(--primary-300));
+          box-shadow: 0 16px 34px rgba(30, 136, 229, 0.32);
+          border: 1px solid rgba(255, 255, 255, 0.18);
       }
 
       .nav-btn.active::after {
           opacity: 0;
+      }
+
+      body.light-theme .nav-group-toggle {
+          background: rgba(255, 255, 255, 0.65);
+          box-shadow: inset 0 0 0 1px rgba(24, 66, 104, 0.12);
+          color: var(--text-secondary);
+      }
+
+      body.light-theme .nav-group-toggle:hover,
+      body.light-theme .nav-group-toggle:focus-visible {
+          background: rgba(30, 136, 229, 0.12);
+      }
+
+      body.light-theme .nav-group.is-open .nav-group-toggle,
+      body.light-theme .nav-group-toggle.is-open {
+          background: rgba(30, 136, 229, 0.18);
+          color: var(--primary-strong);
+          box-shadow: 0 16px 32px rgba(30, 136, 229, 0.22);
+      }
+
+      body.light-theme .nav-submenu {
+          background: rgba(255, 255, 255, 0.96);
+          box-shadow: var(--shadow-soft);
+      }
+
+      body.light-theme .nav-btn.active {
+          border-color: rgba(21, 101, 192, 0.22);
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+          .nav-btn[data-tooltip]::before {
+              content: attr(data-tooltip);
+              position: absolute;
+              left: 50%;
+              bottom: calc(100% + 14px);
+              transform: translateX(-50%) translateY(4px);
+              background: rgba(15, 23, 42, 0.92);
+              color: #ffffff;
+              padding: 8px 12px;
+              border-radius: 10px;
+              font-size: 0.75rem;
+              white-space: nowrap;
+              opacity: 0;
+              pointer-events: none;
+              transition: var(--transition-fast);
+              box-shadow: 0 14px 28px rgba(15, 23, 42, 0.4);
+              z-index: 50;
+          }
+
+          body.light-theme .nav-btn[data-tooltip]::before {
+              background: rgba(15, 44, 77, 0.92);
+          }
+
+          .nav-btn[data-tooltip]:hover::before,
+          .nav-btn[data-tooltip]:focus-visible::before {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0);
+          }
       }
 
       body.light-theme header {
@@ -797,8 +957,8 @@
       }
 
       body.light-theme .nav-btn.active {
-          background-color: var(--primary);
-          box-shadow: var(--shadow-soft);
+          background: linear-gradient(135deg, var(--primary-500), var(--primary-300));
+          box-shadow: 0 14px 28px rgba(21, 101, 192, 0.28);
           color: #ffffff;
       }
 
@@ -840,7 +1000,7 @@
               display: none;
               flex-direction: column;
               align-items: stretch;
-              gap: 10px;
+              gap: 16px;
               padding: 18px;
               border-radius: 20px;
               background: var(--surface-filter-panel);
@@ -855,8 +1015,36 @@
               display: flex;
           }
 
-          .nav-btn {
+          .nav-group {
+              width: 100%;
+              gap: 12px;
+          }
+
+          .nav-group-toggle {
+              width: 100%;
               justify-content: flex-start;
+              padding: 12px 18px;
+              background: var(--surface-highlight);
+              border: 1px solid var(--border-soft);
+              box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+          }
+
+          .nav-submenu {
+              position: static;
+              background: var(--surface-filter-panel);
+              border-radius: 16px;
+              border: 1px solid var(--border-soft);
+              box-shadow: none;
+              padding: 12px 14px;
+              gap: 8px;
+          }
+
+          body.light-theme .nav-submenu {
+              background: rgba(255, 255, 255, 0.92);
+          }
+
+          .nav-btn {
+              width: 100%;
           }
 
           .controls {
