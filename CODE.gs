@@ -1549,6 +1549,148 @@ function removerAgendamento(id) {
   }
 }
 
+function registrarFrequenciaAgendamento(idEntrada, dadosEntrada) {
+  try {
+    const id = String(idEntrada || '').trim();
+    if (!id) {
+      return { success: false, message: 'ID do agendamento inválido.' };
+    }
+
+    const dados = dadosEntrada || {};
+    const faltouFlag = dados.faltou === true
+      || normalizarTextoServidor(dados.faltou) === 'true'
+      || normalizarTextoServidor(dados.faltou) === 'faltou';
+
+    const horaRegex = /^(\d{1,2}):(\d{2})$/;
+    const normalizarHoraEntrada = (valor, campo) => {
+      const texto = String(valor || '').trim();
+      if (!texto) return '';
+
+      const formatada = formatarHora(texto);
+      const match = formatada.match(horaRegex);
+      if (!match) {
+        throw new Error(`Hora ${campo} inválida.`);
+      }
+
+      const horas = parseInt(match[1], 10);
+      const minutos = parseInt(match[2], 10);
+      if (!Number.isInteger(horas) || !Number.isInteger(minutos)
+        || horas < 0 || horas > 23 || minutos < 0 || minutos > 59) {
+        throw new Error(`Hora ${campo} inválida.`);
+      }
+
+      const horasPad = horas.toString().padStart(2, '0');
+      const minutosPad = minutos.toString().padStart(2, '0');
+      return `${horasPad}:${minutosPad}`;
+    };
+
+    let horaChegadaFinal = '';
+    let horaSaidaFinal = '';
+    if (faltouFlag) {
+      horaChegadaFinal = 'FALTOU';
+      horaSaidaFinal = 'FALTOU';
+    } else {
+      horaChegadaFinal = normalizarHoraEntrada(dados.horaChegadaReal, 'de chegada');
+      horaSaidaFinal = normalizarHoraEntrada(dados.horaSaidaReal, 'de saída');
+
+      if (horaChegadaFinal && horaSaidaFinal && horaChegadaFinal > horaSaidaFinal) {
+        return { success: false, message: 'A hora de saída deve ser maior que a hora de chegada.' };
+      }
+    }
+
+    const spreadsheet = tentarObterSpreadsheetPrincipal();
+    if (!spreadsheet) {
+      return { success: false, message: 'Planilha não encontrada' };
+    }
+
+    const resultado = executarComLock('document', 30000, () => {
+      const sheet = spreadsheet.getSheetByName(SHEET_NAMES.BASE);
+      if (!sheet) {
+        return { sucesso: false, mensagem: 'Aba BASE não encontrada' };
+      }
+
+      const dataRange = sheet.getDataRange();
+      const values = dataRange.getValues();
+      let rowIndex = -1;
+      let linhaAnterior = null;
+
+      for (let i = 1; i < values.length; i++) {
+        const currentId = String(values[i][BASE_COLUMNS.ID - 1] || '').trim();
+        if (currentId === id) {
+          rowIndex = i + 1;
+          linhaAnterior = mapearRowParaAgendamento(values[i]);
+          break;
+        }
+      }
+
+      if (rowIndex < 0) {
+        return { sucesso: false, mensagem: 'Agendamento não encontrado' };
+      }
+
+      const valoresRegistro = [horaChegadaFinal, horaSaidaFinal];
+      sheet.getRange(rowIndex, BASE_COLUMNS.HORA_CHEGADA_REAL, 1, 2).setValues([valoresRegistro]);
+
+      const linhaAtualizada = mapearRowParaAgendamento(
+        sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0]
+      );
+
+      return { sucesso: true, linhaAnterior, linhaAtualizada };
+    });
+
+    if (resultado.sucesso === false) {
+      return { success: false, message: resultado.mensagem || 'Erro ao registrar frequência.' };
+    }
+
+    if (resultado.linhaAnterior && resultado.linhaAtualizada) {
+      registrarLog(
+        'REGISTRAR_FREQUENCIA',
+        `Frequência atualizada para agendamento ${id}`,
+        {
+          antes: resultado.linhaAnterior,
+          depois: resultado.linhaAtualizada
+        }
+      );
+    }
+
+    limparCache();
+
+    const normalizarRespostaHora = valor => {
+      if (valor === null || valor === undefined || valor === '') {
+        return '';
+      }
+      return formatarHora(valor);
+    };
+
+    const respostaChegada = faltouFlag
+      ? 'FALTOU'
+      : normalizarRespostaHora(resultado.linhaAtualizada?.horaChegadaReal);
+    const respostaSaida = faltouFlag
+      ? 'FALTOU'
+      : normalizarRespostaHora(resultado.linhaAtualizada?.horaSaidaReal);
+
+    let mensagemSucesso = 'Frequência registrada com sucesso.';
+    if (faltouFlag) {
+      mensagemSucesso = 'Profissional marcado como faltou.';
+    } else if (!horaChegadaFinal && !horaSaidaFinal) {
+      mensagemSucesso = 'Registro de frequência removido.';
+    }
+
+    return {
+      success: true,
+      id,
+      message: mensagemSucesso,
+      horaChegadaReal: respostaChegada,
+      horaSaidaReal: respostaSaida
+    };
+  } catch (error) {
+    console.error('Erro ao registrar frequência:', error);
+    const mensagemErro = error && error.message
+      ? error.message
+      : 'Erro interno ao registrar frequência.';
+    return { success: false, message: mensagemErro };
+  }
+}
+
 /**
  * Função de saúde do sistema - para debug
  */
