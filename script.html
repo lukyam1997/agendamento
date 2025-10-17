@@ -2652,12 +2652,15 @@
 
                         clearHoverCloseTimer();
                         hoverCloseTimer = setTimeout(() => {
+                            if (navGroupElement.matches(':hover')) {
+                                return;
+                            }
                             const activeElement = document.activeElement;
                             if (activeElement && navGroupElement.contains(activeElement)) {
                                 return;
                             }
                             setGroupExpanded(toggle, false);
-                        }, 140);
+                        }, 220);
                     });
 
                     navGroupElement.addEventListener('focusout', event => {
