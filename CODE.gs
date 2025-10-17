@@ -1164,6 +1164,14 @@ function salvarAgendamento(agendamento) {
       return { success: false, message: 'Aba BASE não encontrada' };
     }
 
+    const datasParaVerificacao = Array.isArray(agendamento.datas) && agendamento.datas.length
+      ? Array.from(new Set(agendamento.datas))
+      : [agendamento.dataInicio];
+    const agendamentosExistentes = carregarAgendamentosParaVerificacao(
+      agendamento.sala,
+      datasParaVerificacao
+    );
+
     const resultado = executarComLock('document', 30000, () => {
       const cache = CacheService.getScriptCache();
       const limparCacheDados = () => {
@@ -1190,7 +1198,9 @@ function salvarAgendamento(agendamento) {
             dataStr,
             agendamento.horaInicio,
             agendamento.horaFim,
-            agendamento.turno
+            agendamento.turno,
+            undefined,
+            agendamentosExistentes
           );
 
           if (conflito.conflito) {
@@ -1249,7 +1259,9 @@ function salvarAgendamento(agendamento) {
         agendamento.dataInicio,
         agendamento.horaInicio,
         agendamento.horaFim,
-        agendamento.turno
+        agendamento.turno,
+        undefined,
+        agendamentosExistentes
       );
 
       if (conflito.conflito) {
@@ -1450,16 +1462,66 @@ function atualizarStatusMultiplasSalas(salas, status, motivo) {
 }
 
 /**
+ * Funções auxiliares para verificação de conflitos de agendamento
+ */
+/**
+ * Pré-carrega agendamentos por dia para acelerar a verificação de conflitos
+ */
+function carregarAgendamentosParaVerificacao(sala, datas) {
+  if (!Array.isArray(datas) || !datas.length) {
+    return {};
+  }
+
+  const tz = obterTimeZonePadrao();
+  const datasProcessadas = datas.reduce((lista, dataStr) => {
+    if (!dataStr) return lista;
+    try {
+      const dataObj = new Date(`${dataStr}T12:00:00`);
+      if (isNaN(dataObj.getTime())) return lista;
+      const iso = Utilities.formatDate(dataObj, tz, 'yyyy-MM-dd');
+      lista.push({ dataObj, iso });
+    } catch (erro) {
+      console.warn('Falha ao preparar data para verificação de conflitos:', dataStr, erro);
+    }
+    return lista;
+  }, []);
+
+  if (!datasProcessadas.length) {
+    return {};
+  }
+
+  datasProcessadas.sort((a, b) => a.dataObj.getTime() - b.dataObj.getTime());
+
+  const inicio = datasProcessadas[0].dataObj;
+  const fim = datasProcessadas[datasProcessadas.length - 1].dataObj;
+  const periodo = obterAgendamentosPeriodoAgrupado(inicio, fim);
+  const resultado = {};
+
+  datasProcessadas.forEach(({ iso }) => {
+    const listaDia = (periodo.dias && periodo.dias[iso]) ? periodo.dias[iso] : [];
+    resultado[iso] = listaDia
+      .filter(item => !sala || item.sala === sala)
+      .map(item => ({ ...item }));
+  });
+
+  return resultado;
+}
+
+/**
  * Função para verificar conflitos de agendamento
  */
-function verificarConflitos(sala, data, horaInicio, horaFim, turno, agendamentoId) {
+function verificarConflitos(sala, data, horaInicio, horaFim, turno, agendamentoId, agendamentosPreCarregados) {
   try {
     const dataObj = new Date(data + 'T00:00:00');
     if (isNaN(dataObj.getTime())) {
       return { conflito: false };
     }
-    
-    const agendamentos = getAgendamentos(dataObj);
+
+    const tz = obterTimeZonePadrao();
+    const dataIso = Utilities.formatDate(dataObj, tz, 'yyyy-MM-dd');
+    const agendamentos = agendamentosPreCarregados && agendamentosPreCarregados[dataIso]
+      ? agendamentosPreCarregados[dataIso]
+      : getAgendamentos(dataObj);
     
     // Converter horas para minutos para facilitar a comparação
     const [hInicioH, hInicioM] = horaInicio.split(':').map(Number);
