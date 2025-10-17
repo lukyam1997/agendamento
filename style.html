@@ -1,23 +1,23 @@
 <style>
 :root {
           --font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
-          --bg-body: #121f32;
-          --surface-base: #1b2c42;
-          --surface-elevated: #233756;
-          --surface-subtle: #2d4363;
-          --surface-highlight: #345074;
-          --surface-filter: rgba(32, 49, 72, 0.94);
-          --surface-filter-hover: rgba(45, 64, 92, 0.96);
-          --surface-filter-panel: rgba(20, 33, 51, 0.98);
-          --surface-filter-option: rgba(30, 136, 229, 0.24);
-          --surface-input: rgba(37, 56, 82, 0.82);
-          --border-soft: rgba(165, 195, 222, 0.22);
-          --border-strong: rgba(165, 195, 222, 0.4);
-          --text-primary: #f5f8fc;
-          --text-secondary: #d7e1ef;
-          --text-muted: #b2c0d3;
+          --bg-body: #0f1a2b;
+          --surface-base: #16253a;
+          --surface-elevated: #1d2f47;
+          --surface-subtle: #253955;
+          --surface-highlight: #2b4362;
+          --surface-filter: rgba(19, 33, 53, 0.94);
+          --surface-filter-hover: rgba(31, 48, 71, 0.97);
+          --surface-filter-panel: rgba(14, 26, 42, 0.98);
+          --surface-filter-option: rgba(30, 136, 229, 0.26);
+          --surface-input: rgba(33, 52, 78, 0.86);
+          --border-soft: rgba(148, 181, 213, 0.26);
+          --border-strong: rgba(148, 181, 213, 0.44);
+          --text-primary: #f4f8fd;
+          --text-secondary: #d2deec;
+          --text-muted: #a3b4ca;
           --primary: #1e88e5;
-          --primary-soft: rgba(30, 136, 229, 0.22);
+          --primary-soft: rgba(30, 136, 229, 0.24);
           --primary-strong: #1565c0;
           --primary-50: #dceeff;
           --primary-100: #add6ff;
@@ -26,27 +26,27 @@
           --primary-500: #166fca;
           --success: #2ba58f;
           --success-strong: #27c0a6;
-          --success-soft: rgba(43, 165, 143, 0.2);
+          --success-soft: rgba(43, 165, 143, 0.22);
           --info: #29a4d6;
           --info-strong: #1f97c8;
-          --info-soft: rgba(41, 164, 214, 0.22);
+          --info-soft: rgba(41, 164, 214, 0.24);
           --warning: #f2c14e;
           --warning-strong: #f0b429;
-          --warning-soft: rgba(242, 193, 78, 0.24);
+          --warning-soft: rgba(242, 193, 78, 0.26);
           --danger: #e57373;
           --danger-strong: #d66767;
-          --danger-soft: rgba(229, 115, 115, 0.24);
+          --danger-soft: rgba(229, 115, 115, 0.26);
           --radius-sm: 8px;
           --radius-md: 14px;
           --radius-lg: 20px;
-          --shadow-soft: 0 20px 40px rgba(16, 23, 44, 0.45);
-          --shadow-strong: 0 36px 68px rgba(17, 26, 51, 0.58);
+          --shadow-soft: 0 24px 48px rgba(10, 16, 30, 0.52);
+          --shadow-strong: 0 38px 72px rgba(12, 20, 36, 0.6);
           --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
           --transition-base: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
           --medico-nome: #69b9ea;
           --medico-nome-intenso: #88c9f0;
           --medico-nome-suave: #dbe9f6;
-          --ilha-pin-bg: rgba(86, 134, 177, 0.2);
+          --ilha-pin-bg: rgba(86, 134, 177, 0.22);
       }
 
       body.light-theme {
@@ -244,6 +244,7 @@
           position: relative;
           flex-wrap: nowrap;
           width: 100%;
+          z-index: 30;
       }
 
       .logo {
@@ -754,6 +755,12 @@
           flex-direction: column;
           gap: 10px;
           z-index: 25;
+      }
+
+      .nav-group[data-group="gestao"] .nav-submenu {
+          right: 0;
+          left: auto;
+          transform-origin: top right;
       }
 
       .nav-group.is-open .nav-submenu,
