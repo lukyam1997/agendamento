@@ -1146,51 +1146,65 @@
 
       @media (max-width: 720px) {
           header {
-              padding: 0;
-              background: transparent;
-              border: none;
-              box-shadow: none;
-              height: 0;
-              min-height: 0;
+              padding: 16px;
+              background: var(--surface-base);
+              border: 1px solid var(--border-soft);
+              box-shadow: var(--shadow-soft);
+              flex-direction: column;
+              align-items: stretch;
+              gap: 14px;
+              height: auto;
+              min-height: auto;
               overflow: visible;
           }
 
           .controls {
-              display: none;
+              display: flex;
+              width: 100%;
+              justify-content: space-between;
+              flex-wrap: wrap;
+              gap: 8px;
+              padding: 6px 10px;
           }
 
           .header-left {
-              display: contents;
+              display: flex;
+              width: 100%;
+              flex-wrap: wrap;
+              justify-content: space-between;
+              align-items: center;
+              gap: 12px;
           }
 
           .header-left .logo {
-              display: none;
+              display: flex;
           }
 
           .header-nav {
-              justify-content: flex-end;
+              width: 100%;
+              justify-content: space-between;
           }
 
           .nav-toggle {
               display: inline-flex;
-              position: fixed;
-              top: var(--mobile-shell-padding);
-              right: var(--mobile-shell-padding);
-              width: 52px;
-              height: 52px;
-              border-radius: 50%;
-              padding: 0;
-              gap: 0;
+              position: static;
+              top: auto;
+              right: auto;
+              width: 100%;
+              height: auto;
+              border-radius: var(--radius-sm);
+              padding: 10px 14px;
+              gap: 8px;
               background: var(--surface-highlight);
               border: 1px solid var(--border-soft);
-              box-shadow: var(--shadow-strong);
+              box-shadow: var(--shadow-soft);
               justify-content: center;
               align-items: center;
-              z-index: 960;
+              z-index: auto;
           }
 
           .nav-toggle span {
-              display: none;
+              display: inline;
           }
 
           .nav-toggle i {
@@ -1226,12 +1240,12 @@
 
       @media (max-width: 640px) {
           header {
-              padding: 0;
+              padding: 14px;
           }
 
           .nav-toggle {
-              width: 48px;
-              height: 48px;
+              width: 100%;
+              min-height: 48px;
           }
 
           .main-nav {
@@ -1245,8 +1259,9 @@
 
       @media (max-width: 520px) {
           .nav-toggle {
-              top: calc(var(--mobile-shell-padding) - 2px);
-              right: calc(var(--mobile-shell-padding) - 2px);
+              top: auto;
+              right: auto;
+              padding: 9px 12px;
           }
 
           .main-nav {
