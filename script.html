@@ -376,6 +376,16 @@
         };
 
         const estado = {};
+        const drawerController = {
+            register: () => () => {},
+            unregister: () => {},
+            open: () => {},
+            close: () => {},
+            toggle: () => {},
+            closeAll: () => {},
+            isAnyOpen: () => false,
+            syncBackdrop: () => {}
+        };
         const estadoMapeamento = {
             dataAtual: ['ui', 'dataAtual'],
             turnoAtual: ['ui', 'turnoAtual'],
@@ -931,8 +941,8 @@
             configurarLogin();
             inicializarAnimacaoBotoes();
             inicializarData();
-            configurarEventListeners();
             setupResponsiveShell();
+            configurarEventListeners();
             carregarDadosMestres();
             carregarDados();
         });
@@ -2754,6 +2764,7 @@
                 ? window.matchMedia('(max-width: 960px)')
                 : { matches: false };
             const navGroupToggles = document.querySelectorAll('.nav-group-toggle');
+            let shouldFocusNavToggle = false;
 
             const setGroupExpanded = (toggle, expanded) => {
                 if (!toggle) return;
@@ -2770,47 +2781,66 @@
                 }
             };
 
-            const closeMobileNav = () => {
+            if (navToggle && mainNav) {
+                drawerController.register('nav', {
+                    open: () => {
+                        shouldFocusNavToggle = false;
+                        navToggle.setAttribute('aria-expanded', 'true');
+                        navToggle.classList.add('is-open');
+                        mainNav.classList.add('is-open');
+                        const icon = navToggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-bars');
+                            icon.classList.add('fa-xmark');
+                        }
+                    },
+                    close: () => {
+                        navToggle.setAttribute('aria-expanded', 'false');
+                        navToggle.classList.remove('is-open');
+                        mainNav.classList.remove('is-open');
+                        const icon = navToggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-xmark');
+                            icon.classList.add('fa-bars');
+                        }
+                        const focusRequested = shouldFocusNavToggle
+                            || (mobileNavMediaQuery.matches && mainNav.contains(document.activeElement));
+                        shouldFocusNavToggle = false;
+                        if (focusRequested && typeof navToggle.focus === 'function') {
+                            navToggle.focus();
+                        }
+                    },
+                    isOpen: () => mainNav.classList.contains('is-open')
+                });
+
+                navToggle.addEventListener('click', () => {
+                    if (!mobileNavMediaQuery.matches) {
+                        return;
+                    }
+                    drawerController.toggle('nav');
+                });
+            }
+
+            const closeMobileNav = ({ shouldFocus = false } = {}) => {
                 if (!navToggle || !mainNav) return;
-                navToggle.setAttribute('aria-expanded', 'false');
-                navToggle.classList.remove('is-open');
-                mainNav.classList.remove('is-open');
-                const icon = navToggle.querySelector('i');
-                if (icon) {
-                    icon.classList.remove('fa-xmark');
-                    icon.classList.add('fa-bars');
-                }
+                shouldFocusNavToggle = shouldFocus;
+                drawerController.close('nav');
             };
 
             if (navToggle && mainNav) {
-                navToggle.addEventListener('click', () => {
-                    const expanded = navToggle.getAttribute('aria-expanded') === 'true';
-                    const nextState = !expanded;
-                    navToggle.setAttribute('aria-expanded', String(nextState));
-                    navToggle.classList.toggle('is-open', nextState);
-                    mainNav.classList.toggle('is-open', nextState);
-                    const icon = navToggle.querySelector('i');
-                    if (icon) {
-                        icon.classList.toggle('fa-bars', !nextState);
-                        icon.classList.toggle('fa-xmark', nextState);
-                    }
-                });
-
                 const handleMobileNavChange = (event) => {
                     if (!event.matches) {
                         closeMobileNav();
                         navGroupToggles.forEach(toggle => {
-                            if (toggle.dataset.initialOpen === 'true') {
-                                setGroupExpanded(toggle, false);
-                            }
+                            const shouldOpen = toggle.dataset.initialOpen === 'true';
+                            setGroupExpanded(toggle, shouldOpen);
                         });
+                        drawerController.syncBackdrop();
                         return;
                     }
 
                     navGroupToggles.forEach(toggle => {
-                        if (toggle.dataset.initialOpen === 'true') {
-                            setGroupExpanded(toggle, true);
-                        }
+                        setGroupExpanded(toggle, false);
                     });
                 };
 
@@ -2819,15 +2849,18 @@
                 } else if (typeof mobileNavMediaQuery.addListener === 'function') {
                     mobileNavMediaQuery.addListener(handleMobileNavChange);
                 }
+
+                handleMobileNavChange(mobileNavMediaQuery);
             }
 
             navGroupToggles.forEach(toggle => {
                 const shouldStartOpen = toggle.dataset.initialOpen === 'true';
                 if (shouldStartOpen) {
-                    setGroupExpanded(toggle, mobileNavMediaQuery.matches);
+                    setGroupExpanded(toggle, !mobileNavMediaQuery.matches);
                 } else {
                     const expanded = toggle.getAttribute('aria-expanded') === 'true';
-                    setGroupExpanded(toggle, expanded);
+                    const nextState = mobileNavMediaQuery.matches ? false : expanded;
+                    setGroupExpanded(toggle, nextState);
                 }
 
                 toggle.addEventListener('click', event => {
@@ -2946,7 +2979,7 @@
                     initialGroup.classList.add('is-active');
                     const initialToggle = initialGroup.querySelector('.nav-group-toggle');
                     if (initialToggle) {
-                        setGroupExpanded(initialToggle, mobileNavMediaQuery.matches);
+                        setGroupExpanded(initialToggle, !mobileNavMediaQuery.matches);
                     }
                 }
             }
@@ -2998,7 +3031,7 @@
                     if (tab === 'medicos') renderAcompanhamentoMedicos();
                     if (tab === 'logs') inicializarLogsGestao();
                     if (mobileNavMediaQuery.matches) {
-                        closeMobileNav();
+                        closeMobileNav({ shouldFocus: true });
                     }
                 });
             });
@@ -3220,91 +3253,149 @@
         }
 
         function setupResponsiveShell() {
-            const filtersDrawer = document.querySelector('[data-drawer="filters"]');
+            const registeredDrawers = new Map();
             const backdrop = document.getElementById('drawer-backdrop');
+            const filtersDrawer = document.querySelector('[data-drawer="filters"]');
             const openFiltersBtn = document.getElementById('open-filters');
             const closeButtons = document.querySelectorAll('[data-drawer-close]');
 
-            const drawers = {
-                filters: filtersDrawer
-            };
-
-            function setExpanded(name, expanded) {
-                if (name === 'filters' && openFiltersBtn) {
-                    openFiltersBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-                }
-            }
-
-            function updateBackdropState() {
-                const anyOpen = Object.values(drawers).some(el => el && el.classList.contains('drawer-open'));
+            const syncBackdropState = () => {
+                const anyOpen = Array.from(registeredDrawers.values()).some(entry => entry.isOpen());
                 if (anyOpen) {
-                    if (backdrop) backdrop.classList.add('is-visible');
+                    if (backdrop) {
+                        backdrop.classList.add('is-visible');
+                        backdrop.setAttribute('aria-hidden', 'false');
+                    }
                     document.body.classList.add('drawer-open');
                 } else {
-                    if (backdrop) backdrop.classList.remove('is-visible');
+                    if (backdrop) {
+                        backdrop.classList.remove('is-visible');
+                        backdrop.setAttribute('aria-hidden', 'true');
+                    }
                     document.body.classList.remove('drawer-open');
                 }
-            }
+            };
 
-            function closeDrawer(name) {
-                const drawer = drawers[name];
-                if (!drawer) return;
-                drawer.classList.remove('drawer-open');
-                setExpanded(name, false);
-                updateBackdropState();
-            }
+            const register = (name, entry) => {
+                if (!name || !entry || typeof entry.open !== 'function' || typeof entry.close !== 'function' || typeof entry.isOpen !== 'function') {
+                    return () => {};
+                }
+                registeredDrawers.set(name, entry);
+                return () => unregister(name);
+            };
 
-            function openDrawer(name) {
-                const drawer = drawers[name];
-                if (!drawer) return;
-                Object.entries(drawers).forEach(([key, element]) => {
-                    if (key !== name && element) {
-                        element.classList.remove('drawer-open');
-                        setExpanded(key, false);
+            const unregister = (name) => {
+                if (!registeredDrawers.has(name)) {
+                    return;
+                }
+                const entry = registeredDrawers.get(name);
+                if (entry && entry.isOpen()) {
+                    entry.close();
+                }
+                registeredDrawers.delete(name);
+                syncBackdropState();
+            };
+
+            const open = (name) => {
+                const entry = registeredDrawers.get(name);
+                if (!entry) return;
+                registeredDrawers.forEach((otherEntry, otherName) => {
+                    if (otherName !== name && otherEntry.isOpen()) {
+                        otherEntry.close();
                     }
                 });
-                drawer.classList.add('drawer-open');
-                setExpanded(name, true);
-                updateBackdropState();
-            }
+                entry.open();
+                syncBackdropState();
+            };
 
-            function toggleDrawer(name) {
-                const drawer = drawers[name];
-                if (!drawer) return;
-                if (drawer.classList.contains('drawer-open')) {
-                    closeDrawer(name);
+            const close = (name) => {
+                const entry = registeredDrawers.get(name);
+                if (!entry) return;
+                entry.close();
+                syncBackdropState();
+            };
+
+            const toggle = (name) => {
+                const entry = registeredDrawers.get(name);
+                if (!entry) return;
+                if (entry.isOpen()) {
+                    close(name);
                 } else {
-                    openDrawer(name);
+                    open(name);
                 }
-            }
+            };
 
-            if (openFiltersBtn) openFiltersBtn.setAttribute('aria-expanded', 'false');
+            const closeAll = (exceptName) => {
+                registeredDrawers.forEach((entry, key) => {
+                    if (exceptName && key === exceptName) {
+                        return;
+                    }
+                    if (entry.isOpen()) {
+                        entry.close();
+                    }
+                });
+                syncBackdropState();
+            };
 
-            if (openFiltersBtn) openFiltersBtn.addEventListener('click', () => toggleDrawer('filters'));
-
-            closeButtons.forEach(btn => {
-                const target = btn.getAttribute('data-drawer-close');
-                btn.addEventListener('click', () => closeDrawer(target));
+            Object.assign(drawerController, {
+                register,
+                unregister,
+                open,
+                close,
+                toggle,
+                closeAll,
+                isAnyOpen: () => Array.from(registeredDrawers.values()).some(entry => entry.isOpen()),
+                syncBackdrop: syncBackdropState
             });
 
-            if (backdrop) {
-                backdrop.addEventListener('click', () => {
-                    closeDrawer('filters');
+            if (openFiltersBtn) {
+                openFiltersBtn.setAttribute('aria-expanded', 'false');
+            }
+
+            if (filtersDrawer) {
+                register('filters', {
+                    open: () => {
+                        filtersDrawer.classList.add('drawer-open');
+                        if (openFiltersBtn) {
+                            openFiltersBtn.setAttribute('aria-expanded', 'true');
+                        }
+                    },
+                    close: () => {
+                        filtersDrawer.classList.remove('drawer-open');
+                        if (openFiltersBtn) {
+                            openFiltersBtn.setAttribute('aria-expanded', 'false');
+                        }
+                    },
+                    isOpen: () => filtersDrawer.classList.contains('drawer-open')
                 });
+
+                if (openFiltersBtn) {
+                    openFiltersBtn.addEventListener('click', () => toggle('filters'));
+                }
+
+                closeButtons.forEach(btn => {
+                    const target = btn.getAttribute('data-drawer-close');
+                    if (!target) return;
+                    btn.addEventListener('click', () => close(target));
+                });
+            } else if (openFiltersBtn) {
+                openFiltersBtn.addEventListener('click', () => toggle('filters'));
+            }
+
+            if (backdrop) {
+                backdrop.addEventListener('click', () => closeAll());
             }
 
             window.addEventListener('keydown', event => {
                 if (event.key === 'Escape') {
-                    closeDrawer('filters');
+                    closeAll();
                 }
             });
 
             window.addEventListener('resize', () => {
-                if (window.innerWidth <= 1100) {
-                    return;
+                if (window.innerWidth > 1100) {
+                    syncBackdropState();
                 }
-                // Garantir que o corpo não permaneça travado ao redimensionar
-                updateBackdropState();
             });
 
             inicializarLogsGestao();

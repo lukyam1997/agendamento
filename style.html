@@ -43,6 +43,8 @@
           --shadow-strong: 0 38px 72px rgba(12, 20, 36, 0.6);
           --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
           --transition-base: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+          --mobile-header-height: 82px;
+          --mobile-shell-padding: 16px;
           --medico-nome: #69b9ea;
           --medico-nome-intenso: #88c9f0;
           --medico-nome-suave: #dbe9f6;
@@ -678,6 +680,7 @@
           position: relative;
           overflow: visible;
           scrollbar-width: none;
+          z-index: 960;
       }
 
       .main-nav::-webkit-scrollbar {
@@ -1013,53 +1016,85 @@
 
           .main-nav {
               display: none;
+              position: fixed;
+              top: calc(var(--mobile-header-height) + 12px);
+              left: 0;
+              right: 0;
+              margin: 0 auto;
+              width: min(520px, calc(100% - (var(--mobile-shell-padding) * 2)));
               flex-direction: column;
               align-items: stretch;
-              gap: 16px;
-              padding: 18px;
-              border-radius: 20px;
+              gap: 12px;
+              padding: 20px 20px 18px;
+              border-radius: 22px;
               background: var(--surface-filter-panel);
+              border: 1px solid var(--border-soft);
               box-shadow: var(--shadow-strong);
+              max-height: calc(100vh - (var(--mobile-header-height) + 32px));
+              overflow-y: auto;
+              -webkit-overflow-scrolling: touch;
+              pointer-events: none;
+              opacity: 0;
+              transform: translateY(-8px);
+              transition: opacity var(--transition-fast), transform var(--transition-fast);
           }
 
           body.light-theme .main-nav {
-              background: rgba(255, 255, 255, 0.95);
+              background: rgba(255, 255, 255, 0.96);
+              border-color: rgba(24, 66, 104, 0.12);
+              box-shadow: 0 26px 48px rgba(15, 44, 77, 0.22);
+              backdrop-filter: saturate(120%) blur(18px);
           }
 
           .main-nav.is-open {
               display: flex;
+              pointer-events: auto;
+              opacity: 1;
+              transform: translateY(0);
           }
 
           .nav-group {
               width: 100%;
-              gap: 12px;
+              gap: 10px;
           }
 
           .nav-group-toggle {
               width: 100%;
               justify-content: flex-start;
-              padding: 12px 18px;
+              gap: 8px;
+              padding: 11px 16px;
               background: var(--surface-highlight);
               border: 1px solid var(--border-soft);
               box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+              font-size: 0.78rem;
+              letter-spacing: 0.14em;
           }
 
           .nav-submenu {
               position: static;
-              background: var(--surface-filter-panel);
+              background: var(--surface-base);
               border-radius: 16px;
               border: 1px solid var(--border-soft);
               box-shadow: none;
-              padding: 12px 14px;
-              gap: 8px;
+              padding: 10px 12px;
+              gap: 6px;
           }
 
           body.light-theme .nav-submenu {
-              background: rgba(255, 255, 255, 0.92);
+              background: rgba(255, 255, 255, 0.94);
           }
 
           .nav-btn {
               width: 100%;
+              justify-content: flex-start;
+              gap: 12px;
+              padding: 10px 14px;
+              border-radius: 14px;
+              font-size: 0.98rem;
+          }
+
+          .nav-btn i {
+              font-size: 1rem;
           }
 
           .controls {
@@ -5267,9 +5302,28 @@
           }
       }
 
+      @media (max-width: 960px) {
+          .sidebar {
+              top: calc(var(--mobile-header-height) + 12px);
+              right: var(--mobile-shell-padding);
+              left: auto;
+              bottom: auto;
+              width: min(420px, calc(100% - (var(--mobile-shell-padding) * 2)));
+              max-width: 100%;
+              height: calc(100vh - (var(--mobile-header-height) + 28px));
+              max-height: calc(100vh - (var(--mobile-header-height) + 28px));
+              border-radius: 20px;
+              padding: 24px 20px;
+              box-shadow: var(--shadow-strong);
+          }
+      }
+
       @media (max-width: 768px) {
           .main-nav {
-              padding: 10px;
+              width: calc(100% - 24px);
+              max-width: calc(100% - 24px);
+              padding: 18px 16px 16px;
+              border-radius: 20px;
           }
 
           header {
