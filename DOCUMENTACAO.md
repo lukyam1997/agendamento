@@ -42,6 +42,7 @@ sequenceDiagram
 - **Tema e Layout**: CSS com variáveis para modo escuro/claro, sombras e cartões responsivos.
 - **Dashboard**: cards de ocupação, heatmaps e gráficos (Chart.js) para visão rápida.
 - **Planejamento**: tabela dinâmica com filtros por ilha, sala, turno, status e categoria.
+- **Gestão (Logs & Auditoria)**: aba dedicada com cards de visão geral, filtros avançados com salvamento rápido, atalhos para falhas recentes, painel lateral de detalhes, exportação CSV/JSON e lista de alertas configurados.
 - **Interação**: botões com indicadores de processamento, drawer lateral para filtros avançados e modais de detalhamento.
 - **Experiência**: spinner exibido enquanto dados são buscados, garantindo feedback imediato.
 

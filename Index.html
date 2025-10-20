@@ -101,6 +101,10 @@
                                     <i class="fas fa-user-md" aria-hidden="true"></i>
                                     <span>Acompanhamento Médicos</span>
                                 </button>
+                                <button class="nav-btn" data-tab="logs" role="menuitem" data-tooltip="Audite atividades, alertas e ações administrativas">
+                                    <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+                                    <span>Logs &amp; Auditoria</span>
+                                </button>
                                 <button class="nav-btn" data-tab="sala-mes" role="menuitem" data-tooltip="Analise a performance das salas ao longo do mês">
                                     <i class="fas fa-door-open" aria-hidden="true"></i>
                                     <span>Acompanhamento Salas</span>
@@ -390,6 +394,260 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div class="dashboard-section" id="logs-section">
+                    <section class="logs-container" aria-label="Auditoria e monitoramento de logs">
+                        <div class="logs-header">
+                            <div class="logs-header-info">
+                                <h2><i class="fas fa-clipboard-list"></i> Logs e Auditoria</h2>
+                                <p>Visualize eventos críticos, acompanhe alertas configurados e mantenha o histórico de auditoria sempre organizado.</p>
+                            </div>
+                            <div class="logs-header-actions">
+                                <span class="logs-sync-indicator" id="logs-ultima-sincronizacao">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    <span>Sincronização: aguardando dados</span>
+                                </span>
+                                <button class="btn btn-secondary" id="logs-exportar" type="button" data-logs-control>
+                                    <i class="fas fa-file-export"></i> Exportar filtrados (CSV)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="logs-overview" id="logs-overview">
+                            <article class="logs-card">
+                                <header>
+                                    <span class="logs-card-label">Eventos registrados</span>
+                                    <i class="fas fa-database" aria-hidden="true"></i>
+                                </header>
+                                <strong id="logs-total-eventos">0</strong>
+                                <p>Total acumulado considerando todos os filtros.</p>
+                            </article>
+                            <article class="logs-card">
+                                <header>
+                                    <span class="logs-card-label">Alertas ativos</span>
+                                    <i class="fas fa-bell-exclamation" aria-hidden="true"></i>
+                                </header>
+                                <strong id="logs-total-alertas">0</strong>
+                                <p>Registros sinalizados para revisão imediata.</p>
+                            </article>
+                            <article class="logs-card">
+                                <header>
+                                    <span class="logs-card-label">Pendências de auditoria</span>
+                                    <i class="fas fa-user-check" aria-hidden="true"></i>
+                                </header>
+                                <strong id="logs-pendentes-revisao">0</strong>
+                                <p>Logs ainda não marcados como revisados.</p>
+                            </article>
+                            <article class="logs-card">
+                                <header>
+                                    <span class="logs-card-label">Último evento crítico</span>
+                                    <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                                </header>
+                                <strong id="logs-ultimo-critico">—</strong>
+                                <p>Horário da última ocorrência com falha.</p>
+                            </article>
+                        </div>
+
+                        <div class="logs-quick-filters" role="group" aria-label="Filtros rápidos de auditoria">
+                            <span class="logs-quick-title">Atalhos de auditoria:</span>
+                            <div class="logs-quick-buttons">
+                                <button class="logs-quick-filter active" type="button" data-logs-filter="todos" data-logs-control>Todos</button>
+                                <button class="logs-quick-filter" type="button" data-logs-filter="ultimas24h" data-logs-control>Últimas 24h</button>
+                                <button class="logs-quick-filter" type="button" data-logs-filter="falhas" data-logs-control>Falhas registradas</button>
+                                <button class="logs-quick-filter" type="button" data-logs-filter="administradores" data-logs-control>Ações de administradores</button>
+                                <button class="logs-quick-filter" type="button" data-logs-filter="alertas" data-logs-control>Somente alertas</button>
+                            </div>
+                        </div>
+
+                        <div class="logs-main">
+                            <aside class="logs-filter-panel">
+                                <div class="logs-filter-header">
+                                    <h3><i class="fas fa-sliders-h"></i> Filtro avançado</h3>
+                                    <p>Combine critérios para refinar a busca e salve filtros frequentes.</p>
+                                </div>
+                                <div class="logs-filter-body">
+                                    <label>
+                                        Intervalo inicial
+                                        <input type="date" id="logs-data-inicio" data-logs-control>
+                                    </label>
+                                    <label>
+                                        Intervalo final
+                                        <input type="date" id="logs-data-fim" data-logs-control>
+                                    </label>
+                                    <label>
+                                        Usuário responsável
+                                        <input type="text" id="logs-usuario" placeholder="Nome ou matrícula" data-logs-control>
+                                    </label>
+                                    <label>
+                                        Tipo de ação
+                                        <select id="logs-acao" multiple data-logs-control>
+                                            <option value="criacao">Criação</option>
+                                            <option value="atualizacao">Atualização</option>
+                                            <option value="cancelamento">Cancelamento</option>
+                                            <option value="login">Login</option>
+                                            <option value="exportacao">Exportação</option>
+                                            <option value="rotina">Rotina automática</option>
+                                            <option value="administrativo">Ajuste administrativo</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Resultado
+                                        <select id="logs-status" multiple data-logs-control>
+                                            <option value="sucesso">Sucesso</option>
+                                            <option value="erro">Erro</option>
+                                            <option value="alerta">Alerta</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Origem do evento
+                                        <select id="logs-origem" multiple data-logs-control>
+                                            <option value="web">Portal web</option>
+                                            <option value="mobile">Aplicativo mobile</option>
+                                            <option value="api">API externa</option>
+                                            <option value="rotina">Rotina automática</option>
+                                        </select>
+                                    </label>
+                                    <label class="logs-checkbox">
+                                        <input type="checkbox" id="logs-apenas-alertas" data-logs-control>
+                                        <span>Somente eventos com alerta vinculado</span>
+                                    </label>
+                                </div>
+                                <div class="logs-filter-footer">
+                                    <div class="logs-save-filter">
+                                        <input type="text" id="logs-nome-filtro" placeholder="Nome do filtro salvo" data-logs-control>
+                                        <button class="btn btn-tertiary" id="logs-salvar-filtro" type="button" data-logs-control>
+                                            <i class="fas fa-bookmark"></i> Salvar filtro
+                                        </button>
+                                    </div>
+                                    <div class="logs-saved-filters" id="logs-filtros-salvos" aria-live="polite"></div>
+                                </div>
+                            </aside>
+
+                            <div class="logs-table-area">
+                                <div class="logs-access-warning" id="logs-access-warning" role="alert">
+                                    <i class="fas fa-lock" aria-hidden="true"></i>
+                                    <div>
+                                        <strong>Acesso restrito.</strong>
+                                        <p>Solicite uma permissão de gestor ou administrador para manipular filtros avançados ou exportar registros.</p>
+                                    </div>
+                                </div>
+                                <div class="logs-table-card">
+                                    <div class="logs-table-toolbar">
+                                        <div class="logs-search">
+                                            <i class="fas fa-search" aria-hidden="true"></i>
+                                            <input type="search" id="logs-busca" placeholder="Buscar por usuário, ação ou detalhes" data-logs-control>
+                                        </div>
+                                        <div class="logs-toolbar-actions">
+                                            <button class="btn btn-tertiary" id="logs-marcar-revisado" type="button" data-logs-control disabled>
+                                                <i class="fas fa-shield-check"></i> Marcar como revisado
+                                            </button>
+                                            <button class="btn btn-tertiary" id="logs-limpar-filtros" type="button" data-logs-control>
+                                                <i class="fas fa-eraser"></i> Limpar filtros
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="logs-table-wrapper">
+                                        <table class="logs-table">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Data/Hora</th>
+                                                    <th scope="col">Usuário</th>
+                                                    <th scope="col">Ação</th>
+                                                    <th scope="col">Resultado</th>
+                                                    <th scope="col">Origem</th>
+                                                    <th scope="col">Detalhes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="logs-table-body">
+                                                <tr class="logs-table-empty">
+                                                    <td colspan="6">
+                                                        <i class="fas fa-clipboard"></i>
+                                                        <p>Nenhum registro encontrado para os filtros atuais.</p>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <aside class="logs-detail-panel" id="logs-detail-panel" aria-label="Detalhes do log selecionado">
+                                <div class="logs-detail-header">
+                                    <h3><i class="fas fa-file-lines"></i> Detalhes do log</h3>
+                                    <button class="icon-button icon-only" id="logs-detail-close" type="button" aria-label="Fechar detalhes" data-skip-busy="true">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="logs-detail-body">
+                                    <p class="logs-detail-placeholder" id="logs-detail-placeholder">Selecione um registro para visualizar o histórico completo.</p>
+                                    <div class="logs-detail-content" id="logs-detail-content">
+                                        <dl class="logs-detail-grid">
+                                            <div>
+                                                <dt>Data/Hora</dt>
+                                                <dd id="logs-detalhe-data">—</dd>
+                                            </div>
+                                            <div>
+                                                <dt>Usuário</dt>
+                                                <dd id="logs-detalhe-usuario">—</dd>
+                                            </div>
+                                            <div>
+                                                <dt>Perfil</dt>
+                                                <dd id="logs-detalhe-perfil">—</dd>
+                                            </div>
+                                            <div>
+                                                <dt>Ação executada</dt>
+                                                <dd id="logs-detalhe-acao">—</dd>
+                                            </div>
+                                            <div>
+                                                <dt>Resultado</dt>
+                                                <dd id="logs-detalhe-resultado">—</dd>
+                                            </div>
+                                            <div>
+                                                <dt>Origem</dt>
+                                                <dd id="logs-detalhe-origem">—</dd>
+                                            </div>
+                                            <div>
+                                                <dt>IP de origem</dt>
+                                                <dd id="logs-detalhe-ip">—</dd>
+                                            </div>
+                                            <div>
+                                                <dt>Revisão</dt>
+                                                <dd id="logs-detalhe-revisao">—</dd>
+                                            </div>
+                                        </dl>
+                                        <div class="logs-detail-notes">
+                                            <h4>Observações</h4>
+                                            <p id="logs-detalhe-observacoes">—</p>
+                                        </div>
+                                        <div class="logs-detail-payload">
+                                            <header>
+                                                <span>Payload associado</span>
+                                                <button class="btn btn-tertiary" id="logs-exportar-individual" type="button" data-logs-control>
+                                                    <i class="fas fa-download"></i> Exportar JSON
+                                                </button>
+                                            </header>
+                                            <pre id="logs-detalhe-payload">—</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </aside>
+                        </div>
+
+                        <section class="logs-alerts" aria-label="Alertas configurados">
+                            <div class="logs-alerts-header">
+                                <h3><i class="fas fa-bell"></i> Alertas &amp; notificações</h3>
+                                <button class="btn btn-tertiary admin-only" id="logs-gerenciar-alertas" type="button" data-logs-control>
+                                    <i class="fas fa-gear"></i> Gerenciar regras
+                                </button>
+                            </div>
+                            <ul class="logs-alerts-list" id="logs-alertas-list">
+                                <li class="logs-alerts-empty">Nenhuma regra configurada até o momento.</li>
+                            </ul>
+                        </section>
+
+                        <div class="logs-feedback" id="logs-feedback" role="status" aria-live="polite"></div>
+                    </section>
                 </div>
 
                 <div class="dashboard-section" id="dashboard-section">

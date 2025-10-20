@@ -4,6 +4,210 @@
         const horariosTarde = ['13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'];
         const horariosNoite = ['19:00-20:00', '20:00-21:00', '21:00-22:00', '22:00-23:00', '23:00-00:00', '00:00-01:00', '01:00-02:00', '02:00-03:00', '03:00-04:00', '04:00-05:00', '05:00-06:00', '06:00-07:00'];
 
+        const LOGS_DEMONSTRACAO = [
+            {
+                id: 'LOG-20240210-0810',
+                timestamp: '2024-02-10T08:10:24-03:00',
+                usuario: 'Ana Lima',
+                matricula: '12567',
+                perfil: 'Administrador',
+                acao: 'Atualização de agenda',
+                tipoAcao: 'atualizacao',
+                resultado: 'sucesso',
+                origem: 'web',
+                ip: '10.10.12.5',
+                detalhes: 'Atualizou o turno da sala 203 para procedimento de ortopedia.',
+                observacoes: 'Ajuste solicitado pelo coordenador clínico para acomodar caso urgente.',
+                alerta: false,
+                revisado: true,
+                revisadoPor: 'Carlos Mendes',
+                revisadoEm: '2024-02-10T09:05:00-03:00',
+                payload: {
+                    sala: '203',
+                    turno: 'manhã',
+                    statusAnterior: 'Livre',
+                    statusAtual: 'Ocupado',
+                    especialidade: 'Ortopedia'
+                }
+            },
+            {
+                id: 'LOG-20240210-0915',
+                timestamp: '2024-02-10T09:15:42-03:00',
+                usuario: 'João Tavares',
+                matricula: '98321',
+                perfil: 'Gestor',
+                acao: 'Bloqueio de sala',
+                tipoAcao: 'administrativo',
+                resultado: 'alerta',
+                origem: 'web',
+                ip: '10.10.14.2',
+                detalhes: 'Bloqueou a sala 105 por manutenção emergencial.',
+                observacoes: 'Manutenção preventiva do equipamento de anestesia. Encaminhado para engenharia clínica.',
+                alerta: true,
+                alertaMotivo: 'Bloqueio emergencial registrado.',
+                revisado: false,
+                payload: {
+                    sala: '105',
+                    bloqueio: 'Emergencial',
+                    previsaoRetorno: '2024-02-10T15:00:00-03:00'
+                }
+            },
+            {
+                id: 'LOG-20240209-2312',
+                timestamp: '2024-02-09T23:12:07-03:00',
+                usuario: 'API Externa',
+                matricula: 'api-service',
+                perfil: 'Integração',
+                acao: 'Sincronização automática',
+                tipoAcao: 'rotina',
+                resultado: 'sucesso',
+                origem: 'rotina',
+                ip: '172.16.10.3',
+                detalhes: 'Rotina de sincronização com planilha mestre executada com sucesso.',
+                observacoes: 'Atualização completa em 320ms.',
+                alerta: false,
+                revisado: true,
+                revisadoPor: 'Sistema',
+                revisadoEm: '2024-02-09T23:12:40-03:00',
+                payload: {
+                    registrosSincronizados: 128,
+                    inconsistencias: 0
+                }
+            },
+            {
+                id: 'LOG-20240210-0628',
+                timestamp: '2024-02-10T06:28:11-03:00',
+                usuario: 'Marina Costa',
+                matricula: '77321',
+                perfil: 'Analista',
+                acao: 'Exportação de relatório',
+                tipoAcao: 'exportacao',
+                resultado: 'sucesso',
+                origem: 'web',
+                ip: '10.10.9.8',
+                detalhes: 'Exportou relatório consolidado do turno da noite (CSV).',
+                observacoes: 'Arquivo encaminhado para o comitê de produtividade.',
+                alerta: false,
+                revisado: false,
+                payload: {
+                    turno: 'Noite',
+                    formato: 'CSV',
+                    linhas: 78
+                }
+            },
+            {
+                id: 'LOG-20240209-1844',
+                timestamp: '2024-02-09T18:44:09-03:00',
+                usuario: 'Paulo Vilar',
+                matricula: '66111',
+                perfil: 'Administrador',
+                acao: 'Cancelamento de agendamento',
+                tipoAcao: 'cancelamento',
+                resultado: 'erro',
+                origem: 'mobile',
+                ip: '177.201.32.88',
+                detalhes: 'Falha ao cancelar agendamento da sala 302 - conflito de horário.',
+                observacoes: 'Usuário recebeu orientação para tentar novamente após sincronização.',
+                alerta: true,
+                alertaMotivo: 'Cancelamento crítico não concluído.',
+                revisado: false,
+                payload: {
+                    sala: '302',
+                    profissional: 'Dr. Henrique Souza',
+                    motivoErro: 'Horário indisponível após atualização paralela'
+                }
+            },
+            {
+                id: 'LOG-20240210-1033',
+                timestamp: '2024-02-10T10:33:58-03:00',
+                usuario: 'Carla Moraes',
+                matricula: '55219',
+                perfil: 'Gestor',
+                acao: 'Cadastro de usuário',
+                tipoAcao: 'criacao',
+                resultado: 'sucesso',
+                origem: 'web',
+                ip: '10.10.21.4',
+                detalhes: 'Cadastrou novo colaborador com perfil de analista de agenda.',
+                observacoes: 'Perfil temporário válido até 30/03/2024.',
+                alerta: false,
+                revisado: true,
+                revisadoPor: 'Ana Lima',
+                revisadoEm: '2024-02-10T11:00:00-03:00',
+                payload: {
+                    novoUsuario: 'Fernanda Lessa',
+                    perfil: 'Analista',
+                    expiracao: '2024-03-30'
+                }
+            },
+            {
+                id: 'LOG-20240208-2138',
+                timestamp: '2024-02-08T21:38:44-03:00',
+                usuario: 'Rafael Campos',
+                matricula: '44192',
+                perfil: 'Administrador',
+                acao: 'Login do usuário',
+                tipoAcao: 'login',
+                resultado: 'sucesso',
+                origem: 'web',
+                ip: '187.55.21.102',
+                detalhes: 'Login autenticado via MFA.',
+                observacoes: 'Sessão ativa por 2h.',
+                alerta: false,
+                revisado: true,
+                revisadoPor: 'Sistema',
+                revisadoEm: '2024-02-08T21:39:00-03:00',
+                payload: {
+                    metodoAutenticacao: 'MFA',
+                    dispositivo: 'Notebook corporativo'
+                }
+            },
+            {
+                id: 'LOG-20240210-1122',
+                timestamp: '2024-02-10T11:22:05-03:00',
+                usuario: 'Monitoramento Automático',
+                matricula: 'watcher',
+                perfil: 'Integração',
+                acao: 'Regra de alerta disparada',
+                tipoAcao: 'rotina',
+                resultado: 'alerta',
+                origem: 'rotina',
+                ip: '172.16.10.12',
+                detalhes: 'Detectado volume atípico de cancelamentos em 30 minutos.',
+                observacoes: 'Alertar equipe de governança para validação.',
+                alerta: true,
+                alertaMotivo: 'Mais de 5 cancelamentos em 30 minutos.',
+                revisado: false,
+                payload: {
+                    cancelamentosDetectados: 7,
+                    intervaloMinutos: 30,
+                    salasAfetadas: ['201', '203', '210']
+                }
+            },
+            {
+                id: 'LOG-20240207-1542',
+                timestamp: '2024-02-07T15:42:33-03:00',
+                usuario: 'Equipe TI',
+                matricula: 'support',
+                perfil: 'Suporte',
+                acao: 'Reprocessamento de fila',
+                tipoAcao: 'administrativo',
+                resultado: 'sucesso',
+                origem: 'api',
+                ip: '10.10.55.7',
+                detalhes: 'Reprocessou fila de notificações para salas bloqueadas.',
+                observacoes: 'Fila limpa após tentativa manual.',
+                alerta: false,
+                revisado: true,
+                revisadoPor: 'Paulo Vilar',
+                revisadoEm: '2024-02-07T16:10:00-03:00',
+                payload: {
+                    notificacoesReenviadas: 12,
+                    erros: 0
+                }
+            }
+        ];
+
         const criarEstadoFiltrosContexto = () => ({
             turnos: [],
             status: [],
@@ -120,6 +324,25 @@
                 comparativoDados: null,
                 comparativoInfo: null,
                 resumoAtual: null
+            },
+            logs: {
+                registros: [],
+                filtros: {
+                    busca: '',
+                    dataInicio: '',
+                    dataFim: '',
+                    usuario: '',
+                    acao: [],
+                    status: [],
+                    origem: [],
+                    apenasAlertas: false
+                },
+                filtroRapido: 'todos',
+                filtrosSalvos: [],
+                selecionadoId: null,
+                alertasConfigurados: [],
+                eventosConfigurados: false,
+                ultimaSincronizacao: null
             },
             cache: {
                 dadosPorDia: new Map(),
@@ -733,6 +956,7 @@
             document.querySelectorAll('.admin-only').forEach(el => {
                 el.style.display = isAdmin ? 'flex' : 'none';
             });
+            aplicarRestricoesLogs();
         }
 
         function realizarLogin() {
@@ -806,6 +1030,7 @@
             const mainDom = obterDomMain();
             if (mainDom.container) mainDom.container.style.display = 'none';
             if (loginDom.container) loginDom.container.style.display = 'flex';
+            aplicarRestricoesLogs();
         }
 
         function mostrarLoginAlerta(mensagem) {
@@ -2751,6 +2976,7 @@
                     if (tab === 'relatorios') inicializarRelatorios();
                     if (tab === 'planejamento') atualizarPlanejamento();
                     if (tab === 'medicos') renderAcompanhamentoMedicos();
+                    if (tab === 'logs') inicializarLogsGestao();
                     if (mobileNavMediaQuery.matches) {
                         closeMobileNav();
                     }
@@ -3060,6 +3286,8 @@
                 // Garantir que o corpo não permaneça travado ao redimensionar
                 updateBackdropState();
             });
+
+            inicializarLogsGestao();
         }
 
         function aplicarFiltros() {
@@ -6653,6 +6881,740 @@
             atualizarAcompanhamentoMedicosFiltros();
             sincronizarFiltrosMedicos();
             renderAcompanhamentoMedicos();
+        }
+
+        function inicializarLogsGestao() {
+            const container = document.getElementById('logs-section');
+            if (!container) {
+                return;
+            }
+
+            const logsState = stores.logs;
+            if (!logsState.eventosConfigurados) {
+                logsState.registros = JSON.parse(JSON.stringify(LOGS_DEMONSTRACAO));
+                logsState.alertasConfigurados = [
+                    {
+                        titulo: 'Cancelamentos em sequência',
+                        descricao: 'Dispara quando ocorrem 5 cancelamentos em 30 minutos.',
+                        ultimaVerificacao: '2024-02-10T11:22:05-03:00'
+                    },
+                    {
+                        titulo: 'Bloqueios emergenciais',
+                        descricao: 'Notifica sempre que uma sala é bloqueada com motivo emergencial.',
+                        ultimaVerificacao: '2024-02-10T09:15:42-03:00'
+                    },
+                    {
+                        titulo: 'Falhas de integração',
+                        descricao: 'Alerta quando rotinas automáticas retornam erro consecutivo.',
+                        ultimaVerificacao: '2024-02-09T23:12:07-03:00'
+                    }
+                ];
+                logsState.ultimaSincronizacao = new Date().toISOString();
+                configurarEventosLogs();
+                logsState.eventosConfigurados = true;
+            }
+
+            sincronizarUIFiltrosLogs();
+            renderLogsSection();
+        }
+
+        function configurarEventosLogs() {
+            const logsState = stores.logs;
+
+            document.querySelectorAll('.logs-quick-filter').forEach(button => {
+                button.addEventListener('click', () => {
+                    const filtro = button.dataset.logsFilter || 'todos';
+                    logsState.filtroRapido = filtro;
+                    renderLogsSection();
+                });
+            });
+
+            const buscaInput = document.getElementById('logs-busca');
+            if (buscaInput) {
+                buscaInput.addEventListener('input', () => {
+                    logsState.filtros.busca = buscaInput.value.trim();
+                    renderLogsSection();
+                });
+            }
+
+            const usuarioInput = document.getElementById('logs-usuario');
+            if (usuarioInput) {
+                usuarioInput.addEventListener('input', () => {
+                    logsState.filtros.usuario = usuarioInput.value.trim();
+                    renderLogsSection();
+                });
+            }
+
+            const dataInicioInput = document.getElementById('logs-data-inicio');
+            if (dataInicioInput) {
+                dataInicioInput.addEventListener('change', () => {
+                    logsState.filtros.dataInicio = dataInicioInput.value || '';
+                    renderLogsSection();
+                });
+            }
+
+            const dataFimInput = document.getElementById('logs-data-fim');
+            if (dataFimInput) {
+                dataFimInput.addEventListener('change', () => {
+                    logsState.filtros.dataFim = dataFimInput.value || '';
+                    renderLogsSection();
+                });
+            }
+
+            const aplicarValoresSelect = (id, chave) => {
+                const select = document.getElementById(id);
+                if (!select) return;
+                select.addEventListener('change', () => {
+                    logsState.filtros[chave] = Array.from(select.selectedOptions).map(option => option.value);
+                    renderLogsSection();
+                });
+            };
+
+            aplicarValoresSelect('logs-acao', 'acao');
+            aplicarValoresSelect('logs-status', 'status');
+            aplicarValoresSelect('logs-origem', 'origem');
+
+            const apenasAlertas = document.getElementById('logs-apenas-alertas');
+            if (apenasAlertas) {
+                apenasAlertas.addEventListener('change', () => {
+                    logsState.filtros.apenasAlertas = !!apenasAlertas.checked;
+                    renderLogsSection();
+                });
+            }
+
+            const salvarFiltroBtn = document.getElementById('logs-salvar-filtro');
+            if (salvarFiltroBtn) {
+                salvarFiltroBtn.addEventListener('click', salvarFiltroLogs);
+            }
+
+            const limparFiltrosBtn = document.getElementById('logs-limpar-filtros');
+            if (limparFiltrosBtn) {
+                limparFiltrosBtn.addEventListener('click', () => {
+                    limparFiltrosLogs();
+                });
+            }
+
+            const marcarRevisadoBtn = document.getElementById('logs-marcar-revisado');
+            if (marcarRevisadoBtn) {
+                marcarRevisadoBtn.addEventListener('click', marcarLogComoRevisado);
+            }
+
+            const fecharDetalheBtn = document.getElementById('logs-detail-close');
+            if (fecharDetalheBtn) {
+                fecharDetalheBtn.addEventListener('click', () => {
+                    stores.logs.selecionadoId = null;
+                    renderLogsSection();
+                });
+            }
+
+            const exportarBtn = document.getElementById('logs-exportar');
+            if (exportarBtn) {
+                exportarBtn.addEventListener('click', () => {
+                    const filtrados = filtrarRegistrosLogs();
+                    exportarLogsParaCsv(filtrados);
+                });
+            }
+
+            const exportarIndividualBtn = document.getElementById('logs-exportar-individual');
+            if (exportarIndividualBtn) {
+                exportarIndividualBtn.addEventListener('click', () => {
+                    const selecionado = obterLogSelecionado();
+                    exportarLogIndividual(selecionado);
+                });
+            }
+
+            const gerenciarAlertasBtn = document.getElementById('logs-gerenciar-alertas');
+            if (gerenciarAlertasBtn) {
+                gerenciarAlertasBtn.addEventListener('click', () => {
+                    mostrarLogsFeedback('Em breve: gerenciamento avançado de regras de alerta.');
+                });
+            }
+        }
+
+        function renderLogsSection() {
+            const container = document.getElementById('logs-section');
+            if (!container) {
+                return;
+            }
+
+            const logsState = stores.logs;
+            const registrosFiltrados = filtrarRegistrosLogs();
+
+            atualizarVisaoGeralLogs(registrosFiltrados);
+            atualizarTabelaLogs(registrosFiltrados);
+            atualizarDetalheLog();
+            atualizarAlertasLogs();
+            atualizarFiltrosSalvosUI();
+
+            document.querySelectorAll('.logs-quick-filter').forEach(button => {
+                const filtro = button.dataset.logsFilter || 'todos';
+                button.classList.toggle('active', filtro === logsState.filtroRapido);
+            });
+
+            const sincronizacaoEl = document.getElementById('logs-ultima-sincronizacao');
+            if (sincronizacaoEl) {
+                const ultima = logsState.ultimaSincronizacao ? formatarDataHoraLog(logsState.ultimaSincronizacao) : '—';
+                sincronizacaoEl.innerHTML = `<i class="fas fa-clock" aria-hidden="true"></i><span>Sincronização: ${ultima}</span>`;
+            }
+
+            aplicarRestricoesLogs();
+        }
+
+        function filtrarRegistrosLogs() {
+            const logsState = stores.logs;
+            const filtros = logsState.filtros || {};
+            let registros = Array.isArray(logsState.registros) ? [...logsState.registros] : [];
+            const normalizar = texto => (typeof normalizarTexto === 'function' ? normalizarTexto(texto) : String(texto || '').toLowerCase());
+
+            switch (logsState.filtroRapido) {
+                case 'ultimas24h': {
+                    const limite = Date.now() - (24 * 60 * 60 * 1000);
+                    registros = registros.filter(log => new Date(log.timestamp).getTime() >= limite);
+                    break;
+                }
+                case 'falhas':
+                    registros = registros.filter(log => log.resultado === 'erro' || log.alerta);
+                    break;
+                case 'administradores':
+                    registros = registros.filter(log => normalizar(log.perfil).includes('admin'));
+                    break;
+                case 'alertas':
+                    registros = registros.filter(log => log.alerta);
+                    break;
+                default:
+                    break;
+            }
+
+            if (filtros.busca) {
+                const busca = normalizar(filtros.busca);
+                registros = registros.filter(log => {
+                    return [log.usuario, log.acao, log.detalhes, log.observacoes, log.matricula]
+                        .some(campo => normalizar(campo).includes(busca));
+                });
+            }
+
+            if (filtros.usuario) {
+                const termo = normalizar(filtros.usuario);
+                registros = registros.filter(log => normalizar(`${log.usuario} ${log.matricula}`).includes(termo));
+            }
+
+            if (filtros.dataInicio) {
+                const inicio = new Date(`${filtros.dataInicio}T00:00:00`);
+                registros = registros.filter(log => new Date(log.timestamp) >= inicio);
+            }
+
+            if (filtros.dataFim) {
+                const fim = new Date(`${filtros.dataFim}T23:59:59`);
+                registros = registros.filter(log => new Date(log.timestamp) <= fim);
+            }
+
+            if (Array.isArray(filtros.acao) && filtros.acao.length) {
+                registros = registros.filter(log => filtros.acao.includes(log.tipoAcao));
+            }
+
+            if (Array.isArray(filtros.status) && filtros.status.length) {
+                registros = registros.filter(log => filtros.status.includes(log.resultado));
+            }
+
+            if (Array.isArray(filtros.origem) && filtros.origem.length) {
+                registros = registros.filter(log => filtros.origem.includes(log.origem));
+            }
+
+            if (filtros.apenasAlertas) {
+                registros = registros.filter(log => log.alerta);
+            }
+
+            registros.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            return registros;
+        }
+
+        function atualizarVisaoGeralLogs(registrosFiltrados) {
+            const logsState = stores.logs;
+            const registrosTotais = Array.isArray(logsState.registros) ? logsState.registros : [];
+            const total = registrosTotais.length;
+            const alertas = registrosTotais.filter(log => log.alerta).length;
+            const pendentes = registrosTotais.filter(log => !log.revisado).length;
+            const ultimoCritico = registrosTotais
+                .filter(log => log.resultado === 'erro' || log.alerta)
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+            const definirTexto = (id, texto) => {
+                const elemento = document.getElementById(id);
+                if (elemento) {
+                    elemento.textContent = texto;
+                }
+            };
+
+            definirTexto('logs-total-eventos', total.toLocaleString('pt-BR'));
+            definirTexto('logs-total-alertas', alertas.toLocaleString('pt-BR'));
+            definirTexto('logs-pendentes-revisao', pendentes.toLocaleString('pt-BR'));
+            definirTexto('logs-ultimo-critico', ultimoCritico ? formatarDataHoraLog(ultimoCritico.timestamp) : '—');
+
+            if (!registrosFiltrados.length) {
+                mostrarLogsFeedback('Nenhum registro encontrado para os filtros atuais.');
+            } else {
+                mostrarLogsFeedback('');
+            }
+        }
+
+        function atualizarTabelaLogs(registros) {
+            const tbody = document.getElementById('logs-table-body');
+            if (!tbody) {
+                return;
+            }
+
+            if (!registros.length) {
+                tbody.innerHTML = `
+                    <tr class="logs-table-empty">
+                        <td colspan="6">
+                            <i class="fas fa-clipboard"></i>
+                            <p>Nenhum registro encontrado para os filtros atuais.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            const selecionadoId = stores.logs.selecionadoId;
+
+            registros.forEach(log => {
+                const linha = document.createElement('tr');
+                linha.dataset.logId = log.id;
+                if (log.alerta) {
+                    linha.classList.add('is-alert');
+                }
+                if (log.resultado === 'erro') {
+                    linha.classList.add('is-error');
+                }
+                if (log.id === selecionadoId) {
+                    linha.classList.add('is-active');
+                }
+
+                const criarCelula = valor => {
+                    const td = document.createElement('td');
+                    td.innerHTML = valor;
+                    return td;
+                };
+
+                linha.appendChild(criarCelula(formatarDataHoraLog(log.timestamp)));
+                linha.appendChild(criarCelula(`<strong>${log.usuario}</strong><br><span class="logs-usuario-meta">${log.perfil}</span>`));
+                linha.appendChild(criarCelula(log.acao));
+
+                const statusHtml = `<span class="logs-status" data-status="${log.resultado}">${formatarTituloLog(log.resultado)}</span>`;
+                linha.appendChild(criarCelula(statusHtml));
+
+                linha.appendChild(criarCelula(formatarTituloLog(log.origem)));
+
+                const detalhesTexto = log.detalhes && log.detalhes.length > 90
+                    ? `${log.detalhes.slice(0, 90)}…`
+                    : (log.detalhes || '—');
+                linha.appendChild(criarCelula(detalhesTexto));
+
+                linha.addEventListener('click', () => {
+                    selecionarLogGestao(log.id);
+                });
+
+                fragment.appendChild(linha);
+            });
+
+            tbody.innerHTML = '';
+            tbody.appendChild(fragment);
+        }
+
+        function selecionarLogGestao(logId) {
+            stores.logs.selecionadoId = logId;
+            atualizarDetalheLog();
+            const registros = filtrarRegistrosLogs();
+            atualizarTabelaLogs(registros);
+            aplicarRestricoesLogs();
+        }
+
+        function obterLogSelecionado() {
+            const logsState = stores.logs;
+            if (!logsState.selecionadoId) {
+                return null;
+            }
+            return logsState.registros.find(log => log.id === logsState.selecionadoId) || null;
+        }
+
+        function atualizarDetalheLog() {
+            const detalhe = document.getElementById('logs-detail-content');
+            const placeholder = document.getElementById('logs-detail-placeholder');
+            const selecionado = obterLogSelecionado();
+            const marcarRevisadoBtn = document.getElementById('logs-marcar-revisado');
+            const exportarIndividualBtn = document.getElementById('logs-exportar-individual');
+
+            if (!detalhe || !placeholder) {
+                return;
+            }
+
+            if (!selecionado) {
+                detalhe.classList.remove('is-visible');
+                placeholder.style.display = 'block';
+                if (marcarRevisadoBtn) marcarRevisadoBtn.disabled = true;
+                if (exportarIndividualBtn) exportarIndividualBtn.disabled = true;
+                return;
+            }
+
+            placeholder.style.display = 'none';
+            detalhe.classList.add('is-visible');
+
+            const definir = (id, texto) => {
+                const elemento = document.getElementById(id);
+                if (elemento) {
+                    elemento.textContent = texto;
+                }
+            };
+
+            definir('logs-detalhe-data', formatarDataHoraLog(selecionado.timestamp));
+            definir('logs-detalhe-usuario', `${selecionado.usuario} (${selecionado.matricula || '—'})`);
+            definir('logs-detalhe-perfil', selecionado.perfil || '—');
+            definir('logs-detalhe-acao', selecionado.acao || '—');
+            definir('logs-detalhe-resultado', formatarTituloLog(selecionado.resultado));
+            definir('logs-detalhe-origem', formatarTituloLog(selecionado.origem));
+            definir('logs-detalhe-ip', selecionado.ip || '—');
+
+            let revisaoTexto = 'Pendente de revisão';
+            if (selecionado.revisado) {
+                const quando = selecionado.revisadoEm ? formatarDataHoraLog(selecionado.revisadoEm) : '—';
+                revisaoTexto = `Revisado por ${selecionado.revisadoPor || 'Equipe gestora'} em ${quando}`;
+            }
+            definir('logs-detalhe-revisao', revisaoTexto);
+
+            definir('logs-detalhe-observacoes', selecionado.observacoes || '—');
+
+            const payloadElement = document.getElementById('logs-detalhe-payload');
+            if (payloadElement) {
+                const payload = selecionado.payload ? JSON.stringify(selecionado.payload, null, 2) : '—';
+                payloadElement.textContent = payload;
+            }
+
+            if (marcarRevisadoBtn) {
+                marcarRevisadoBtn.disabled = !!selecionado.revisado;
+            }
+            if (exportarIndividualBtn) {
+                exportarIndividualBtn.disabled = false;
+            }
+        }
+
+        function atualizarAlertasLogs() {
+            const lista = document.getElementById('logs-alertas-list');
+            if (!lista) {
+                return;
+            }
+
+            const alertas = Array.isArray(stores.logs.alertasConfigurados) ? stores.logs.alertasConfigurados : [];
+            if (!alertas.length) {
+                lista.innerHTML = '<li class="logs-alerts-empty">Nenhuma regra configurada até o momento.</li>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            alertas.forEach(alerta => {
+                const item = document.createElement('li');
+                item.className = 'logs-alert-item';
+
+                const titulo = document.createElement('strong');
+                titulo.innerHTML = `<i class="fas fa-bolt"></i> ${alerta.titulo}`;
+
+                const descricao = document.createElement('span');
+                descricao.textContent = alerta.descricao;
+
+                item.appendChild(titulo);
+                item.appendChild(descricao);
+
+                if (alerta.ultimaVerificacao) {
+                    const ultima = document.createElement('span');
+                    ultima.innerHTML = `<i class="fas fa-clock"></i> Última verificação: ${formatarDataHoraLog(alerta.ultimaVerificacao)}`;
+                    item.appendChild(ultima);
+                }
+
+                fragment.appendChild(item);
+            });
+
+            lista.innerHTML = '';
+            lista.appendChild(fragment);
+        }
+
+        function atualizarFiltrosSalvosUI() {
+            const container = document.getElementById('logs-filtros-salvos');
+            if (!container) {
+                return;
+            }
+
+            const filtrosSalvos = Array.isArray(stores.logs.filtrosSalvos) ? stores.logs.filtrosSalvos : [];
+            if (!filtrosSalvos.length) {
+                container.innerHTML = '<span class="logs-alerts-empty">Nenhum filtro salvo até o momento.</span>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            filtrosSalvos.forEach((item, indice) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'logs-saved-chip';
+
+                const aplicarBtn = document.createElement('button');
+                aplicarBtn.type = 'button';
+                aplicarBtn.innerHTML = `<i class="fas fa-filter"></i> ${item.nome}`;
+                aplicarBtn.addEventListener('click', () => {
+                    aplicarFiltroSalvo(indice);
+                });
+
+                const removerBtn = document.createElement('button');
+                removerBtn.type = 'button';
+                removerBtn.setAttribute('aria-label', `Remover filtro ${item.nome}`);
+                removerBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removerBtn.addEventListener('click', event => {
+                    event.stopPropagation();
+                    removerFiltroSalvoLogs(indice);
+                });
+
+                wrapper.appendChild(aplicarBtn);
+                wrapper.appendChild(removerBtn);
+                fragment.appendChild(wrapper);
+            });
+
+            container.innerHTML = '';
+            container.appendChild(fragment);
+        }
+
+        function salvarFiltroLogs() {
+            const nomeInput = document.getElementById('logs-nome-filtro');
+            if (!nomeInput) {
+                return;
+            }
+
+            const nome = nomeInput.value.trim();
+            if (!nome) {
+                mostrarLogsFeedback('Informe um nome para salvar o filtro.');
+                nomeInput.focus();
+                return;
+            }
+
+            const filtroAtual = {
+                nome,
+                filtros: JSON.parse(JSON.stringify(stores.logs.filtros)),
+                filtroRapido: stores.logs.filtroRapido
+            };
+
+            stores.logs.filtrosSalvos.push(filtroAtual);
+            nomeInput.value = '';
+            mostrarLogsFeedback(`Filtro "${nome}" salvo com sucesso.`);
+            atualizarFiltrosSalvosUI();
+        }
+
+        function aplicarFiltroSalvo(indice) {
+            const salvo = stores.logs.filtrosSalvos[indice];
+            if (!salvo) {
+                return;
+            }
+
+            stores.logs.filtros = JSON.parse(JSON.stringify(salvo.filtros));
+            stores.logs.filtroRapido = salvo.filtroRapido || 'todos';
+            sincronizarUIFiltrosLogs();
+            renderLogsSection();
+            mostrarLogsFeedback(`Filtro "${salvo.nome}" aplicado.`);
+        }
+
+        function removerFiltroSalvoLogs(indice) {
+            if (!Array.isArray(stores.logs.filtrosSalvos)) {
+                return;
+            }
+            stores.logs.filtrosSalvos.splice(indice, 1);
+            atualizarFiltrosSalvosUI();
+            mostrarLogsFeedback('Filtro removido.');
+        }
+
+        function sincronizarUIFiltrosLogs() {
+            const filtros = stores.logs.filtros || {};
+
+            const dataInicioInput = document.getElementById('logs-data-inicio');
+            if (dataInicioInput) {
+                dataInicioInput.value = filtros.dataInicio || '';
+            }
+
+            const dataFimInput = document.getElementById('logs-data-fim');
+            if (dataFimInput) {
+                dataFimInput.value = filtros.dataFim || '';
+            }
+
+            const usuarioInput = document.getElementById('logs-usuario');
+            if (usuarioInput) {
+                usuarioInput.value = filtros.usuario || '';
+            }
+
+            const buscaInput = document.getElementById('logs-busca');
+            if (buscaInput) {
+                buscaInput.value = filtros.busca || '';
+            }
+
+            const marcarSelecionados = (id, valores) => {
+                const select = document.getElementById(id);
+                if (!select) return;
+                Array.from(select.options).forEach(option => {
+                    option.selected = Array.isArray(valores) && valores.includes(option.value);
+                });
+            };
+
+            marcarSelecionados('logs-acao', filtros.acao);
+            marcarSelecionados('logs-status', filtros.status);
+            marcarSelecionados('logs-origem', filtros.origem);
+
+            const apenasAlertas = document.getElementById('logs-apenas-alertas');
+            if (apenasAlertas) {
+                apenasAlertas.checked = !!filtros.apenasAlertas;
+            }
+        }
+
+        function limparFiltrosLogs() {
+            stores.logs.filtros = {
+                busca: '',
+                dataInicio: '',
+                dataFim: '',
+                usuario: '',
+                acao: [],
+                status: [],
+                origem: [],
+                apenasAlertas: false
+            };
+            stores.logs.filtroRapido = 'todos';
+            stores.logs.selecionadoId = null;
+            sincronizarUIFiltrosLogs();
+            renderLogsSection();
+        }
+
+        function marcarLogComoRevisado() {
+            const selecionado = obterLogSelecionado();
+            if (!selecionado) {
+                mostrarLogsFeedback('Selecione um log antes de marcar como revisado.');
+                return;
+            }
+
+            if (selecionado.revisado) {
+                mostrarLogsFeedback('Este registro já está revisado.');
+                return;
+            }
+
+            const role = (estado.userRole || '').toLowerCase();
+            const revisor = role ? `Perfil ${role}` : 'Equipe gestora';
+            selecionado.revisado = true;
+            selecionado.revisadoPor = revisor;
+            selecionado.revisadoEm = new Date().toISOString();
+            renderLogsSection();
+            mostrarLogsFeedback('Registro marcado como revisado.');
+        }
+
+        function exportarLogsParaCsv(registros) {
+            if (!Array.isArray(registros) || !registros.length) {
+                mostrarLogsFeedback('Nenhum registro disponível para exportação.');
+                return;
+            }
+
+            const cabecalho = ['ID', 'Data/Hora', 'Usuário', 'Perfil', 'Matrícula', 'Ação', 'Resultado', 'Origem', 'Detalhes', 'Observações', 'Alerta', 'Revisado', 'Revisado por', 'Revisado em'];
+            const linhas = registros.map(log => {
+                const campos = [
+                    log.id,
+                    formatarDataHoraLog(log.timestamp),
+                    log.usuario,
+                    log.perfil,
+                    log.matricula,
+                    log.acao,
+                    formatarTituloLog(log.resultado),
+                    formatarTituloLog(log.origem),
+                    log.detalhes,
+                    log.observacoes,
+                    log.alerta ? 'Sim' : 'Não',
+                    log.revisado ? 'Sim' : 'Não',
+                    log.revisadoPor,
+                    log.revisadoEm ? formatarDataHoraLog(log.revisadoEm) : ''
+                ];
+
+                return campos.map(valor => {
+                    const texto = String(valor ?? '').replace(/"/g, '""');
+                    return `"${texto}"`;
+                }).join(',');
+            });
+
+            const conteudo = [cabecalho.join(','), ...linhas].join('\n');
+            const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `logs-auditoria-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            mostrarLogsFeedback(`Exportação concluída (${registros.length} registros).`);
+        }
+
+        function exportarLogIndividual(log) {
+            if (!log) {
+                mostrarLogsFeedback('Selecione um registro antes de exportar o payload.');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${log.id}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            mostrarLogsFeedback('Payload exportado em JSON.');
+        }
+
+        function mostrarLogsFeedback(mensagem) {
+            const feedback = document.getElementById('logs-feedback');
+            if (!feedback) {
+                return;
+            }
+            feedback.textContent = mensagem || '';
+        }
+
+        function formatarDataHoraLog(valor) {
+            if (!valor) {
+                return '—';
+            }
+            const data = new Date(valor);
+            if (Number.isNaN(data.getTime())) {
+                return valor;
+            }
+            return data.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+        }
+
+        function formatarTituloLog(texto) {
+            if (!texto) {
+                return '—';
+            }
+            const str = String(texto);
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function aplicarRestricoesLogs() {
+            const container = document.getElementById('logs-section');
+            if (!container) {
+                return;
+            }
+
+            const role = (estado.userRole || '').toLowerCase();
+            const permitido = role === 'admin' || role === 'gestor';
+            const controles = container.querySelectorAll('[data-logs-control]');
+            controles.forEach(controle => {
+                if (permitido) {
+                    controle.removeAttribute('disabled');
+                } else {
+                    controle.setAttribute('disabled', 'true');
+                }
+            });
+
+            const aviso = document.getElementById('logs-access-warning');
+            if (aviso) {
+                aviso.style.display = permitido ? 'none' : 'flex';
+            }
         }
 
         async function carregarDashboard() {
