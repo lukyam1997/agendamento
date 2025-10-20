@@ -208,6 +208,24 @@
             }
         ];
 
+        const ALERTAS_LOGS_DEMONSTRACAO = [
+            {
+                titulo: 'Cancelamentos em sequência',
+                descricao: 'Dispara quando ocorrem 5 cancelamentos em 30 minutos.',
+                ultimaVerificacao: '2024-02-10T11:22:05-03:00'
+            },
+            {
+                titulo: 'Bloqueios emergenciais',
+                descricao: 'Notifica sempre que uma sala é bloqueada com motivo emergencial.',
+                ultimaVerificacao: '2024-02-10T09:15:42-03:00'
+            },
+            {
+                titulo: 'Falhas de integração',
+                descricao: 'Alerta quando rotinas automáticas retornam erro consecutivo.',
+                ultimaVerificacao: '2024-02-09T23:12:07-03:00'
+            }
+        ];
+
         const criarEstadoFiltrosContexto = () => ({
             turnos: [],
             status: [],
@@ -342,7 +360,9 @@
                 selecionadoId: null,
                 alertasConfigurados: [],
                 eventosConfigurados: false,
-                ultimaSincronizacao: null
+                ultimaSincronizacao: null,
+                carregado: false,
+                carregando: false
             },
             cache: {
                 dadosPorDia: new Map(),
@@ -6883,6 +6903,364 @@
             renderAcompanhamentoMedicos();
         }
 
+        function clonarProfundo(valor) {
+            if (valor === null || valor === undefined) {
+                return valor;
+            }
+            if (typeof valor !== 'object') {
+                return valor;
+            }
+            try {
+                return JSON.parse(JSON.stringify(valor));
+            } catch (erro) {
+                console.warn('Falha ao clonar valor para logs.', erro, valor);
+                if (Array.isArray(valor)) {
+                    return valor.map(item => clonarProfundo(item));
+                }
+                return { ...valor };
+            }
+        }
+
+        function obterLogsDemonstracaoClonados() {
+            return clonarProfundo(LOGS_DEMONSTRACAO);
+        }
+
+        function obterAlertasLogsDemonstracaoClonados() {
+            return clonarProfundo(ALERTAS_LOGS_DEMONSTRACAO);
+        }
+
+        function tentarParseJsonLog(valor) {
+            if (valor === null || valor === undefined || valor === '') {
+                return {};
+            }
+            if (typeof valor === 'object') {
+                return valor;
+            }
+            if (typeof valor !== 'string') {
+                return { valor };
+            }
+            const texto = valor.trim();
+            if (!texto) {
+                return {};
+            }
+            try {
+                return JSON.parse(texto);
+            } catch (erro) {
+                console.warn('Falha ao interpretar JSON de log.', erro, texto);
+                return { descricao: texto };
+            }
+        }
+
+        function obterValorPorCaminho(obj, caminho) {
+            if (!obj || typeof obj !== 'object') {
+                return undefined;
+            }
+            const partes = Array.isArray(caminho) ? caminho : String(caminho).split('.');
+            let atual = obj;
+            for (const parte of partes) {
+                if (atual && typeof atual === 'object' && parte in atual) {
+                    atual = atual[parte];
+                } else {
+                    return undefined;
+                }
+            }
+            return atual;
+        }
+
+        function extrairPrimeiroValor(obj, caminhos, padrao = '') {
+            if (!Array.isArray(caminhos)) {
+                return padrao;
+            }
+            for (const caminho of caminhos) {
+                const valor = obterValorPorCaminho(obj, caminho);
+                if (valor !== undefined && valor !== null && valor !== '') {
+                    return valor;
+                }
+            }
+            return padrao;
+        }
+
+        function interpretarBooleanoFlex(valor) {
+            if (typeof valor === 'boolean') {
+                return valor;
+            }
+            if (typeof valor === 'number') {
+                return valor !== 0;
+            }
+            if (typeof valor === 'string') {
+                const texto = normalizarTexto(valor);
+                if (!texto) {
+                    return null;
+                }
+                if (['sim', 'true', '1', 'ativo', 'alerta', 'critico', 'crítico', 'positivo', 'sucesso'].includes(texto)) {
+                    return true;
+                }
+                if (['nao', 'não', 'false', '0', 'negativo', 'inativo', 'erro', 'fail'].includes(texto)) {
+                    return false;
+                }
+            }
+            return null;
+        }
+
+        function inferirTipoAcao(acao, tipoOriginal) {
+            const base = normalizarTexto(tipoOriginal || acao || '');
+            if (!base) {
+                return 'operacao';
+            }
+            if (base.includes('cancel')) return 'cancelamento';
+            if (base.includes('login') || base.includes('acesso') || base.includes('autentic')) return 'login';
+            if (base.includes('export') || base.includes('download')) return 'exportacao';
+            if (base.includes('rotin') || base.includes('cron') || base.includes('auto')) return 'rotina';
+            if (base.includes('bloq') || base.includes('admin') || base.includes('status') || base.includes('ajust')) return 'administrativo';
+            if (base.includes('cad') || base.includes('cria') || base.includes('inclu') || base.includes('novo')) return 'criacao';
+            if (base.includes('atualiz') || base.includes('edit') || base.includes('alter') || base.includes('ajus')) return 'atualizacao';
+            return base.split(' ')[0] || 'operacao';
+        }
+
+        function inferirResultado(valor, alertaAtivo) {
+            if (typeof valor === 'string') {
+                const base = normalizarTexto(valor);
+                if (!base) {
+                    return alertaAtivo ? 'alerta' : 'sucesso';
+                }
+                if (base.includes('erro') || base.includes('falh') || base.includes('inval')) {
+                    return 'erro';
+                }
+                if (base.includes('alert') || base.includes('aten') || base.includes('crit')) {
+                    return 'alerta';
+                }
+                if (base.includes('pend')) {
+                    return alertaAtivo ? 'alerta' : 'sucesso';
+                }
+                return 'sucesso';
+            }
+            if (typeof valor === 'boolean') {
+                return valor ? 'sucesso' : 'erro';
+            }
+            if (typeof valor === 'number') {
+                if (valor > 0) return 'sucesso';
+                if (valor < 0) return 'erro';
+            }
+            return alertaAtivo ? 'alerta' : 'sucesso';
+        }
+
+        function inferirOrigem(valor) {
+            const base = normalizarTexto(valor || '');
+            if (!base) {
+                return 'sistema';
+            }
+            if (base.includes('web') || base.includes('portal')) return 'web';
+            if (base.includes('mobil') || base.includes('app')) return 'mobile';
+            if (base.includes('api') || base.includes('integra')) return 'api';
+            if (base.includes('rotina') || base.includes('cron') || base.includes('auto') || base.includes('script')) return 'rotina';
+            return base || 'sistema';
+        }
+
+        function gerarIdLog(timestampIso, indice) {
+            const base = (timestampIso || '').replace(/[^0-9]/g, '') || `${Date.now()}`;
+            const sufixo = typeof indice === 'number' ? String(indice + 1).padStart(3, '0') : '000';
+            return `LOG-${base}-${sufixo}`;
+        }
+
+        function converterLogPlanilhaParaRegistro(item, indice) {
+            if (!item) {
+                return null;
+            }
+
+            const dadosExtras = tentarParseJsonLog(item.dados);
+            const timestampValor = item.timestamp instanceof Date ? item.timestamp : new Date(item.timestamp || Date.now());
+            const timestampIso = Number.isNaN(timestampValor.getTime())
+                ? new Date().toISOString()
+                : timestampValor.toISOString();
+
+            const id = String(
+                extrairPrimeiroValor(dadosExtras, [
+                    ['id'],
+                    ['identificador'],
+                    ['meta', 'id'],
+                    ['agendamento', 'id'],
+                    ['payload', 'id']
+                ], gerarIdLog(timestampIso, indice))
+            );
+
+            const usuario = item.usuario
+                || extrairPrimeiroValor(dadosExtras, [['usuario', 'nome'], ['usuario'], ['responsavel'], ['operador']], 'Desconhecido');
+            const perfil = extrairPrimeiroValor(dadosExtras, [['usuario', 'perfil'], ['perfil'], ['role'], ['usuario', 'role']], '—');
+            const matricula = extrairPrimeiroValor(dadosExtras, [['usuario', 'matricula'], ['matricula'], ['responsavel', 'matricula']], '');
+            const acao = item.acao || extrairPrimeiroValor(dadosExtras, [['acao'], ['evento'], ['tipo']], 'Registro');
+            const tipoAcao = inferirTipoAcao(acao, extrairPrimeiroValor(dadosExtras, [['tipoAcao'], ['tipo'], ['categoria']], ''));
+            const alertaFlag = interpretarBooleanoFlex(extrairPrimeiroValor(dadosExtras, [['alerta'], ['isAlert'], ['critico'], ['critico']], null)) || false;
+            const resultado = inferirResultado(extrairPrimeiroValor(dadosExtras, [['resultado'], ['status'], ['sucesso']], null), alertaFlag);
+            const origem = inferirOrigem(extrairPrimeiroValor(dadosExtras, [['origem'], ['canal'], ['fonte']], ''));
+            const detalhes = item.detalhes || extrairPrimeiroValor(dadosExtras, [['detalhes'], ['descricao'], ['mensagem']], '');
+            const observacoes = extrairPrimeiroValor(dadosExtras, [['observacoes'], ['observacao'], ['obs']], '');
+            const ip = extrairPrimeiroValor(dadosExtras, [['ip'], ['enderecoIp'], ['origemIp']], '');
+            const alertaMotivo = extrairPrimeiroValor(dadosExtras, [['alertaMotivo'], ['motivoAlerta'], ['alertReason']], '');
+
+            const revisadoValor = interpretarBooleanoFlex(extrairPrimeiroValor(dadosExtras, [['revisado'], ['foiRevisado'], ['reviewed']], null));
+            const revisado = revisadoValor === null ? false : revisadoValor;
+            const revisadoPor = extrairPrimeiroValor(dadosExtras, [['revisadoPor'], ['revisor'], ['reviewedBy']], '');
+            const revisadoEmValor = extrairPrimeiroValor(dadosExtras, [['revisadoEm'], ['dataRevisao'], ['reviewedAt']], '');
+            let revisadoEm = '';
+            if (revisadoEmValor) {
+                const dataRevisao = new Date(revisadoEmValor);
+                if (!Number.isNaN(dataRevisao.getTime())) {
+                    revisadoEm = dataRevisao.toISOString();
+                }
+            }
+
+            let payload = extrairPrimeiroValor(dadosExtras, [['payload'], ['dados'], ['contexto'], ['log'], ['registro']], null);
+            if (!payload && dadosExtras && typeof dadosExtras === 'object') {
+                const copia = { ...dadosExtras };
+                delete copia.id;
+                delete copia.identificador;
+                delete copia.meta;
+                delete copia.agendamento;
+                delete copia.payload;
+                delete copia.dados;
+                delete copia.contexto;
+                delete copia.log;
+                delete copia.registro;
+                delete copia.usuario;
+                delete copia.responsavel;
+                delete copia.operador;
+                delete copia.perfil;
+                delete copia.role;
+                delete copia.matricula;
+                delete copia.tipoAcao;
+                delete copia.tipo;
+                delete copia.categoria;
+                delete copia.resultado;
+                delete copia.status;
+                delete copia.sucesso;
+                delete copia.alerta;
+                delete copia.isAlert;
+                delete copia.critico;
+                delete copia.alertaMotivo;
+                delete copia.motivoAlerta;
+                delete copia.revisado;
+                delete copia.foiRevisado;
+                delete copia.reviewed;
+                delete copia.revisadoPor;
+                delete copia.revisor;
+                delete copia.reviewedBy;
+                delete copia.revisadoEm;
+                delete copia.dataRevisao;
+                delete copia.reviewedAt;
+                delete copia.detalhes;
+                delete copia.descricao;
+                delete copia.mensagem;
+                delete copia.observacoes;
+                delete copia.observacao;
+                delete copia.obs;
+                delete copia.origem;
+                delete copia.canal;
+                delete copia.fonte;
+                delete copia.ip;
+                delete copia.enderecoIp;
+                delete copia.origemIp;
+                if (Object.keys(copia).length) {
+                    payload = copia;
+                }
+            }
+
+            if (payload && typeof payload === 'object') {
+                payload = clonarProfundo(payload);
+            }
+
+            return {
+                id,
+                timestamp: timestampIso,
+                usuario,
+                perfil,
+                matricula,
+                acao,
+                tipoAcao,
+                resultado,
+                origem,
+                detalhes,
+                observacoes,
+                alerta: alertaFlag,
+                alertaMotivo,
+                revisado,
+                revisadoPor,
+                revisadoEm,
+                ip,
+                payload: payload || null
+            };
+        }
+
+        function carregarLogsDaPlanilha(opcoes = {}) {
+            const { forcar = false } = opcoes;
+            const logsState = stores.logs;
+            if (logsState.carregando) {
+                return;
+            }
+            if (!forcar && logsState.carregado) {
+                return;
+            }
+
+            const runnerDisponivel = typeof google !== 'undefined' && google?.script?.run;
+            if (!runnerDisponivel) {
+                if (!logsState.carregado) {
+                    logsState.registros = obterLogsDemonstracaoClonados();
+                    logsState.alertasConfigurados = obterAlertasLogsDemonstracaoClonados();
+                    logsState.ultimaSincronizacao = new Date().toISOString();
+                    logsState.carregado = true;
+                    renderLogsSection();
+                    mostrarLogsFeedback('Exibindo dados demonstrativos.');
+                }
+                return;
+            }
+
+            logsState.carregando = true;
+            mostrarLogsFeedback('Carregando registros de auditoria...');
+
+            executarGoogleScript({
+                funcao: 'getLogs',
+                parametros: [300, ''],
+                tentativas: 1,
+                contexto: {
+                    onFinally() {
+                        logsState.carregando = false;
+                    }
+                },
+                onSuccess(resposta) {
+                    const registros = Array.isArray(resposta)
+                        ? resposta.map((item, indice) => converterLogPlanilhaParaRegistro(item, indice)).filter(Boolean)
+                        : [];
+
+                    if (!registros.length) {
+                        console.warn('Nenhum registro de log encontrado na planilha.');
+                        logsState.registros = [];
+                        mostrarLogsFeedback('Nenhum registro encontrado na planilha de logs.');
+                    } else {
+                        logsState.registros = registros;
+                        mostrarLogsFeedback('');
+                    }
+                    logsState.alertasConfigurados = [];
+
+                    logsState.ultimaSincronizacao = new Date().toISOString();
+                    logsState.carregado = true;
+                    renderLogsSection();
+                },
+                onFailure(erro) {
+                    console.error('Erro ao carregar logs da planilha:', erro);
+                    if (!logsState.carregado) {
+                        logsState.registros = obterLogsDemonstracaoClonados();
+                        logsState.alertasConfigurados = obterAlertasLogsDemonstracaoClonados();
+                        logsState.ultimaSincronizacao = new Date().toISOString();
+                        renderLogsSection();
+                        mostrarLogsFeedback('Não foi possível carregar os logs reais. Exibindo dados demonstrativos.');
+                    } else {
+                        mostrarLogsFeedback('Não foi possível atualizar os logs no momento.');
+                    }
+                    logsState.carregado = false;
+                },
+                mensagemErroPadrao: 'Erro ao carregar logs.'
+            });
+        }
+
         function inicializarLogsGestao() {
             const container = document.getElementById('logs-section');
             if (!container) {
@@ -6891,31 +7269,16 @@
 
             const logsState = stores.logs;
             if (!logsState.eventosConfigurados) {
-                logsState.registros = JSON.parse(JSON.stringify(LOGS_DEMONSTRACAO));
-                logsState.alertasConfigurados = [
-                    {
-                        titulo: 'Cancelamentos em sequência',
-                        descricao: 'Dispara quando ocorrem 5 cancelamentos em 30 minutos.',
-                        ultimaVerificacao: '2024-02-10T11:22:05-03:00'
-                    },
-                    {
-                        titulo: 'Bloqueios emergenciais',
-                        descricao: 'Notifica sempre que uma sala é bloqueada com motivo emergencial.',
-                        ultimaVerificacao: '2024-02-10T09:15:42-03:00'
-                    },
-                    {
-                        titulo: 'Falhas de integração',
-                        descricao: 'Alerta quando rotinas automáticas retornam erro consecutivo.',
-                        ultimaVerificacao: '2024-02-09T23:12:07-03:00'
-                    }
-                ];
-                logsState.ultimaSincronizacao = new Date().toISOString();
                 configurarEventosLogs();
                 logsState.eventosConfigurados = true;
             }
 
             sincronizarUIFiltrosLogs();
             renderLogsSection();
+
+            if (!logsState.carregado && !logsState.carregando) {
+                carregarLogsDaPlanilha();
+            }
         }
 
         function configurarEventosLogs() {
