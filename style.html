@@ -1558,7 +1558,7 @@
 
       .planejamento-table th.planejamento-col-check,
       .planejamento-table td.planejamento-col-check {
-          width: 72px;
+          width: 140px;
           text-align: center;
       }
 
@@ -1586,17 +1586,22 @@
           color: var(--text-secondary);
       }
 
-      body.light-theme .planejamento-row-marcado {
-          background: var(--primary-soft);
-      }
-
-      body.light-theme .planejamento-check-visual {
+      body.light-theme .planejamento-quickfreq-btn {
           background: #fff;
-          border: 1px solid rgba(148, 163, 184, 0.35);
+          border-color: rgba(148, 163, 184, 0.4);
+          color: var(--text-secondary);
       }
 
-      body.light-theme .planejamento-check-input:checked + .planejamento-check-visual {
-          box-shadow: 0 0 0 2px rgba(91, 191, 167, 0.22);
+      body.light-theme .planejamento-quickfreq-btn:hover {
+          box-shadow: 0 0 0 2px rgba(99, 107, 255, 0.1);
+      }
+
+      body.light-theme .planejamento-quickfreq-btn-in.is-active {
+          background: rgba(91, 191, 167, 0.18);
+      }
+
+      body.light-theme .planejamento-quickfreq-btn-out.is-active {
+          background: rgba(122, 141, 255, 0.22);
       }
 
       body.light-theme .planejamento-grupo {
@@ -1671,61 +1676,87 @@
           align-items: flex-start;
       }
 
-      .planejamento-check {
-          position: relative;
+      .planejamento-col-check {
+          width: 140px;
+      }
+
+      .planejamento-quickfreq {
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          gap: 10px;
+          width: 100%;
       }
 
-      .planejamento-check-input {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          margin: 0;
-          padding: 0;
-          opacity: 0;
-          pointer-events: none;
-      }
-
-      .planejamento-check-visual {
-          width: 42px;
-          height: 42px;
+      .planejamento-quickfreq-btn {
+          min-width: 60px;
+          height: 38px;
           border-radius: var(--radius-sm);
           border: 1px solid var(--border-soft);
           background: var(--surface-elevated);
           color: var(--text-muted);
+          font-weight: 600;
+          font-size: 0.82rem;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          font-size: 1rem;
-          cursor: pointer;
+          gap: 6px;
           transition: all var(--transition-fast);
+          position: relative;
       }
 
-      .planejamento-check:hover .planejamento-check-visual {
-          color: var(--primary);
-          border-color: var(--primary);
-      }
-
-      .planejamento-check-input:focus-visible + .planejamento-check-visual {
+      .planejamento-quickfreq-btn:focus-visible {
           outline: 2px solid var(--primary);
           outline-offset: 2px;
       }
 
-      .planejamento-check-input:checked + .planejamento-check-visual {
-          background: rgba(91, 191, 167, 0.16);
+      .planejamento-quickfreq-btn-in {
           border-color: rgba(91, 191, 167, 0.45);
           color: var(--success);
-          box-shadow: 0 0 0 2px rgba(91, 191, 167, 0.18);
       }
 
-      .planejamento-row-marcado {
-          background: rgba(91, 191, 167, 0.08);
+      .planejamento-quickfreq-btn-out {
+          border-color: rgba(122, 141, 255, 0.45);
+          color: var(--info-strong);
       }
 
-      .planejamento-row-marcado .planejamento-planejada-wrapper .planejamento-status-chip {
-          border: 1px solid rgba(91, 191, 167, 0.4);
+      .planejamento-quickfreq-btn:hover {
+          border-color: var(--primary);
+          color: var(--primary);
+          box-shadow: 0 0 0 2px rgba(99, 107, 255, 0.12);
+      }
+
+      .planejamento-quickfreq-btn-in:hover {
+          border-color: rgba(91, 191, 167, 0.75);
+          color: var(--success);
+      }
+
+      .planejamento-quickfreq-btn-out:hover {
+          border-color: rgba(122, 141, 255, 0.75);
+          color: var(--info-strong);
+      }
+
+      .planejamento-quickfreq-btn.is-active {
+          background: rgba(99, 107, 255, 0.12);
+          color: var(--primary);
+          border-color: rgba(99, 107, 255, 0.4);
+          box-shadow: 0 0 0 2px rgba(99, 107, 255, 0.2);
+      }
+
+      .planejamento-quickfreq-btn-in.is-active {
+          background: rgba(91, 191, 167, 0.16);
+          border-color: rgba(91, 191, 167, 0.55);
+          color: var(--success);
+          box-shadow: 0 0 0 2px rgba(91, 191, 167, 0.2);
+      }
+
+      .planejamento-quickfreq-btn-out.is-active {
+          background: rgba(122, 141, 255, 0.18);
+          border-color: rgba(122, 141, 255, 0.55);
+          color: var(--info-strong);
+          box-shadow: 0 0 0 2px rgba(122, 141, 255, 0.2);
       }
 
       .planejamento-grupo {
@@ -4718,6 +4749,11 @@
           flex-direction: column;
       }
 
+      .modal-content.modal-compact {
+          max-width: 420px;
+          width: min(92vw, 420px);
+      }
+
       .modal-header {
           padding: 22px 26px;
           border-bottom: 1px solid var(--border-soft);
@@ -4729,6 +4765,13 @@
       .modal-body {
           padding: 24px;
           overflow-y: auto;
+      }
+
+      .modal-content.modal-compact .modal-body {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+          padding: 22px 24px;
       }
 
       .modal-subtitle {
@@ -4756,6 +4799,55 @@
           display: flex;
           flex-direction: column;
           gap: 16px;
+      }
+
+      .planejamento-registro-rapido-info {
+          display: grid;
+          gap: 6px;
+      }
+
+      .planejamento-registro-rapido-profissional {
+          margin: 0;
+          font-weight: 600;
+          font-size: 1.05rem;
+          color: var(--text-primary);
+      }
+
+      .planejamento-registro-rapido-resumo {
+          margin: 0;
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+      }
+
+      .planejamento-registro-rapido-status {
+          margin: 0;
+          font-size: 0.85rem;
+          color: var(--text-muted);
+      }
+
+      .planejamento-registro-rapido-status.registrado {
+          color: var(--success);
+      }
+
+      .planejamento-registro-rapido-status.faltou {
+          color: var(--warning-strong);
+      }
+
+      .planejamento-registro-rapido-status.pendente {
+          color: var(--text-muted);
+      }
+
+      .planejamento-registro-rapido-horario {
+          margin: 4px 0 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+      }
+
+      .planejamento-registro-rapido-acoes {
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
       }
 
       .chart-modal-body {

@@ -272,7 +272,7 @@
                             <table class="planejamento-table">
                                 <thead>
                                 <tr>
-                                    <th class="planejamento-col-check">OK</th>
+                                    <th class="planejamento-col-check">IN / OUT</th>
                                     <th>Profissional</th>
                                     <th>Especialidade</th>
                                     <th>Turno</th>
@@ -1758,6 +1758,34 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="planejamento-registro-rapido-modal">
+        <div class="modal-content modal-compact">
+            <div class="modal-header">
+                <h2><i class="fas fa-stopwatch"></i> Registro rápido</h2>
+                <button class="close-modal" data-skip-busy="true">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-error" id="planejamento-registro-rapido-alert" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i> <span id="planejamento-registro-rapido-message"></span>
+                </div>
+                <div class="planejamento-registro-rapido-info">
+                    <p class="planejamento-registro-rapido-profissional" id="planejamento-registro-rapido-profissional"></p>
+                    <p class="planejamento-registro-rapido-resumo" id="planejamento-registro-rapido-resumo"></p>
+                    <p class="planejamento-registro-rapido-status" id="planejamento-registro-rapido-status"></p>
+                    <p class="planejamento-registro-rapido-horario" id="planejamento-registro-rapido-horario"></p>
+                </div>
+                <div class="planejamento-registro-rapido-acoes">
+                    <button type="button" class="btn btn-secondary" id="planejamento-registro-rapido-cancelar">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" id="planejamento-registro-rapido-confirmar">
+                        <i class="fas fa-check"></i> Confirmar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
