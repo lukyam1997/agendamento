@@ -376,6 +376,7 @@
         };
 
         const estado = {};
+        let contextoRegistroRapido = null;
         const drawerController = {
             register: () => () => {},
             unregister: () => {},
@@ -2638,6 +2639,8 @@
                     if (!modal) return;
                     if (modal.id === 'planejamento-frequencia-modal') {
                         fecharModalPlanejamentoFrequencia();
+                    } else if (modal.id === 'planejamento-registro-rapido-modal') {
+                        fecharPlanejamentoRegistroRapido();
                     } else if (modal.id === 'chart-modal') {
                         fecharChartModal();
                     } else {
@@ -2697,6 +2700,18 @@
                 planejamentoFrequenciaFaltou.addEventListener('click', marcarPlanejamentoFrequenciaFaltou);
             }
 
+            const planejamentoRegistroRapidoCancelar = document.getElementById('planejamento-registro-rapido-cancelar');
+            if (planejamentoRegistroRapidoCancelar) {
+                planejamentoRegistroRapidoCancelar.addEventListener('click', () => {
+                    fecharPlanejamentoRegistroRapido();
+                });
+            }
+
+            const planejamentoRegistroRapidoConfirmar = document.getElementById('planejamento-registro-rapido-confirmar');
+            if (planejamentoRegistroRapidoConfirmar) {
+                planejamentoRegistroRapidoConfirmar.addEventListener('click', confirmarPlanejamentoRegistroRapido);
+            }
+
             // Formulário de cadastro
             document.getElementById('form-cadastro').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -2751,6 +2766,8 @@
                     if (e.target === modal) {
                         if (modal.id === 'planejamento-frequencia-modal') {
                             fecharModalPlanejamentoFrequencia();
+                        } else if (modal.id === 'planejamento-registro-rapido-modal') {
+                            fecharPlanejamentoRegistroRapido();
                         } else if (modal.id === 'chart-modal') {
                             fecharChartModal();
                         } else {
@@ -3918,29 +3935,38 @@
 
                 grupo.itens.forEach(item => {
                     const tr = document.createElement('tr');
-                    tr.classList.toggle('planejamento-row-marcado', Boolean(item.marcado));
+                    tr.dataset.planejamentoId = item.id;
                     let statusSpan;
                     let botaoAcao;
 
                     const tdCheck = document.createElement('td');
                     tdCheck.className = 'planejamento-col-check';
-                    const checkLabel = document.createElement('label');
-                    checkLabel.className = 'planejamento-check';
-                    const checkInput = document.createElement('input');
-                    checkInput.type = 'checkbox';
-                    checkInput.className = 'planejamento-check-input';
-                    checkInput.checked = Boolean(item.marcado);
-                    checkInput.setAttribute('aria-label', `Confirmar ${item.profissional || 'profissional'} no planejamento`);
-                    const checkVisual = document.createElement('span');
-                    checkVisual.className = 'planejamento-check-visual';
-                    checkVisual.innerHTML = '<i class="fas fa-check"></i>';
-                    checkInput.addEventListener('change', () => {
-                        item.marcado = checkInput.checked;
-                        tr.classList.toggle('planejamento-row-marcado', item.marcado);
-                    });
-                    checkLabel.appendChild(checkInput);
-                    checkLabel.appendChild(checkVisual);
-                    tdCheck.appendChild(checkLabel);
+                    const quickWrapper = document.createElement('div');
+                    quickWrapper.className = 'planejamento-quickfreq';
+
+                    const botaoEntradaRapida = document.createElement('button');
+                    botaoEntradaRapida.type = 'button';
+                    botaoEntradaRapida.className = 'planejamento-quickfreq-btn planejamento-quickfreq-btn-in';
+                    botaoEntradaRapida.dataset.planejamentoRegistro = 'entrada';
+                    botaoEntradaRapida.dataset.planejamentoRegistroId = item.id;
+                    botaoEntradaRapida.textContent = 'IN';
+                    botaoEntradaRapida.setAttribute('aria-label', `Registrar entrada rápida de ${item.profissional || 'profissional'}`);
+                    botaoEntradaRapida.setAttribute('title', 'Registrar entrada');
+                    botaoEntradaRapida.addEventListener('click', () => abrirPlanejamentoRegistroRapido(item.id, 'entrada'));
+
+                    const botaoSaidaRapida = document.createElement('button');
+                    botaoSaidaRapida.type = 'button';
+                    botaoSaidaRapida.className = 'planejamento-quickfreq-btn planejamento-quickfreq-btn-out';
+                    botaoSaidaRapida.dataset.planejamentoRegistro = 'saida';
+                    botaoSaidaRapida.dataset.planejamentoRegistroId = item.id;
+                    botaoSaidaRapida.textContent = 'OUT';
+                    botaoSaidaRapida.setAttribute('aria-label', `Registrar saída rápida de ${item.profissional || 'profissional'}`);
+                    botaoSaidaRapida.setAttribute('title', 'Registrar saída');
+                    botaoSaidaRapida.addEventListener('click', () => abrirPlanejamentoRegistroRapido(item.id, 'saida'));
+
+                    quickWrapper.appendChild(botaoEntradaRapida);
+                    quickWrapper.appendChild(botaoSaidaRapida);
+                    tdCheck.appendChild(quickWrapper);
 
                     const tdProfissional = document.createElement('td');
                     tdProfissional.textContent = item.profissional;
@@ -4026,6 +4052,7 @@
                     const frequenciaInfo = document.createElement('span');
                     frequenciaInfo.className = 'planejamento-frequencia-info';
                     atualizarInfoFrequenciaElemento(frequenciaInfo, item);
+                    atualizarEstadoBotoesRegistroRapido(botaoEntradaRapida, botaoSaidaRapida, item);
 
                     containerAcoes.appendChild(containerBotoes);
                     containerAcoes.appendChild(frequenciaInfo);
@@ -4337,17 +4364,28 @@
             return normalizarTexto(valor) === 'faltou';
         }
 
+        function sanitizarValorFrequencia(valor) {
+            const texto = (valor || '').trim();
+            if (!texto || texto === '—' || valorFrequenciaEhFaltou(texto)) {
+                return '';
+            }
+            return texto;
+        }
+
         function obterDescricaoFrequencia(linha) {
             if (!linha) {
                 return { texto: 'Frequência não registrada', classe: 'pendente' };
             }
 
-            const chegada = (linha.horaChegadaReal || '').trim();
-            const saida = (linha.horaSaidaReal || '').trim();
+            const chegadaBruta = (linha.horaChegadaReal || '').trim();
+            const saidaBruta = (linha.horaSaidaReal || '').trim();
 
-            if (valorFrequenciaEhFaltou(chegada) || valorFrequenciaEhFaltou(saida)) {
+            if (valorFrequenciaEhFaltou(chegadaBruta) || valorFrequenciaEhFaltou(saidaBruta)) {
                 return { texto: 'Marcado como faltou', classe: 'faltou' };
             }
+
+            const chegada = sanitizarValorFrequencia(chegadaBruta);
+            const saida = sanitizarValorFrequencia(saidaBruta);
 
             if (!chegada && !saida) {
                 return { texto: 'Frequência não registrada', classe: 'pendente' };
@@ -4366,6 +4404,29 @@
             elemento.classList.remove('faltou', 'registrado', 'pendente');
             if (info.classe) {
                 elemento.classList.add(info.classe);
+            }
+        }
+
+        function atualizarEstadoBotoesRegistroRapido(botaoEntrada, botaoSaida, linha) {
+            const chegadaValor = linha ? sanitizarValorFrequencia(linha.horaChegadaReal) : '';
+            const saidaValor = linha ? sanitizarValorFrequencia(linha.horaSaidaReal) : '';
+            const chegadaRegistrada = Boolean(chegadaValor);
+            const saidaRegistrada = Boolean(saidaValor);
+
+            if (botaoEntrada) {
+                botaoEntrada.classList.toggle('is-active', chegadaRegistrada);
+                botaoEntrada.setAttribute('aria-pressed', chegadaRegistrada ? 'true' : 'false');
+                botaoEntrada.setAttribute('title', chegadaRegistrada
+                    ? `Entrada registrada às ${chegadaValor}`
+                    : 'Registrar entrada');
+            }
+
+            if (botaoSaida) {
+                botaoSaida.classList.toggle('is-active', saidaRegistrada);
+                botaoSaida.setAttribute('aria-pressed', saidaRegistrada ? 'true' : 'false');
+                botaoSaida.setAttribute('title', saidaRegistrada
+                    ? `Saída registrada às ${saidaValor}`
+                    : 'Registrar saída');
             }
         }
 
@@ -4431,14 +4492,23 @@
         }
 
         function atualizarPlanejamentoFrequenciaVisual(id) {
-            const botao = document.querySelector(`button[data-planejamento-frequencia-id="${id}"]`);
-            if (!botao) return;
-            const container = botao.closest('.planejamento-acoes');
-            if (!container) return;
-            const info = container.querySelector('.planejamento-frequencia-info');
             const linha = estado.planejamentoLinhas.find(item => item.id === String(id));
-            if (info) {
-                atualizarInfoFrequenciaElemento(info, linha);
+            const botao = document.querySelector(`button[data-planejamento-frequencia-id="${id}"]`);
+            if (botao) {
+                const container = botao.closest('.planejamento-acoes');
+                if (container) {
+                    const info = container.querySelector('.planejamento-frequencia-info');
+                    if (info) {
+                        atualizarInfoFrequenciaElemento(info, linha);
+                    }
+                }
+            }
+
+            const trLinha = document.querySelector(`#planejamento-tbody tr[data-planejamento-id="${id}"]`);
+            if (trLinha) {
+                const botaoEntrada = trLinha.querySelector('button[data-planejamento-registro="entrada"]');
+                const botaoSaida = trLinha.querySelector('button[data-planejamento-registro="saida"]');
+                atualizarEstadoBotoesRegistroRapido(botaoEntrada, botaoSaida, linha);
             }
         }
 
@@ -4609,6 +4679,176 @@
                     setPlanejamentoFrequenciaBusy(false);
                     const mensagem = 'Erro ao marcar falta: ' + (error?.message || error);
                     mostrarPlanejamentoFrequenciaAlerta(mensagem);
+                    mostrarPlanejamentoMensagem(mensagem, false, true);
+                }
+            });
+        }
+
+        function obterHorarioAtualFormatado() {
+            return new Date().toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        }
+
+        function mostrarPlanejamentoRegistroRapidoAlerta(mensagem) {
+            const alerta = document.getElementById('planejamento-registro-rapido-alert');
+            const texto = document.getElementById('planejamento-registro-rapido-message');
+            if (!alerta || !texto) return;
+
+            if (mensagem) {
+                texto.textContent = mensagem;
+                alerta.style.display = 'block';
+                alerta.classList.add('show');
+            } else {
+                texto.textContent = '';
+                alerta.style.display = 'none';
+                alerta.classList.remove('show');
+            }
+        }
+
+        function setPlanejamentoRegistroRapidoBusy(isBusy) {
+            const confirmarBtn = document.getElementById('planejamento-registro-rapido-confirmar');
+            const cancelarBtn = document.getElementById('planejamento-registro-rapido-cancelar');
+
+            [confirmarBtn, cancelarBtn].forEach(btn => {
+                if (!btn) return;
+                btn.disabled = !!isBusy;
+            });
+
+            if (confirmarBtn) {
+                if (isBusy) {
+                    confirmarBtn.dataset.keepBusy = 'true';
+                    confirmarBtn.classList.add('is-processing');
+                } else {
+                    delete confirmarBtn.dataset.keepBusy;
+                    confirmarBtn.classList.remove('is-processing');
+                    const spinner = confirmarBtn.querySelector('.button-spinner');
+                    if (spinner) spinner.remove();
+                }
+            }
+        }
+
+        function fecharPlanejamentoRegistroRapido() {
+            const modal = document.getElementById('planejamento-registro-rapido-modal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            contextoRegistroRapido = null;
+            mostrarPlanejamentoRegistroRapidoAlerta('');
+            setPlanejamentoRegistroRapidoBusy(false);
+        }
+
+        function abrirPlanejamentoRegistroRapido(id, tipo) {
+            const modal = document.getElementById('planejamento-registro-rapido-modal');
+            if (!modal) return;
+
+            const linha = estado.planejamentoLinhas.find(item => item.id === String(id));
+            if (!linha) {
+                mostrarPlanejamentoMensagem('Não foi possível localizar o agendamento selecionado para frequência.', false, true);
+                return;
+            }
+
+            const tipoNormalizado = tipo === 'saida' ? 'saida' : 'entrada';
+            const horario = obterHorarioAtualFormatado();
+            const labelTipo = tipoNormalizado === 'entrada' ? 'entrada' : 'saída';
+
+            contextoRegistroRapido = {
+                id: linha.id,
+                tipo: tipoNormalizado,
+                horario
+            };
+
+            const profissionalEl = document.getElementById('planejamento-registro-rapido-profissional');
+            if (profissionalEl) {
+                profissionalEl.textContent = linha.profissional || 'Profissional não identificado';
+            }
+
+            const resumoEl = document.getElementById('planejamento-registro-rapido-resumo');
+            if (resumoEl) {
+                const partes = [];
+                if (linha.especialidade && linha.especialidade !== '—') partes.push(linha.especialidade);
+                const turnoLabel = formatarTurnoLabel(linha.turno);
+                if (turnoLabel) partes.push(turnoLabel);
+                const salaLabel = linha.salaAtual && linha.salaAtual !== '—' ? `Sala ${linha.salaAtual}` : 'Sala não definida';
+                partes.push(salaLabel);
+                resumoEl.textContent = partes.join(' • ');
+            }
+
+            const statusEl = document.getElementById('planejamento-registro-rapido-status');
+            if (statusEl) {
+                const info = obterDescricaoFrequencia(linha);
+                statusEl.textContent = info.texto;
+                statusEl.className = `planejamento-registro-rapido-status ${info.classe || ''}`;
+            }
+
+            const horarioEl = document.getElementById('planejamento-registro-rapido-horario');
+            if (horarioEl) {
+                horarioEl.textContent = `Confirmar ${labelTipo} às ${horario}?`;
+            }
+
+            mostrarPlanejamentoRegistroRapidoAlerta('');
+            setPlanejamentoRegistroRapidoBusy(false);
+
+            modal.style.display = 'flex';
+            const confirmarBtn = document.getElementById('planejamento-registro-rapido-confirmar');
+            if (confirmarBtn) {
+                setTimeout(() => confirmarBtn.focus(), 100);
+            }
+        }
+
+        function confirmarPlanejamentoRegistroRapido() {
+            if (!contextoRegistroRapido) {
+                mostrarPlanejamentoRegistroRapidoAlerta('Não foi possível identificar o agendamento selecionado.');
+                return;
+            }
+
+            const { id, tipo, horario } = contextoRegistroRapido;
+            const linha = estado.planejamentoLinhas.find(item => item.id === String(id));
+
+            if (!linha) {
+                mostrarPlanejamentoRegistroRapidoAlerta('Não foi possível localizar o agendamento selecionado.');
+                return;
+            }
+
+            const chegadaAtual = sanitizarValorFrequencia(linha.horaChegadaReal);
+            const saidaAtual = sanitizarValorFrequencia(linha.horaSaidaReal);
+
+            const payload = { faltou: false };
+            if (tipo === 'entrada') {
+                payload.horaChegadaReal = horario;
+                payload.horaSaidaReal = saidaAtual;
+            } else {
+                payload.horaSaidaReal = horario;
+                payload.horaChegadaReal = chegadaAtual;
+            }
+
+            mostrarPlanejamentoRegistroRapidoAlerta('');
+            setPlanejamentoRegistroRapidoBusy(true);
+            const labelTipo = tipo === 'entrada' ? 'entrada' : 'saída';
+            mostrarPlanejamentoMensagem(`Registrando ${labelTipo} às ${horario}...`, false);
+
+            executarGoogleScript({
+                funcao: 'registrarFrequenciaAgendamento',
+                parametros: [id, payload],
+                tentativas: 1,
+                onSuccess(result) {
+                    setPlanejamentoRegistroRapidoBusy(false);
+                    if (result && result.success) {
+                        mostrarPlanejamentoMensagem(result.message || `Registro de ${labelTipo} salvo com sucesso.`, true);
+                        fecharPlanejamentoRegistroRapido();
+                        atualizarPlanejamentoFrequenciaEstado(result.id || id, result.horaChegadaReal, result.horaSaidaReal);
+                        atualizarPlanejamentoFrequenciaVisual(result.id || id);
+                    } else {
+                        const mensagem = (result && result.message) || 'Não foi possível registrar a frequência.';
+                        mostrarPlanejamentoRegistroRapidoAlerta(mensagem);
+                        mostrarPlanejamentoMensagem(mensagem, false, true);
+                    }
+                },
+                onFailure(error) {
+                    setPlanejamentoRegistroRapidoBusy(false);
+                    const mensagem = 'Erro ao registrar frequência: ' + (error?.message || error);
+                    mostrarPlanejamentoRegistroRapidoAlerta(mensagem);
                     mostrarPlanejamentoMensagem(mensagem, false, true);
                 }
             });
