@@ -269,7 +269,8 @@
           object-fit: contain;
           background: transparent;
           padding: 0;
-          box-shadow: none;
+          box-shadow: 0 16px 32px rgba(6, 17, 34, 0.18);
+          transition: box-shadow var(--transition-fast);
       }
 
       .logo-caption {
@@ -924,7 +925,7 @@
       }
 
       body.light-theme .logo-img {
-          box-shadow: none;
+          box-shadow: 0 12px 24px rgba(15, 44, 77, 0.1);
       }
 
       body.light-theme .logo-caption {
