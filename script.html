@@ -888,6 +888,16 @@
                     : 'Ativar modo claro');
             }
 
+            const logoImg = document.getElementById('app-logo');
+            if (logoImg) {
+                const { lightSrc, darkSrc } = logoImg.dataset;
+                if (normalizado === 'light' && lightSrc) {
+                    logoImg.src = lightSrc;
+                } else if (darkSrc) {
+                    logoImg.src = darkSrc;
+                }
+            }
+
             localStorage.setItem('themePreference', normalizado);
 
             if (estado.dashboardDados) {
