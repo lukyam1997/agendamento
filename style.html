@@ -1,6 +1,6 @@
 <style>
 :root {
-          --font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
+          --font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
           --bg-body: #0f1a2b;
           --surface-base: #16253a;
           --surface-elevated: #1d2f47;
@@ -204,7 +204,7 @@
           margin: 0 auto;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 32px;
       }
 
       header {
@@ -213,7 +213,7 @@
           z-index: 60;
           background-color: var(--surface-base);
           border-radius: 20px;
-          padding: 14px 18px;
+          padding: 20px 24px;
           display: flex;
           flex-wrap: nowrap;
           align-items: center;
@@ -275,7 +275,7 @@
 
       .logo-caption {
           margin: 0;
-          font-family: 'Inter', 'Segoe UI', sans-serif;
+          font-family: var(--font-family);
           color: var(--text-secondary);
           font-size: 0.95rem;
           font-weight: 600;
@@ -667,7 +667,7 @@
           align-items: center;
           justify-content: center;
           gap: 18px;
-          padding: 10px 14px;
+          padding: 14px 20px;
           border-radius: 18px;
           background-color: var(--surface-highlight);
           border: 1px solid var(--border-soft);
