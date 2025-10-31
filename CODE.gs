@@ -4353,7 +4353,7 @@ function obterEstilosPdf() {
       box-sizing: border-box;
     }
     body {
-      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
       color: #0f172a;
       margin: 0;
       padding: 32px;
