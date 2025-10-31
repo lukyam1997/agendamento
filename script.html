@@ -880,16 +880,13 @@
 
             const toggle = document.getElementById('theme-toggle');
             if (toggle) {
-                if (toggle instanceof HTMLInputElement) {
-                    toggle.checked = normalizado === 'dark';
+                const icone = toggle.querySelector('i');
+                if (icone) {
+                    icone.className = normalizado === 'light' ? 'fas fa-sun' : 'fas fa-moon';
                 }
                 toggle.setAttribute('aria-label', normalizado === 'light'
                     ? 'Ativar modo escuro'
                     : 'Ativar modo claro');
-                const themeLabelText = document.querySelector('.theme-label-text');
-                if (themeLabelText) {
-                    themeLabelText.textContent = normalizado === 'light' ? 'Claro' : 'Escuro';
-                }
             }
 
             const logoImg = document.getElementById('app-logo');
@@ -916,17 +913,10 @@
             const toggle = document.getElementById('theme-toggle');
             if (!toggle) return;
 
-            if (toggle instanceof HTMLInputElement) {
-                toggle.addEventListener('change', () => {
-                    const proximoTema = toggle.checked ? 'dark' : 'light';
-                    aplicarTema(proximoTema);
-                });
-            } else {
-                toggle.addEventListener('click', () => {
-                    const proximoTema = estado.temaAtual === 'light' ? 'dark' : 'light';
-                    aplicarTema(proximoTema);
-                });
-            }
+            toggle.addEventListener('click', () => {
+                const proximoTema = estado.temaAtual === 'light' ? 'dark' : 'light';
+                aplicarTema(proximoTema);
+            });
         }
 
         function inicializarAnimacaoBotoes() {
@@ -2795,88 +2785,283 @@
             // Atualizar botão
             document.getElementById('btn-atualizar').addEventListener('click', carregarDados);
 
+            const navToggle = document.getElementById('nav-toggle');
+            const mainNav = document.getElementById('main-nav');
+            const mobileNavMediaQuery = typeof window.matchMedia === 'function'
+                ? window.matchMedia('(max-width: 960px)')
+                : { matches: false };
             const navGroupToggles = document.querySelectorAll('.nav-group-toggle');
-            const navButtons = document.querySelectorAll('.nav-btn');
+            let shouldFocusNavToggle = false;
 
-            const syncGroupStates = () => {
-                navGroupToggles.forEach(toggle => {
-                    const group = toggle.closest('.nav-group');
-                    const hasActive = group ? group.querySelector('.nav-btn.active') : null;
-                    toggle.classList.toggle('active', Boolean(hasActive));
-                    toggle.setAttribute('aria-expanded', hasActive ? 'true' : 'false');
-                });
-            };
-
-            const activateTab = (button) => {
-                if (!button) return;
-                navButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                const tab = button.getAttribute('data-tab');
-                if (tab) {
-                    document.querySelectorAll('.dashboard-section').forEach(sec => sec.classList.remove('active'));
-                    const section = document.getElementById(`${tab}-section`);
-                    if (section) {
-                        section.classList.add('active');
-                    }
+            const setGroupExpanded = (toggle, expanded) => {
+                if (!toggle) return;
+                const controlsId = toggle.getAttribute('aria-controls');
+                const submenu = controlsId ? document.getElementById(controlsId) : toggle.nextElementSibling;
+                const group = toggle.closest('.nav-group');
+                toggle.setAttribute('aria-expanded', String(expanded));
+                toggle.classList.toggle('is-open', expanded);
+                if (submenu) {
+                    submenu.classList.toggle('is-open', expanded);
                 }
-                syncGroupStates();
-
-                if (tab === 'dashboard') carregarDashboard();
-                if (tab === 'sala-mes') carregarSalaMesOptions();
-                if (tab === 'relatorios') inicializarRelatorios();
-                if (tab === 'planejamento') atualizarPlanejamento();
-                if (tab === 'medicos') renderAcompanhamentoMedicos();
-                if (tab === 'logs') inicializarLogsGestao();
+                if (group) {
+                    group.classList.toggle('is-open', expanded);
+                }
             };
+
+            if (navToggle && mainNav) {
+                drawerController.register('nav', {
+                    open: () => {
+                        shouldFocusNavToggle = false;
+                        navToggle.setAttribute('aria-expanded', 'true');
+                        navToggle.classList.add('is-open');
+                        mainNav.classList.add('is-open');
+                        const icon = navToggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-bars');
+                            icon.classList.add('fa-xmark');
+                        }
+                    },
+                    close: () => {
+                        navToggle.setAttribute('aria-expanded', 'false');
+                        navToggle.classList.remove('is-open');
+                        mainNav.classList.remove('is-open');
+                        const icon = navToggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-xmark');
+                            icon.classList.add('fa-bars');
+                        }
+                        const focusRequested = shouldFocusNavToggle
+                            || (mobileNavMediaQuery.matches && mainNav.contains(document.activeElement));
+                        shouldFocusNavToggle = false;
+                        if (focusRequested && typeof navToggle.focus === 'function') {
+                            navToggle.focus();
+                        }
+                    },
+                    isOpen: () => mainNav.classList.contains('is-open')
+                });
+
+                navToggle.addEventListener('click', () => {
+                    if (!mobileNavMediaQuery.matches) {
+                        return;
+                    }
+                    drawerController.toggle('nav');
+                });
+            }
+
+            const closeMobileNav = ({ shouldFocus = false } = {}) => {
+                if (!navToggle || !mainNav) return;
+                shouldFocusNavToggle = shouldFocus;
+                drawerController.close('nav');
+            };
+
+            if (navToggle && mainNav) {
+                const handleMobileNavChange = (event) => {
+                    if (!event.matches) {
+                        closeMobileNav();
+                        navGroupToggles.forEach(toggle => {
+                            const shouldOpen = toggle.dataset.initialOpen === 'true';
+                            setGroupExpanded(toggle, shouldOpen);
+                        });
+                        drawerController.syncBackdrop();
+                        return;
+                    }
+
+                    navGroupToggles.forEach(toggle => {
+                        setGroupExpanded(toggle, false);
+                    });
+                };
+
+                if (typeof mobileNavMediaQuery.addEventListener === 'function') {
+                    mobileNavMediaQuery.addEventListener('change', handleMobileNavChange);
+                } else if (typeof mobileNavMediaQuery.addListener === 'function') {
+                    mobileNavMediaQuery.addListener(handleMobileNavChange);
+                }
+
+                handleMobileNavChange(mobileNavMediaQuery);
+            }
 
             navGroupToggles.forEach(toggle => {
-                toggle.addEventListener('keydown', event => {
-                    if ((event.key === 'Enter' || event.key === ' ') && !event.defaultPrevented) {
-                        event.preventDefault();
-                        const firstItem = toggle.closest('.nav-group')?.querySelector('.nav-btn');
-                        if (firstItem) {
-                            firstItem.focus();
+                const shouldStartOpen = toggle.dataset.initialOpen === 'true';
+                if (shouldStartOpen) {
+                    setGroupExpanded(toggle, !mobileNavMediaQuery.matches);
+                } else {
+                    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                    const nextState = mobileNavMediaQuery.matches ? false : expanded;
+                    setGroupExpanded(toggle, nextState);
+                }
+
+                toggle.addEventListener('click', event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                    const nextState = !expanded;
+
+                    if (mobileNavMediaQuery.matches) {
+                        navGroupToggles.forEach(other => {
+                            if (other !== toggle) {
+                                setGroupExpanded(other, false);
+                                const otherGroup = other.closest('.nav-group');
+                                if (otherGroup) {
+                                    otherGroup.classList.remove('is-active');
+                                }
+                            }
+                        });
+                    }
+
+                    setGroupExpanded(toggle, nextState);
+
+                    const currentGroup = toggle.closest('.nav-group');
+                    if (currentGroup) {
+                        document.querySelectorAll('.nav-group').forEach(group => {
+                            if (group !== currentGroup && !mobileNavMediaQuery.matches) {
+                                const groupToggle = group.querySelector('.nav-group-toggle');
+                                if (groupToggle) {
+                                    setGroupExpanded(groupToggle, false);
+                                }
+                                group.classList.remove('is-active');
+                            }
+                        });
+                        if (nextState) {
+                            currentGroup.classList.add('is-active');
                         }
                     }
                 });
+
+                const navGroupElement = toggle.closest('.nav-group');
+                if (navGroupElement) {
+                    let hoverCloseTimer = null;
+
+                    const clearHoverCloseTimer = () => {
+                        if (hoverCloseTimer) {
+                            clearTimeout(hoverCloseTimer);
+                            hoverCloseTimer = null;
+                        }
+                    };
+
+                    navGroupElement.addEventListener('mouseenter', () => {
+                        if (mobileNavMediaQuery.matches) {
+                            return;
+                        }
+                        clearHoverCloseTimer();
+                    });
+
+                    navGroupElement.addEventListener('mouseleave', event => {
+                        if (mobileNavMediaQuery.matches) {
+                            return;
+                        }
+
+                        const relatedTarget = event.relatedTarget;
+                        if (relatedTarget && navGroupElement.contains(relatedTarget)) {
+                            return;
+                        }
+
+                        clearHoverCloseTimer();
+                        hoverCloseTimer = setTimeout(() => {
+                            if (navGroupElement.matches(':hover')) {
+                                return;
+                            }
+                            const activeElement = document.activeElement;
+                            if (activeElement && navGroupElement.contains(activeElement)) {
+                                return;
+                            }
+                            setGroupExpanded(toggle, false);
+                        }, 220);
+                    });
+
+                    navGroupElement.addEventListener('focusout', event => {
+                        if (mobileNavMediaQuery.matches) {
+                            return;
+                        }
+                        clearHoverCloseTimer();
+                        const nextFocused = event.relatedTarget;
+                        if (nextFocused && navGroupElement.contains(nextFocused)) {
+                            return;
+                        }
+                        setGroupExpanded(toggle, false);
+                    });
+                }
             });
 
-            navButtons.forEach(button => {
-                button.addEventListener('click', () => activateTab(button));
-                button.addEventListener('keydown', event => {
-                    if ((event.key === 'Enter' || event.key === ' ') && !event.defaultPrevented) {
-                        event.preventDefault();
-                        activateTab(button);
+            if (navGroupToggles.length > 0) {
+                document.addEventListener('click', event => {
+                    if (mobileNavMediaQuery.matches) {
+                        return;
                     }
+                    navGroupToggles.forEach(toggle => {
+                        const group = toggle.closest('.nav-group');
+                        if (!group) {
+                            return;
+                        }
+                        if (!group.contains(event.target)) {
+                            setGroupExpanded(toggle, false);
+                        }
+                    });
                 });
-            });
-
-            syncGroupStates();
+            }
 
             const initialActiveButton = document.querySelector('.nav-btn.active');
             if (initialActiveButton) {
-                activateTab(initialActiveButton);
-            } else if (navButtons.length > 0) {
-                activateTab(navButtons[0]);
+                const initialGroup = initialActiveButton.closest('.nav-group');
+                if (initialGroup) {
+                    initialGroup.classList.add('is-active');
+                    const initialToggle = initialGroup.querySelector('.nav-group-toggle');
+                    if (initialToggle) {
+                        setGroupExpanded(initialToggle, !mobileNavMediaQuery.matches);
+                    }
+                }
             }
 
-            const globalSearchInput = document.getElementById('global-search');
-            if (globalSearchInput) {
-                document.addEventListener('keydown', event => {
-                    if (event.key !== '/' || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+            // Configuração das abas
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('focus', () => {
+                    const group = btn.closest('.nav-group');
+                    if (!group) {
                         return;
                     }
-                    const target = event.target;
-                    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
-                        return;
+                    const toggle = group.querySelector('.nav-group-toggle');
+                    if (toggle) {
+                        setGroupExpanded(toggle, true);
                     }
-                    if (target && target.isContentEditable) {
-                        return;
-                    }
-                    event.preventDefault();
-                    globalSearchInput.focus();
                 });
-            }
+
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const tab = this.getAttribute('data-tab');
+                    document.querySelectorAll('.dashboard-section').forEach(sec => sec.classList.remove('active'));
+                    document.getElementById(`${tab}-section`).classList.add('active');
+                    const group = this.closest('.nav-group');
+                    if (group) {
+                        document.querySelectorAll('.nav-group').forEach(otherGroup => {
+                            if (otherGroup !== group) {
+                                otherGroup.classList.remove('is-active');
+                                const otherToggle = otherGroup.querySelector('.nav-group-toggle');
+                                if (otherToggle) {
+                                    setGroupExpanded(otherToggle, false);
+                                }
+                            }
+                        });
+                        group.classList.add('is-active');
+                        const toggle = group.querySelector('.nav-group-toggle');
+                        if (toggle) {
+                            if (mobileNavMediaQuery.matches) {
+                                setGroupExpanded(toggle, true);
+                            } else {
+                                setGroupExpanded(toggle, false);
+                            }
+                        }
+                    }
+                    if (tab === 'dashboard') carregarDashboard();
+                    if (tab === 'sala-mes') carregarSalaMesOptions();
+                    if (tab === 'relatorios') inicializarRelatorios();
+                    if (tab === 'planejamento') atualizarPlanejamento();
+                    if (tab === 'medicos') renderAcompanhamentoMedicos();
+                    if (tab === 'logs') inicializarLogsGestao();
+                    if (mobileNavMediaQuery.matches) {
+                        closeMobileNav({ shouldFocus: true });
+                    }
+                });
+            });
 
             const medicosBusca = document.getElementById('medicos-busca');
             if (medicosBusca) {
