@@ -2643,6 +2643,11 @@
                         fecharPlanejamentoRegistroRapido();
                     } else if (modal.id === 'chart-modal') {
                         fecharChartModal();
+                    } else if (modal.id === 'planejamento-inserir-modal') {
+                        definirPlanejamentoInserirProcessando(false);
+                        const salvarBtn = document.querySelector('#form-planejamento-inserir button[type="submit"]');
+                        if (salvarBtn) salvarBtn.disabled = false;
+                        modal.style.display = 'none';
                     } else {
                         modal.style.display = 'none';
                     }
@@ -2679,6 +2684,9 @@
             if (planejamentoCancelarBtn) {
                 planejamentoCancelarBtn.addEventListener('click', function() {
                     mostrarPlanejamentoInserirAlerta('');
+                    definirPlanejamentoInserirProcessando(false);
+                    const salvarBtn = document.querySelector('#form-planejamento-inserir button[type="submit"]');
+                    if (salvarBtn) salvarBtn.disabled = false;
                     document.getElementById('planejamento-inserir-modal').style.display = 'none';
                 });
             }
@@ -2770,6 +2778,11 @@
                             fecharPlanejamentoRegistroRapido();
                         } else if (modal.id === 'chart-modal') {
                             fecharChartModal();
+                        } else if (modal.id === 'planejamento-inserir-modal') {
+                            definirPlanejamentoInserirProcessando(false);
+                            const salvarBtn = document.querySelector('#form-planejamento-inserir button[type="submit"]');
+                            if (salvarBtn) salvarBtn.disabled = false;
+                            modal.style.display = 'none';
                         } else {
                             modal.style.display = 'none';
                         }
@@ -4096,6 +4109,11 @@
             if (!modal) return;
 
             mostrarPlanejamentoInserirAlerta('');
+            const loadingText = document.getElementById('planejamento-inserir-loading-text');
+            if (loadingText) {
+                loadingText.textContent = 'Processando solicitação...';
+            }
+            definirPlanejamentoInserirProcessando(false);
 
             const dataInput = document.getElementById('planejamento-inserir-data');
             const turnoSelect = document.getElementById('planejamento-inserir-turno');
@@ -4159,6 +4177,22 @@
             } else {
                 texto.textContent = '';
                 alerta.style.display = 'none';
+            }
+        }
+
+        function definirPlanejamentoInserirProcessando(ativo, mensagem) {
+            const overlay = document.getElementById('planejamento-inserir-loading');
+            const texto = document.getElementById('planejamento-inserir-loading-text');
+            if (!overlay) return;
+
+            if (typeof mensagem === 'string' && texto) {
+                texto.textContent = mensagem;
+            }
+
+            if (ativo) {
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
             }
         }
 
@@ -4259,26 +4293,34 @@
             };
 
             const executarSalvarAgendamento = () => {
+                definirPlanejamentoInserirProcessando(true, 'Salvando novo agendamento...');
                 executarGoogleScript({
                     funcao: 'salvarAgendamento',
                     parametros: [payload],
                     tentativas: 1,
                     onSuccess(result) {
-                        if (salvarBtn) salvarBtn.disabled = false;
                         if (result && result.success) {
-                            alert('Agendamento inserido com sucesso!');
-                            mostrarPlanejamentoInserirAlerta('');
-                            const modal = document.getElementById('planejamento-inserir-modal');
-                            if (modal) modal.style.display = 'none';
-                            const form = document.getElementById('form-planejamento-inserir');
-                            if (form) form.reset();
-                            carregarDados();
+                            definirPlanejamentoInserirProcessando(true, 'Agendamento inserido com sucesso!');
+                            setTimeout(() => {
+                                definirPlanejamentoInserirProcessando(false);
+                                if (salvarBtn) salvarBtn.disabled = false;
+                                alert('Agendamento inserido com sucesso!');
+                                mostrarPlanejamentoInserirAlerta('');
+                                const modal = document.getElementById('planejamento-inserir-modal');
+                                if (modal) modal.style.display = 'none';
+                                const form = document.getElementById('form-planejamento-inserir');
+                                if (form) form.reset();
+                                carregarDados();
+                            }, 400);
                         } else {
+                            if (salvarBtn) salvarBtn.disabled = false;
+                            definirPlanejamentoInserirProcessando(false);
                             mostrarPlanejamentoInserirAlerta(result?.message || 'Não foi possível salvar o agendamento.');
                         }
                     },
                     onFailure(error) {
                         if (salvarBtn) salvarBtn.disabled = false;
+                        definirPlanejamentoInserirProcessando(false);
                         mostrarPlanejamentoInserirAlerta('Erro ao salvar agendamento: ' + (error?.message || error));
                     }
                 });
@@ -4315,6 +4357,7 @@
                 }
 
                 if (salvarBtn) salvarBtn.disabled = true;
+                definirPlanejamentoInserirProcessando(true, `Movendo ${conflito.profissional} para a sala ${salaDestinoProfissional.numero}...`);
                 mostrarPlanejamentoInserirAlerta(`Movendo ${conflito.profissional} para a sala ${salaDestinoProfissional.numero}...`);
 
                 const payloadMovimento = { sala: salaDestinoProfissional.numero };
@@ -4329,6 +4372,7 @@
                     onSuccess(result) {
                         if (!result || !result.success) {
                             if (salvarBtn) salvarBtn.disabled = false;
+                            definirPlanejamentoInserirProcessando(false);
                             mostrarPlanejamentoInserirAlerta(result?.message || 'Não foi possível mover o agendamento existente.');
                             return;
                         }
@@ -4338,6 +4382,7 @@
                     },
                     onFailure(error) {
                         if (salvarBtn) salvarBtn.disabled = false;
+                        definirPlanejamentoInserirProcessando(false);
                         mostrarPlanejamentoInserirAlerta('Erro ao mover agendamento existente: ' + (error?.message || error));
                     }
                 });
@@ -4346,6 +4391,7 @@
             }
 
             if (salvarBtn) salvarBtn.disabled = true;
+            definirPlanejamentoInserirProcessando(true, 'Salvando novo agendamento...');
             executarSalvarAgendamento();
         }
 
