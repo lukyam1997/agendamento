@@ -2804,7 +2804,74 @@
                 ? window.matchMedia('(max-width: 960px)')
                 : { matches: false };
             const navGroupToggles = document.querySelectorAll('.nav-group-toggle');
+            const scheduleToggle = document.getElementById('schedule-toggle');
+            const scheduleControls = document.getElementById('schedule-controls');
+            const scheduleMediaQuery = typeof window.matchMedia === 'function'
+                ? window.matchMedia('(max-width: 720px)')
+                : {
+                    matches: false,
+                    addEventListener: () => {},
+                    addListener: () => {}
+                };
             let shouldFocusNavToggle = false;
+
+            if (scheduleControls) {
+                scheduleControls.setAttribute('aria-hidden', scheduleMediaQuery.matches ? 'true' : 'false');
+            }
+
+            if (scheduleToggle && scheduleControls) {
+                drawerController.register('schedule', {
+                    open: () => {
+                        scheduleControls.classList.add('is-open');
+                        scheduleControls.setAttribute('aria-hidden', 'false');
+                        scheduleToggle.setAttribute('aria-expanded', 'true');
+                    },
+                    close: () => {
+                        scheduleControls.classList.remove('is-open');
+                        scheduleControls.setAttribute('aria-hidden', scheduleMediaQuery.matches ? 'true' : 'false');
+                        scheduleToggle.setAttribute('aria-expanded', 'false');
+                    },
+                    isOpen: () => scheduleControls.classList.contains('is-open')
+                });
+
+                scheduleToggle.addEventListener('click', () => {
+                    if (!scheduleMediaQuery.matches) {
+                        return;
+                    }
+                    drawerController.toggle('schedule');
+                });
+
+                const closeScheduleDrawer = () => {
+                    if (scheduleMediaQuery.matches) {
+                        drawerController.close('schedule');
+                    }
+                };
+
+                document.querySelectorAll('.turno-btn').forEach(btn => {
+                    btn.addEventListener('click', closeScheduleDrawer);
+                });
+
+                const handleScheduleMediaChange = (event) => {
+                    if (!scheduleControls) return;
+                    scheduleControls.classList.remove('is-open');
+                    scheduleToggle.setAttribute('aria-expanded', 'false');
+                    if (event.matches) {
+                        scheduleControls.setAttribute('aria-hidden', 'true');
+                        drawerController.close('schedule');
+                    } else {
+                        scheduleControls.setAttribute('aria-hidden', 'false');
+                        drawerController.close('schedule');
+                    }
+                };
+
+                if (typeof scheduleMediaQuery.addEventListener === 'function') {
+                    scheduleMediaQuery.addEventListener('change', handleScheduleMediaChange);
+                } else if (typeof scheduleMediaQuery.addListener === 'function') {
+                    scheduleMediaQuery.addListener(handleScheduleMediaChange);
+                }
+
+                handleScheduleMediaChange(scheduleMediaQuery);
+            }
 
             const setGroupExpanded = (toggle, expanded) => {
                 if (!toggle) return;

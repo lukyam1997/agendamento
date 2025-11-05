@@ -116,17 +116,23 @@
                     <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Alternar entre tema claro e escuro">
                         <i class="fas fa-moon" aria-hidden="true"></i>
                     </button>
-                    <div class="date-controls">
-                        <button id="prev-date" type="button"><i class="fas fa-chevron-left"></i></button>
-                        <div id="current-date">Carregando...</div>
-                        <input type="date" id="current-date-picker" aria-label="Selecionar data específica">
-                        <button id="next-date" type="button"><i class="fas fa-chevron-right"></i></button>
-                    </div>
-                    <div class="turno-selector" role="group" aria-label="Seleção de turno">
-                        <button class="turno-btn active" data-turno="manha" type="button" aria-label="Manhã">M</button>
-                        <button class="turno-btn" data-turno="tarde" type="button" aria-label="Tarde">T</button>
-                        <button class="turno-btn" data-turno="noite" type="button" aria-label="Noite">N</button>
-                        <button class="turno-btn" data-turno="todos" type="button" aria-label="Todos os turnos do dia">DIA</button>
+                    <button class="icon-button schedule-toggle" id="schedule-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="schedule-controls" data-skip-busy="true">
+                        <i class="fas fa-calendar-day" aria-hidden="true"></i>
+                        <span class="label">Data &amp; turno</span>
+                    </button>
+                    <div class="schedule-controls" id="schedule-controls" aria-hidden="false">
+                        <div class="date-controls">
+                            <button id="prev-date" type="button"><i class="fas fa-chevron-left"></i></button>
+                            <div id="current-date">Carregando...</div>
+                            <input type="date" id="current-date-picker" aria-label="Selecionar data específica">
+                            <button id="next-date" type="button"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="turno-selector" role="group" aria-label="Seleção de turno">
+                            <button class="turno-btn active" data-turno="manha" type="button" aria-label="Manhã">M</button>
+                            <button class="turno-btn" data-turno="tarde" type="button" aria-label="Tarde">T</button>
+                            <button class="turno-btn" data-turno="noite" type="button" aria-label="Noite">N</button>
+                            <button class="turno-btn" data-turno="todos" type="button" aria-label="Todos os turnos do dia">DIA</button>
+                        </div>
                     </div>
                     <div class="quick-actions">
                         <button class="icon-button icon-only" id="open-filters" type="button" aria-controls="filters-panel" aria-label="Alternar filtros">
