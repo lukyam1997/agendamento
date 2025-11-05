@@ -1305,12 +1305,10 @@
           }
 
           .controls {
-              display: grid;
-              grid-template-columns: repeat(2, minmax(0, 1fr));
-              grid-template-areas:
-                  "theme schedule"
-                  "quick quick";
-              align-items: stretch;
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              justify-content: space-between;
               width: 100%;
               gap: 12px;
               padding: 14px 16px;
@@ -1332,6 +1330,7 @@
               width: 100%;
               font-size: 0.96rem;
               border-radius: var(--radius-md);
+              flex: 1 1 220px;
           }
 
           .schedule-controls {
@@ -1414,23 +1413,27 @@
 
           .quick-actions {
               grid-area: quick;
-              width: 100%;
+              width: auto;
               display: flex;
-              flex-direction: column;
+              flex-direction: row;
+              flex-wrap: wrap;
               gap: 10px;
+              justify-content: flex-end;
+              flex: 1 1 220px;
           }
 
           .quick-actions .icon-button,
           .quick-actions .btn {
-              width: 100%;
+              width: auto;
               min-height: 48px;
               justify-content: center;
               font-size: 0.96rem;
+              flex: 0 0 auto;
           }
 
           .icon-button.icon-only {
               border-radius: var(--radius-md);
-              width: 100%;
+              width: 46px;
               font-size: 1.05rem;
           }
 
@@ -1482,10 +1485,10 @@
 
       @media (max-width: 520px) {
           .controls {
-              grid-template-columns: repeat(2, minmax(0, 1fr));
-              grid-template-areas:
-                  "theme schedule"
-                  "quick quick";
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              justify-content: space-between;
               gap: 10px;
               padding: 12px;
           }
@@ -1498,6 +1501,7 @@
           .schedule-toggle {
               min-height: 44px;
               font-size: 0.94rem;
+              flex: 1 1 200px;
           }
 
           .schedule-controls {
@@ -1544,19 +1548,23 @@
           }
 
           .quick-actions {
-              flex-direction: column;
-              align-items: stretch;
+              flex-direction: row;
+              align-items: center;
+              justify-content: flex-end;
               gap: 8px;
+              flex: 1 1 200px;
+              flex-wrap: wrap;
           }
 
           .quick-actions .icon-button {
-              width: 100%;
+              width: 42px;
               height: 42px;
           }
 
           .quick-actions .btn {
               min-height: 42px;
               font-size: 0.92rem;
+              flex: 0 0 auto;
           }
 
           .nav-toggle {
@@ -1576,15 +1584,15 @@
 
       @media (max-width: 420px) {
           .controls {
-              grid-template-columns: minmax(0, 1fr);
-              grid-template-areas:
-                  "theme"
-                  "schedule"
-                  "quick";
+              display: flex;
+              flex-wrap: wrap;
+              justify-content: center;
+              gap: 8px;
           }
 
           .schedule-toggle {
               min-height: 42px;
+              flex: 1 1 180px;
           }
 
           .turno-selector {
@@ -5857,6 +5865,7 @@
           .controls {
               width: 100%;
               justify-content: flex-start;
+              flex-wrap: wrap;
           }
 
           .sidebar {
@@ -5888,8 +5897,9 @@
           }
 
           .quick-actions {
-              width: 100%;
+              width: auto;
               justify-content: flex-start;
+              flex-wrap: wrap;
           }
 
           .icon-button .label {
