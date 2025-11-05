@@ -42,14 +42,16 @@
     <div id="main-container" class="container" style="display: none;">
         <header>
             <div class="header-left">
-                <div class="logo">
-                    <img src="https://i.ibb.co/JWpmT4ys/logo-gama-claro.png" alt="Logo Gama" class="logo-img" id="app-logo" data-dark-src="https://i.ibb.co/JWpmT4ys/logo-gama-claro.png" data-light-src="https://i.ibb.co/nMyZqyn3/logo-gama-escuro.png">
-                </div>
-                <div class="header-nav">
+                <div class="header-brand">
                     <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">
                         <i class="fas fa-bars" aria-hidden="true"></i>
                         <span>Menu</span>
                     </button>
+                    <div class="logo">
+                        <img src="https://i.ibb.co/JWpmT4ys/logo-gama-claro.png" alt="Logo Gama" class="logo-img" id="app-logo" data-dark-src="https://i.ibb.co/JWpmT4ys/logo-gama-claro.png" data-light-src="https://i.ibb.co/nMyZqyn3/logo-gama-escuro.png">
+                    </div>
+                </div>
+                <div class="header-nav">
                     <nav class="main-nav" id="main-nav" aria-label="Navegação principal">
                         <div class="nav-group is-active" data-group="operacao">
                             <button class="nav-group-toggle" id="nav-group-operacao-toggle" type="button" aria-expanded="true" aria-controls="nav-group-operacao" aria-haspopup="true" data-initial-open="true">
@@ -109,29 +111,31 @@
                     </nav>
                 </div>
             </div>
-            <div class="controls">
-                <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Alternar entre tema claro e escuro">
-                    <i class="fas fa-moon" aria-hidden="true"></i>
-                </button>
-                <div class="date-controls">
-                    <button id="prev-date" type="button"><i class="fas fa-chevron-left"></i></button>
-                    <div id="current-date">Carregando...</div>
-                    <input type="date" id="current-date-picker" aria-label="Selecionar data específica">
-                    <button id="next-date" type="button"><i class="fas fa-chevron-right"></i></button>
-                </div>
-                <div class="turno-selector" role="group" aria-label="Seleção de turno">
-                    <button class="turno-btn active" data-turno="manha" type="button" aria-label="Manhã">M</button>
-                    <button class="turno-btn" data-turno="tarde" type="button" aria-label="Tarde">T</button>
-                    <button class="turno-btn" data-turno="noite" type="button" aria-label="Noite">N</button>
-                    <button class="turno-btn" data-turno="todos" type="button" aria-label="Todos os turnos do dia">DIA</button>
-                </div>
-                <div class="quick-actions">
-                    <button class="icon-button icon-only" id="open-filters" type="button" aria-controls="filters-panel" aria-label="Alternar filtros">
-                        <i class="fas fa-sliders-h"></i>
+            <div class="header-utilities">
+                <div class="controls">
+                    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Alternar entre tema claro e escuro">
+                        <i class="fas fa-moon" aria-hidden="true"></i>
                     </button>
-                    <button class="btn btn-secondary" id="btn-logout" type="button">
-                        <i class="fas fa-sign-out-alt"></i> Sair
-                    </button>
+                    <div class="date-controls">
+                        <button id="prev-date" type="button"><i class="fas fa-chevron-left"></i></button>
+                        <div id="current-date">Carregando...</div>
+                        <input type="date" id="current-date-picker" aria-label="Selecionar data específica">
+                        <button id="next-date" type="button"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div class="turno-selector" role="group" aria-label="Seleção de turno">
+                        <button class="turno-btn active" data-turno="manha" type="button" aria-label="Manhã">M</button>
+                        <button class="turno-btn" data-turno="tarde" type="button" aria-label="Tarde">T</button>
+                        <button class="turno-btn" data-turno="noite" type="button" aria-label="Noite">N</button>
+                        <button class="turno-btn" data-turno="todos" type="button" aria-label="Todos os turnos do dia">DIA</button>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="icon-button icon-only" id="open-filters" type="button" aria-controls="filters-panel" aria-label="Alternar filtros">
+                            <i class="fas fa-sliders-h"></i>
+                        </button>
+                        <button class="btn btn-secondary" id="btn-logout" type="button">
+                            <i class="fas fa-sign-out-alt"></i> Sair
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
